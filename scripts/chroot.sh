@@ -8,7 +8,7 @@ self="$(basename "$0")"
 usage() {
 	cat <<-EOU
 		usage: $self <target-dir> <command> [args...]
-		   ie: $self test-jessie-1 apt-get update
+		   ie: $self rootfs apt-get update
 	EOU
 }
 eusage() {

@@ -8,7 +8,7 @@ self="$(basename "$0")"
 usage() {
 	cat <<-EOU
 		usage: $self <target-dir> <suite> <mirror> <secmirror>
-		   ie: $self test-jessie-1 jessie http://deb.debian.org/debian http://security.debian.org
+		   ie: $self rootfs stretch http://deb.debian.org/debian http://security.debian.org
 	EOU
 }
 eusage() {

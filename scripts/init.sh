@@ -8,7 +8,7 @@ self="$(basename "$0")"
 usage() {
 	cat <<-EOU
 		usage: $self <suite> <timestamp> <target-dir>
-		   ie: $self jessie 2017-05-08T00:00:00Z test-jessie-1
+		   ie: $self stretch 2017-05-08T00:00:00Z rootfs
 	EOU
 }
 eusage() {

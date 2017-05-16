@@ -8,7 +8,7 @@ self="$(basename "$0")"
 usage() {
 	cat <<-EOU
 		usage: $self <target-dir> <target-tar>
-		   ie: $self test-jessie-1 test-jessie-1.tar
+		   ie: $self rootfs rootfs.tar
 	EOU
 }
 eusage() {
