@@ -1,0 +1,8 @@
+./docker-deboot-epoch
+
+./dev/**
+./proc/**
+./sys/**
+
+./var/cache/apt/**
+./var/lib/apt/lists/**
