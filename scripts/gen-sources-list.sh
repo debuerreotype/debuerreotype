@@ -32,11 +32,6 @@ comp='main'
 			echo "deb $mirror $suite $comp"
 			;;
 
-		experimental|rc-buggy)
-			echo "deb $mirror sid $comp"
-			echo "deb $mirror $suite $comp"
-			;;
-
 		*)
 			echo "deb $mirror $suite $comp"
 			echo "deb $mirror $suite-updates $comp"
