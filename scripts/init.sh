@@ -41,7 +41,9 @@ debootstrap \
 	--merged-usr \
 	--variant=minbase \
 	"$suite" "$targetDir" "$mirror"
-
 echo "$epoch" > "$targetDir/docker-deboot-epoch"
 
 "$thisDir/gen-sources-list.sh" "$targetDir" "$suite" "$mirror" "$secmirror"
+
+# since we're minbase, we know everything included is either essential, or a dependency of essential, so let's get clean "apt-mark showmanual" output
+"$thisDir/chroot.sh" "$targetDir" apt-mark auto '.*' > /dev/null
