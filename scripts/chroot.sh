@@ -27,5 +27,5 @@ unshare --mount bash -Eeuo pipefail -c '
 	for dir in dev proc sys; do
 		mount --rbind "/$dir" "$targetDir/$dir"
 	done
-	exec chroot "$targetDir" "$@"
+	exec chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" "$@"
 ' -- "$cmd" "$@"
