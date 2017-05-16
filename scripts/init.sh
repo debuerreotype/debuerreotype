@@ -7,8 +7,8 @@ self="$(basename "$0")"
 
 usage() {
 	cat <<-EOU
-		usage: $self <suite> <timestamp> <target-dir>
-		   ie: $self stretch 2017-05-08T00:00:00Z rootfs
+		usage: $self <target-dir> <suite> <timestamp>
+		   ie: $self rootfs stretch 2017-05-08T00:00:00Z
 	EOU
 }
 eusage() {
@@ -21,9 +21,9 @@ timestamp_to() {
 	date --date "$1" '+%s'
 }
 
+targetDir="${1:-}"; shift || eusage 'missing target-dir'
 suite="${1:-}"; shift || eusage 'missing suite'
 timestamp="${1:-}"; shift || eusage 'missing timestamp'
-targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ] # must be non-empty
 
 if [ -e "$targetDir" ] && [ -z "$(find "$targetDir" -maxdepth 0 -empty)" ]; then

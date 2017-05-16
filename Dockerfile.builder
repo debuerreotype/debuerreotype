@@ -15,12 +15,12 @@ RUN set -ex; \
 
 WORKDIR /tmp
 
-# docker-deboot-init stretch 2017-05-08T00:00:00Z test-stretch
+# docker-deboot-init test-stretch stretch 2017-05-08T00:00:00Z
 # docker-deboot-tar test-stretch test-stretch.tar
 # md5sum test-stretch.tar
 #   93db8c96db59bc6023177a845d1c8263
 
-# docker-deboot-init jessie 2017-05-08T00:00:00Z test-jessie
+# docker-deboot-init test-jessie jessie 2017-05-08T00:00:00Z
 # docker-deboot-tar test-jessie test-jessie.tar
 # md5sum test-jessie.tar
 #   9b60134210c0c848f796e7642c1f75f4
