@@ -34,6 +34,7 @@ fi
 epoch="$(date --date "$timestamp" '+%s')"
 timestamp="$(date --date "@$epoch" '+%Y%m%dT%H%M%SZ')"
 mirror="http://snapshot.debian.org/archive/debian/$timestamp"
+secmirror="http://snapshot.debian.org/archive/debian-security/$timestamp"
 
 debootstrap \
 	--force-check-gpg \
@@ -43,4 +44,4 @@ debootstrap \
 
 echo "$epoch" > "$targetDir/docker-deboot-epoch"
 
-"$thisDir/fixup.sh" "$targetDir"
+"$thisDir/gen-sources-list.sh" "$targetDir" "$suite" "$mirror" "$secmirror"
