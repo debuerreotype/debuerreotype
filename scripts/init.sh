@@ -17,10 +17,6 @@ eusage() {
 	exit 1
 }
 
-timestamp_to() {
-	date --date "$1" '+%s'
-}
-
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 suite="${1:-}"; shift || eusage 'missing suite'
 timestamp="${1:-}"; shift || eusage 'missing timestamp'
@@ -47,3 +43,17 @@ echo "$epoch" > "$targetDir/docker-deboot-epoch"
 
 # since we're minbase, we know everything included is either essential, or a dependency of essential, so let's get clean "apt-mark showmanual" output
 "$thisDir/chroot.sh" "$targetDir" apt-mark auto '.*' > /dev/null
+
+echo 'docker-deboot' > "$targetDir/etc/hostname"
+echo "$epoch" \
+	| md5sum \
+	| cut -f1 -d' ' \
+	> "$targetDir/etc/machine-id"
+{
+	echo 'nameserver 8.8.8.8'
+	echo 'nameserver 8.8.4.4'
+} > "$targetDir/etc/resolv.conf"
+chmod 0644 \
+	"$targetDir/etc/hostname" \
+	"$targetDir/etc/machine-id" \
+	"$targetDir/etc/resolv.conf"

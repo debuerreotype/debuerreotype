@@ -29,20 +29,6 @@ rm -f \
 	"$targetDir/var/log/alternatives.log" \
 	"$targetDir/var/cache/ldconfig/aux-cache"
 
-echo 'docker-deboot' > "$targetDir/etc/hostname"
-echo "$epoch" \
-	| md5sum \
-	| cut -f1 -d' ' \
-	> "$targetDir/etc/machine-id"
-{
-	echo 'nameserver 8.8.8.8'
-	echo 'nameserver 8.8.4.4'
-} > "$targetDir/etc/resolv.conf"
-chmod 0644 \
-	"$targetDir/etc/hostname" \
-	"$targetDir/etc/machine-id" \
-	"$targetDir/etc/resolv.conf"
-
 find "$targetDir" \
 	-newermt "@$epoch" \
 	-exec touch --no-dereference --date="@$epoch" '{}' +
