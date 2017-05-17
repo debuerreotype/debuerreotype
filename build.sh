@@ -74,7 +74,7 @@ docker run \
 
 			mkdir -p "$outputDir"
 			for variant in "" -slim; do
-				targetBase="$outputDir/$dpkgArch-$suite$variant"
+				targetBase="$outputDir/$suite$variant-$dpkgArch"
 				docker-deboot-tar "rootfs$variant" "$targetBase.tar.xz"
 				docker-deboot-chroot "rootfs$variant" dpkg-query -W > "$targetBase.manifest"
 				touch --no-dereference --date="@$epoch" "$targetBase.manifest"
