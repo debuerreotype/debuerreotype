@@ -2,20 +2,9 @@
 set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
-source "$thisDir/.constants.sh"
-self="$(basename "$0")"
-
-usage() {
-	cat <<-EOU
-		usage: $self <target-dir> <command> [args...]
-		   ie: $self rootfs apt-get update
-	EOU
-}
-eusage() {
-	echo >&2 "error: $1"
-	usage >&2
-	exit 1
-}
+source "$thisDir/.constants.sh" \
+	'<target-dir> <command> [args...]' \
+	'rootfs apt-get update'
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 cmd="${1:-}"; shift || eusage 'missing command'

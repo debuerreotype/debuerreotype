@@ -2,20 +2,9 @@
 set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
-source "$thisDir/.constants.sh"
-self="$(basename "$0")"
-
-usage() {
-	cat <<-EOU
-		usage: $self <target-dir>
-		   ie: $self rootfs
-	EOU
-}
-eusage() {
-	echo >&2 "error: $1"
-	usage >&2
-	exit 1
-}
+source "$thisDir/.constants.sh" \
+	'<target-dir>' \
+	'rootfs'
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
@@ -37,7 +26,7 @@ for slimExclude in "${slimExcludes[@]}"; do
 	{
 		echo
 		echo "# dpkg -S '$slimExclude'"
-		if dpkgOutput="$("$thisDir/chroot.sh" "$targetDir" dpkg -S "$slimExclude" 2>&1)"; then
+		if dpkgOutput="$("$thisDir/docker-deboot-chroot" "$targetDir" dpkg -S "$slimExclude" 2>&1)"; then
 			echo "$dpkgOutput" | sed 's/: .*//g; s/, /\n/g' | sort -u | xargs
 		else
 			echo "$dpkgOutput"
@@ -48,20 +37,20 @@ for slimExclude in "${slimExcludes[@]}"; do
 	if [[ "$slimExclude" == *'/*' ]]; then
 		if [ -d "$targetDir/$(dirname "$slimExclude")" ]; then
 			# use two passes so that we don't fail trying to remove directories from $neverExclude
-			"$thisDir/chroot.sh" "$targetDir" \
+			"$thisDir/docker-deboot-chroot" "$targetDir" \
 				find "$(dirname "$slimExclude")" \
 					-mindepth 1 \
 					-not -path "$neverExclude" \
 					-not -type d \
 					-delete
-			"$thisDir/chroot.sh" "$targetDir" \
+			"$thisDir/docker-deboot-chroot" "$targetDir" \
 				find "$(dirname "$slimExclude")" \
 					-mindepth 1 \
 					-empty \
 					-delete
 		fi
 	else
-		"$thisDir/chroot.sh" "$targetDir" rm -f "$slimExclude"
+		"$thisDir/docker-deboot-chroot" "$targetDir" rm -f "$slimExclude"
 	fi
 done
 {

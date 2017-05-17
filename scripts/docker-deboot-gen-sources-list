@@ -2,20 +2,9 @@
 set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
-source "$thisDir/.constants.sh"
-self="$(basename "$0")"
-
-usage() {
-	cat <<-EOU
-		usage: $self <target-dir> <suite> <mirror> <secmirror>
-		   ie: $self rootfs stretch http://deb.debian.org/debian http://security.debian.org
-	EOU
-}
-eusage() {
-	echo >&2 "error: $1"
-	usage >&2
-	exit 1
-}
+source "$thisDir/.constants.sh" \
+	'<target-dir> <suite> <mirror> <secmirror>' \
+	'rootfs stretch http://deb.debian.org/debian http://security.debian.org'
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 suite="${1:-}"; shift || eusage 'missing suite'

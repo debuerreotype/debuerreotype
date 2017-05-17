@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+source "$thisDir/.constants.sh" \
+	'<target-dir> arguments' \
+	'rootfs update'
+
+targetDir="${1:-}"; shift || eusage 'missing target-dir'
+[ -n "$targetDir" ]
+
+"$thisDir/docker-deboot-chroot" "$targetDir" apt-get -o Acquire::Check-Valid-Until=false "$@"

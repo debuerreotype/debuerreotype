@@ -1,10 +1,10 @@
 # docker run --cap-add SYS_ADMIN --tmpfs /tmp:dev,exec,suid,noatime ...
 
 # bootstrapping a new architecture?
-#   ./scripts/init.sh /tmp/docker-rootfs stretch now
-#   ./scripts/minimizing-config.sh /tmp/docker-rootfs
-#   ./scripts/gen-sources-list.sh /tmp/docker-rootfs stretch http://deb.debian.org/debian http://security.debian.org
-#   ./scripts/tar.sh /tmp/docker-rootfs - | docker import - debian:stretch-slim
+#   ./scripts/docker-deboot-init /tmp/docker-rootfs stretch now
+#   ./scripts/docker-deboot-minimizing-config /tmp/docker-rootfs
+#   ./scripts/docker-deboot-gen-sources-list /tmp/docker-rootfs stretch http://deb.debian.org/debian http://security.debian.org
+#   ./scripts/docker-deboot-tar /tmp/docker-rootfs - | docker import - debian:stretch-slim
 # alternate:
 #   debootstrap --variant=minbase stretch /tmp/docker-rootfs
 #   tar -cC /tmp/docker-rootfs . | docker import - debian:stretch-slim
@@ -16,11 +16,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		xz-utils \
 	&& rm -rf /var/lib/apt/lists/*
 
-COPY scripts /opt/docker-deboot
+COPY scripts /opt/docker-deboot/scripts
 RUN set -ex; \
-	cd /opt/docker-deboot; \
-	for f in *.sh; do \
-		ln -svL "$PWD/$f" "/usr/local/bin/docker-deboot-$(basename "$f" '.sh')"; \
+	cd /opt/docker-deboot/scripts; \
+	for f in docker-deboot-*; do \
+		ln -svL "$PWD/$f" "/usr/local/bin/$f"; \
 	done
 
 WORKDIR /tmp

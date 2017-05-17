@@ -2,20 +2,9 @@
 set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
-source "$thisDir/.constants.sh"
-self="$(basename "$0")"
-
-usage() {
-	cat <<-EOU
-		usage: $self <target-dir> <target-tar>
-		   ie: $self rootfs rootfs.tar
-	EOU
-}
-eusage() {
-	echo >&2 "error: $1"
-	usage >&2
-	exit 1
-}
+source "$thisDir/.constants.sh" \
+	'<target-dir> <target-tar>' \
+	'rootfs rootfs.tar'
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
@@ -25,7 +14,7 @@ targetTar="${1:-}"; shift || eusage 'missing target-tar'
 epoch="$(< "$targetDir/docker-deboot-epoch")"
 [ -n "$epoch" ]
 
-"$thisDir/fixup.sh" "$targetDir"
+"$thisDir/docker-deboot-fixup" "$targetDir"
 tar --create \
 	--file "$targetTar" \
 	--auto-compress \

@@ -2,20 +2,9 @@
 set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
-source "$thisDir/.constants.sh"
-self="$(basename "$0")"
-
-usage() {
-	cat <<-EOU
-		usage: $self <target-dir>
-		   ie: $self rootfs
-	EOU
-}
-eusage() {
-	echo >&2 "error: $1"
-	usage >&2
-	exit 1
-}
+source "$thisDir/.constants.sh" \
+	'<target-dir>' \
+	'rootfs'
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
@@ -35,7 +24,7 @@ EOF
 chmod 0755 "$targetDir/usr/sbin/policy-rc.d"
 
 # prevent upstart scripts from running during install/update
-"$thisDir/chroot.sh" "$targetDir" dpkg-divert --local --rename --add /sbin/initctl > /dev/null
+"$thisDir/docker-deboot-chroot" "$targetDir" dpkg-divert --local --rename --add /sbin/initctl > /dev/null
 cp -a "$targetDir/usr/sbin/policy-rc.d" "$targetDir/sbin/initctl"
 sed -i 's/^exit.*/exit 0/' "$targetDir/sbin/initctl"
 
