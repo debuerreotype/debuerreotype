@@ -50,9 +50,9 @@ echo "-- BUILDING TARBALLS FOR '$dpkgArch' --"
 echo
 
 for suite in "${suites[@]}"; do
-	if ! wget --quiet --spider "http://deb.debian.org/debian/dists/$suite/main/binary-$dpkgArch/Release"; then
+	if ! wget --quiet --spider "http://security.debian.org/dists/$suite/updates/main/binary-$dpkgArch/Packages.gz"; then
 		echo >&2
-		echo >&2 "warning: '$suite' not supported on '$dpkgArch'; skipping"
+		echo >&2 "warning: '$suite' not (security) supported on '$dpkgArch'; skipping"
 		echo >&2
 		continue
 	fi
