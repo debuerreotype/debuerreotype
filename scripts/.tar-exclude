@@ -1,3 +1,4 @@
+# the file we store the "epoch" of a given rootfs in
 ./docker-deboot-epoch
 
 ./dev/**
@@ -7,7 +8,12 @@
 ./var/cache/apt/**
 ./var/lib/apt/lists/**
 
+# ends up with host-kernel info
 ./etc/apt/apt.conf.d/01autoremove-kernels
 
+# useful data in these, but includes timestamps too
 ./var/log/apt/history.log
 ./var/log/apt/term.log
+
+# wheezy-only file which contains host-kernel info
+./run/motd.dynamic
