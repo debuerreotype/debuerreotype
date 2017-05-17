@@ -8,3 +8,6 @@
 ./var/lib/apt/lists/**
 
 ./etc/apt/apt.conf.d/01autoremove-kernels
+
+./var/log/apt/history.log
+./var/log/apt/term.log
