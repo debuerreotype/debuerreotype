@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+source "$thisDir/.constants.sh"
+self="$(basename "$0")"
+
+usage() {
+	cat <<-EOU
+		usage: $self <target-dir>
+		   ie: $self rootfs
+	EOU
+}
+eusage() {
+	echo >&2 "error: $1"
+	usage >&2
+	exit 1
+}
+
+targetDir="${1:-}"; shift || eusage 'missing target-dir'
+[ -n "$targetDir" ]
+
+# https://github.com/docker/docker/blob/d6f4fe9e38b60f63e429fff7ffced9c26cbf8236/contrib/mkimage/debootstrap#L63-L177
+
+# prevent init scripts from running during install/update
+cat > "$targetDir/usr/sbin/policy-rc.d" <<-'EOF'
+	#!/bin/sh
+
+	# For most Docker users, "apt-get install" only happens during "docker build",
+	# where starting services doesn't work and often fails in humorous ways. This
+	# prevents those failures by stopping the services from attempting to start.
+
+	exit 101
+EOF
+chmod 0755 "$targetDir/usr/sbin/policy-rc.d"
+
+# prevent upstart scripts from running during install/update
+"$thisDir/chroot.sh" "$targetDir" dpkg-divert --local --rename --add /sbin/initctl
+cp -a "$targetDir/usr/sbin/policy-rc.d" "$targetDir/sbin/initctl"
+sed -i 's/^exit.*/exit 0/' "$targetDir/sbin/initctl"
+
+# force dpkg not to call sync() after package extraction (speeding up installs)
+cat > "$targetDir/etc/dpkg/dpkg.cfg.d/docker-apt-speedup" <<-'EOF'
+	# For most Docker users, package installs happen during "docker build", which
+	# doesn't survive power loss and gets restarted clean afterwards anyhow, so
+	# this minor tweak gives us a nice speedup (much nicer on spinning disks,
+	# obviously).
+
+	force-unsafe-io
+EOF
+chmod 0644 "$targetDir/etc/dpkg/dpkg.cfg.d/docker-apt-speedup"
+
+# keep us lean by effectively running "apt-get clean" after every install
+aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
+cat > "$targetDir/etc/apt/apt.conf.d/docker-clean" <<-EOF
+	# Since for most Docker users, package installs happen in "docker build" steps,
+	# they essentially become individual layers due to the way Docker handles
+	# layering, especially using CoW filesystems.  What this means for us is that
+	# the caches that APT keeps end up just wasting space in those layers, making
+	# our layers unnecessarily large (especially since we'll normally never use
+	# these caches again and will instead just "docker build" again and make a brand
+	# new image).
+
+	# Ideally, these would just be invoking "apt-get clean", but in our testing,
+	# that ended up being cyclic and we got stuck on APT's lock, so we get this fun
+	# creation that's essentially just "apt-get clean".
+	DPkg::Post-Invoke { $aptGetClean };
+	APT::Update::Post-Invoke { $aptGetClean };
+
+	Dir::Cache::pkgcache "";
+	Dir::Cache::srcpkgcache "";
+
+	# Note that we do realize this isn't the ideal way to do this, and are always
+	# open to better suggestions (https://github.com/tianon/docker-brew-debian-snapshot/issues).
+EOF
+chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-clean"
+
+# remove apt-cache translations for faster "apt-get update"
+cat > "$targetDir/etc/apt/apt.conf.d/docker-no-languages" <<-'EOF'
+	# In Docker, we don't often need the "Translations" files, so we're just wasting
+	# time and space by downloading them, and this inhibits that.  For users that do
+	# need them, it's a simple matter to delete this file and "apt-get update". :)
+
+	Acquire::Languages "none";
+EOF
+chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-no-languages"
+
+cat > "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
+	# Since Docker users using "RUN apt-get update && apt-get install -y ..." in
+	# their Dockerfiles don't go delete the lists files afterwards, we want them to
+	# be as small as possible on-disk, so we explicitly request "gz" versions and
+	# tell Apt to keep them gzipped on-disk.
+
+	# For comparison, an "apt-get update" layer without this on a pristine
+	# "debian:wheezy" base image was "29.88 MB", where with this it was only
+	# "8.273 MB".
+
+	Acquire::GzipIndexes "true";
+	Acquire::CompressionTypes::Order:: "gz";
+EOF
+chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes"
+
+# update "autoremove" configuration to be aggressive about removing suggests deps that weren't manually installed
+cat > "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests" <<-'EOF'
+	# Since Docker users are looking for the smallest possible final images, the
+	# following emerges as a very common pattern:
+
+	#   RUN apt-get update \
+	#       && apt-get install -y <packages> \
+	#       && <do some compilation work> \
+	#       && apt-get purge -y --auto-remove <packages>
+
+	# By default, APT will actually _keep_ packages installed via Recommends or
+	# Depends if another package Suggests them, even and including if the package
+	# that originally caused them to be installed is removed.  Setting this to
+	# "false" ensures that APT is appropriately aggressive about removing the
+	# packages it added.
+
+	# https://aptitude.alioth.debian.org/doc/en/ch02s05s05.html#configApt-AutoRemove-SuggestsImportant
+	Apt::AutoRemove::SuggestsImportant "false";
+EOF
+chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests"
