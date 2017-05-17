@@ -4,6 +4,7 @@ FROM debian:stretch-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		debootstrap \
+		xz-utils \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY scripts /opt/docker-deboot
