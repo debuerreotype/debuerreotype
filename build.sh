@@ -16,6 +16,13 @@ eusage() {
 	exit 1
 }
 
+# a silly flag to skip "docker build" (for "build-all.sh")
+build=1
+if [ "${1:-}" = '--no-build' ]; then
+	shift
+	build=
+fi
+
 outputDir="${1:-}"; shift || eusage 'missing output-dir'
 suite="${1:-}"; shift || eusage 'missing suite'
 timestamp="${1:-}"; shift || eusage 'missing timestamp'
@@ -34,7 +41,8 @@ if docker info | grep -q apparmor; then
 fi
 
 dockerImage='tianon/docker-deboot'
-docker build -t "$dockerImage" -f "$thisDir/Dockerfile.builder" "$thisDir"
+[ -z "$build" ] || docker build -t "$dockerImage" -f "$thisDir/Dockerfile.builder" "$thisDir"
+
 docker run \
 	--rm \
 	"${securityArgs[@]}" \
