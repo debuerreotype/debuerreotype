@@ -23,10 +23,20 @@ timestamp="${1:-}"; shift || eusage 'missing timestamp'
 mkdir -p "$outputDir"
 outputDir="$(readlink -f "$outputDir")"
 
+securityArgs=(
+	--cap-add SYS_ADMIN
+)
+if docker info | grep -q apparmor; then
+	# AppArmor blocks mount :)
+	securityArgs+=(
+		--security-opt apparmor=unconfined
+	)
+fi
+
 docker build -t docker-deboot -f "$thisDir/Dockerfile.builder" "$thisDir"
 docker run \
 	--rm \
-	--cap-add SYS_ADMIN \
+	"${securityArgs[@]}" \
 	--tmpfs /tmp:dev,exec,suid,noatime \
 	-w /tmp \
 	-e suite="$suite" \
