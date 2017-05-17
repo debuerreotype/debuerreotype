@@ -68,6 +68,7 @@ docker run \
 			docker-deboot-apt-get rootfs update -qq
 			docker-deboot-apt-get rootfs dist-upgrade -yqq
 
+			# make a copy of rootfs so we can have a "slim" output too
 			mkdir -p rootfs-slim
 			tar -cC rootfs . | tar -xC rootfs-slim
 
