@@ -33,7 +33,8 @@ if docker info | grep -q apparmor; then
 	)
 fi
 
-docker build -t docker-deboot -f "$thisDir/Dockerfile.builder" "$thisDir"
+dockerImage='tianon/docker-deboot'
+docker build -t "$dockerImage" -f "$thisDir/Dockerfile.builder" "$thisDir"
 docker run \
 	--rm \
 	"${securityArgs[@]}" \
@@ -41,7 +42,7 @@ docker run \
 	-w /tmp \
 	-e suite="$suite" \
 	-e timestamp="$timestamp" \
-	docker-deboot \
+	"$dockerImage" \
 	bash -Eeuo pipefail -c '
 		set -x
 
@@ -67,10 +68,16 @@ docker run \
 
 			du -hs rootfs rootfs-slim
 
+			for rootfs in rootfs*/; do
+				docker-deboot-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
+			done
+
 			mkdir -p "$outputDir"
 			for variant in "" -slim; do
-				docker-deboot-gen-sources-list "rootfs$variant" "$suite" http://deb.debian.org/debian http://security.debian.org
-				docker-deboot-tar "rootfs$variant" "$outputDir/$dpkgArch-$suite$variant.tar.xz"
+				targetBase="$outputDir/$dpkgArch-$suite$variant"
+				docker-deboot-tar "rootfs$variant" "$targetBase.tar.xz"
+				docker-deboot-chroot "rootfs$variant" dpkg-query -W > "$targetBase.manifest"
+				touch --no-dereference --date="@$epoch" "$targetBase.manifest"
 			done
 		} >&2
 
