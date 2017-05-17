@@ -5,6 +5,9 @@
 #   ./scripts/minimizing-config.sh /tmp/docker-rootfs
 #   ./scripts/gen-sources-list.sh /tmp/docker-rootfs stretch http://deb.debian.org/debian http://security.debian.org
 #   ./scripts/tar.sh /tmp/docker-rootfs - | docker import - debian:stretch-slim
+# alternate:
+#   debootstrap --variant=minbase stretch /tmp/docker-rootfs
+#   tar -cC /tmp/docker-rootfs . | docker import - debian:stretch-slim
 # (or your own favorite set of "debootstrap" commands to create a base image for building this one FROM)
 FROM debian:stretch-slim
 
