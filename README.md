@@ -107,7 +107,7 @@ Well, I ran the scripts across seven explicit architectures (`amd64`, `arm64`, `
 
 Additionally, Travis runs with a fixed timestamp value across several suites to verify that their checksums are reproducible, as expected.
 
-For the curious, here's the `SHA256SUMS` of my above cross-architecture test (minus all `wheezy`/`oldstable` variants, given their minor variability):
+For the curious, here's the `SHA256SUMS` of my above cross-architecture test run via [`build-all.sh`](build-all.sh) (minus all `wheezy`/`oldstable` variants, given their minor variability):
 
 ```console
 $ grep -E '[.]tar[.]xz$' output/20170516/SHA256SUMS | grep -vE ' (wheezy|oldstable)-'
