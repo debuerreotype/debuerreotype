@@ -20,12 +20,14 @@ eusage() {
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 cmd="${1:-}"; shift || eusage 'missing command'
 [ -n "$targetDir" ]
+epoch="$(< "$targetDir/docker-deboot-epoch")"
+[ -n "$epoch" ]
 
-export targetDir
+export targetDir epoch
 unshare --mount bash -Eeuo pipefail -c '
 	[ -n "$targetDir" ] # just to be safe
 	for dir in dev proc sys; do
 		mount --rbind "/$dir" "$targetDir/$dir"
 	done
-	exec chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" "$@"
+	exec chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$@"
 ' -- "$cmd" "$@"
