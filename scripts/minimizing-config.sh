@@ -35,7 +35,7 @@ EOF
 chmod 0755 "$targetDir/usr/sbin/policy-rc.d"
 
 # prevent upstart scripts from running during install/update
-"$thisDir/chroot.sh" "$targetDir" dpkg-divert --local --rename --add /sbin/initctl
+"$thisDir/chroot.sh" "$targetDir" dpkg-divert --local --rename --add /sbin/initctl > /dev/null
 cp -a "$targetDir/usr/sbin/policy-rc.d" "$targetDir/sbin/initctl"
 sed -i 's/^exit.*/exit 0/' "$targetDir/sbin/initctl"
 
