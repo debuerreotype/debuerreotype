@@ -32,6 +32,7 @@ tar --create \
 	--directory "$targetDir" \
 	--exclude-from "$thisDir/.tar-exclude" \
 	--numeric-owner \
+	--transform 's,^./,,' \
 	--sort name \
 	.
 touch --no-dereference --date="@$epoch" "$targetTar"
