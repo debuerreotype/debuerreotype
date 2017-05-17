@@ -1,5 +1,11 @@
 # docker run --cap-add SYS_ADMIN --tmpfs /tmp:dev,exec,suid,noatime ...
 
+# bootstrapping a new architecture?
+#   ./scripts/init.sh /tmp/docker-rootfs stretch now
+#   ./scripts/minimizing-config.sh /tmp/docker-rootfs
+#   ./scripts/gen-sources-list.sh /tmp/docker-rootfs stretch http://deb.debian.org/debian http://security.debian.org
+#   ./scripts/tar.sh /tmp/docker-rootfs - | docker import - debian:stretch-slim
+# (or your own favorite set of "debootstrap" commands to create a base image for building this one FROM)
 FROM debian:stretch-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -15,6 +21,8 @@ RUN set -ex; \
 	done
 
 WORKDIR /tmp
+
+# a few example md5sum values for amd64:
 
 # docker-deboot-init test-stretch stretch 2017-05-08T00:00:00Z
 # docker-deboot-tar test-stretch test-stretch.tar
