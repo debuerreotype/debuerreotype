@@ -1,0 +1,10 @@
+#   This file contains the list of files/directories which will be removed for "slim" image variants.
+#  https://github.com/tianon/docker-brew-debian/issues/48
+# https://wiki.ubuntu.com/ReducingDiskFootprint#Drop_unnecessary_files
+/usr/share/doc/*
+/usr/share/groff/*
+/usr/share/info/*
+/usr/share/linda/*
+/usr/share/lintian/*
+/usr/share/locale/*
+/usr/share/man/*
