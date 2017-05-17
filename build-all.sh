@@ -49,10 +49,27 @@ echo
 echo "-- BUILDING TARBALLS FOR '$dpkgArch' --"
 echo
 
+fetch_codename() {
+	local suite="$1"; shift
+	wget -qO- "http://deb.debian.org/debian/dists/$suite/Release" \
+		| tac|tac \
+		| awk -F ': ' 'tolower($1) == "codename" { print $2; exit }'
+}
+declare -A codenames=(
+	[testing]="$(fetch_codename 'testing')"
+	[unstable]="$(fetch_codename 'unstable')"
+)
+
 for suite in "${suites[@]}"; do
-	if ! wget --quiet --spider "http://security.debian.org/dists/$suite/updates/main/binary-$dpkgArch/Packages.gz"; then
+	testUrl="http://security.debian.org/dists/$suite/updates/main/binary-$dpkgArch/Packages.gz"
+	case "$suite" in
+		testing|unstable|"${codenames[testing]}"|"${codenames[unstable]}")
+			testUrl="http://deb.debian.org/debian/dists/$suite/main/binary-$dpkgArch/Packages.gz"
+			;;
+	esac
+	if ! wget --quiet --spider "$testUrl"; then
 		echo >&2
-		echo >&2 "warning: '$suite' not (security) supported on '$dpkgArch'; skipping"
+		echo >&2 "warning: '$suite' not supported on '$dpkgArch'; skipping"
 		echo >&2
 		continue
 	fi
