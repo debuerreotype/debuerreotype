@@ -42,6 +42,7 @@ docker run \
 	-w /tmp \
 	-e suite="$suite" \
 	-e timestamp="$timestamp" \
+	-e TZ='UTC' -e LC_ALL='C' \
 	"$dockerImage" \
 	bash -Eeuo pipefail -c '
 		set -x
@@ -62,7 +63,14 @@ docker run \
 			mkdir -p rootfs-slim
 			tar -cC rootfs . | tar -xC rootfs-slim
 
-			docker-deboot-apt-get rootfs install -y --no-install-recommends inetutils-ping iproute2
+			# prefer iproute2 if it exists
+			iproute=iproute2
+			if ! docker-deboot-chroot rootfs apt-cache show iproute2 > /dev/null; then
+				# poor wheezy
+				iproute=iproute
+			fi
+
+			docker-deboot-apt-get rootfs install -y --no-install-recommends inetutils-ping $iproute
 
 			docker-deboot-slimify rootfs-slim
 
