@@ -28,6 +28,8 @@ if [ -e "$targetDir" ] && [ -z "$(find "$targetDir" -maxdepth 0 -empty)" ]; then
 fi
 
 epoch="$(date --date "$timestamp" '+%s')"
+export SOURCE_DATE_EPOCH="$epoch"
+
 timestamp="$(date --date "@$epoch" '+%Y%m%dT%H%M%SZ')"
 mirror="http://snapshot.debian.org/archive/debian/$timestamp"
 secmirror="http://snapshot.debian.org/archive/debian-security/$timestamp"
