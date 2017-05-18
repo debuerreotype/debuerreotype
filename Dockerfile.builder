@@ -30,9 +30,9 @@ WORKDIR /tmp
 # docker-deboot-init test-stretch stretch 2017-05-08T00:00:00Z
 # docker-deboot-tar test-stretch test-stretch.tar
 # md5sum test-stretch.tar
-#   b58e1c32013c9815d83b8bed3db189a4
+#   2dec6d8fc117f4dde1d1932fa232d1b4
 
 # docker-deboot-init test-jessie jessie 2017-05-08T00:00:00Z
 # docker-deboot-tar test-jessie test-jessie.tar
 # md5sum test-jessie.tar
-#   d40354bf29cb69a0359e828f2cb533ba
+#   d6cd6f4f777bffd3f3d1fafd03a4a422
