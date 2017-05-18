@@ -14,6 +14,7 @@ The goal is to create an auditable, reproducible process for creating rootfs tar
 ## TODO
 
 - come up with a good generic name for these tools (unlike `docker-deboot`) that makes their generic use and purpose more clear (since there's only one "Docker specific" script here -- `docker-deboot-minimizing-config`)
+- `/etc/shadow`!!!!  https://bugs.debian.org/857803  ([see "date of last password change" in `shadow(5)`](https://manpages.debian.org/jessie/passwd/shadow.5.en.html))
 
 ## Usage
 
