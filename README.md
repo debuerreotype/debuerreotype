@@ -1,4 +1,4 @@
-# Debian in Docker (reproducible snapshot-based builds)
+# Reproducible, snapshot-based Debian rootfs builds (especially for Docker)
 
 [![Build Status](https://travis-ci.org/tianon/docker-brew-debian-snapshot.svg?branch=master)](https://travis-ci.org/tianon/docker-brew-debian-snapshot)
 
@@ -10,6 +10,10 @@ This is based on [lamby](https://github.com/lamby)'s work for reproducible `debo
 ## Why?
 
 The goal is to create an auditable, reproducible process for creating rootfs tarballs (especially for use in Docker) of Debian releases, based on point-in-time snapshots from [snapshot.debian.org](http://snapshot.debian.org).
+
+## TODO
+
+- come up with a good generic name for these tools (unlike `docker-deboot`) that makes their generic use and purpose more clear (since there's only one "Docker specific" script here -- `docker-deboot-minimizing-config`)
 
 ## Usage
 
