@@ -19,9 +19,8 @@ fi
 epoch="$(date --date "$timestamp" '+%s')"
 export SOURCE_DATE_EPOCH="$epoch"
 
-timestamp="$(date --date "@$epoch" '+%Y%m%dT%H%M%SZ')"
-mirror="http://snapshot.debian.org/archive/debian/$timestamp"
-secmirror="http://snapshot.debian.org/archive/debian-security/$timestamp"
+mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
+secmirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')"
 
 debootstrap \
 	--force-check-gpg \
