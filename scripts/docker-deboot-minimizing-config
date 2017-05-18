@@ -27,6 +27,7 @@ chmod 0755 "$targetDir/usr/sbin/policy-rc.d"
 "$thisDir/docker-deboot-chroot" "$targetDir" dpkg-divert --local --rename --add /sbin/initctl > /dev/null
 cp -a "$targetDir/usr/sbin/policy-rc.d" "$targetDir/sbin/initctl"
 sed -i 's/^exit.*/exit 0/' "$targetDir/sbin/initctl"
+# TODO should we only do this if "/sbin/initctl" already exists?
 
 # force dpkg not to call sync() after package extraction (speeding up installs)
 cat > "$targetDir/etc/dpkg/dpkg.cfg.d/docker-apt-speedup" <<-'EOF'

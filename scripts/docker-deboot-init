@@ -39,7 +39,7 @@ echo 'docker-deboot' > "$targetDir/etc/hostname"
 echo "$epoch" \
 	| md5sum \
 	| cut -f1 -d' ' \
-	> "$targetDir/etc/machine-id"
+	> "$targetDir/etc/machine-id" # TODO should we only do this if "/etc/machine-id" already exists?
 {
 	echo 'nameserver 8.8.8.8'
 	echo 'nameserver 8.8.4.4'
