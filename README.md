@@ -83,6 +83,8 @@ $ docker-deboot-gen-sources-list rootfs stretch http://deb.debian.org/debian htt
 
 $ docker-deboot-tar rootfs - | sha256sum
 89187412edf5b5a487f33a38bff279fff4e1e6c096010417785880076f934112  -
+
+$ # try it!  you should get that same sha256sum value!
 ```
 
 ## Why isn't Wheezy reproducible??
