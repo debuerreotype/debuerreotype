@@ -48,3 +48,24 @@ chmod 0644 \
 	"$targetDir/etc/hostname" \
 	"$targetDir/etc/machine-id" \
 	"$targetDir/etc/resolv.conf"
+
+# https://bugs.debian.org/857803
+# adjust field 3 in /etc/shadow and /etc/shadow- to $(( epoch / 60 / 60 / 24 )), if it's larger
+sp_lstchg="$(( epoch / 60 / 60 / 24 ))"
+for shadowFile in etc/shadow etc/shadow-; do
+	newShadowFile="$shadowFile.docker-deboot"
+	awk -F ':' \
+		-v OFS=':' \
+		-v sp_lstchg="$sp_lstchg" \
+		'{
+			if ($3 > sp_lstchg) {
+				$3 = sp_lstchg
+			}
+			print
+		}' "$targetDir/$shadowFile" > "$targetDir/$newShadowFile"
+	if [ "$(< "$targetDir/$shadowFile")" != "$(< "$targetDir/$newShadowFile")" ]; then
+		# use "cat" instead of "mv" so permissions don't change
+		cat "$targetDir/$newShadowFile" > "$targetDir/$shadowFile"
+	fi
+	rm -f "$targetDir/$newShadowFile"
+done
