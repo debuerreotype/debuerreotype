@@ -42,7 +42,7 @@ mkdir -p "$outputDir"
 outputDir="$(readlink -f "$outputDir")"
 
 dockerImage='tianon/debuerreotype'
-[ -z "$build" ] || docker build -t "$dockerImage" -f "$thisDir/Dockerfile.builder" "$thisDir"
+[ -z "$build" ] || docker build -t "$dockerImage" "$thisDir"
 
 mirror="$("$thisDir/scripts/.snapshot-url.sh" "$timestamp")"
 secmirror="$("$thisDir/scripts/.snapshot-url.sh" "$timestamp" 'debian-security')"

@@ -32,9 +32,9 @@ Available scripts:
 | `debuerreotype-fixup` | invoked by `debuerreotype-tar` to fixup timestamps and remove known-bad log files for determinism |
 | `debuerreotype-tar` | deterministically create a tar file of the rootfs |
 
-`Dockerfile.builder` is provided for using these scripts in a simple deterministic environment based on Docker, but given a recent enough version of `debootstrap`, they should run fine outside Docker as well (and their deterministic properties have been verified on at least a Gentoo host in addition to the provided Debian-based Docker environment).
+A simple `Dockerfile` is provided for using these scripts in a simple deterministic environment based on Docker, but given a recent enough version of `debootstrap`, they should run fine outside Docker as well (and their deterministic properties have been verified on at least a Gentoo host in addition to the provided Debian-based Docker environment).
 
-The provided `Dockerfile.builder` also includes comments with hints for bootstrapping the environment on a new architecture (which doesn't have a `debian` Docker base image yet).
+The provided `Dockerfile` also includes comments with hints for bootstrapping the environment on a new architecture (which then presumably doesn't have a `debian` Docker base image yet).
 
 Full example: (see [`build.sh`](build.sh) for this in practice)
 
