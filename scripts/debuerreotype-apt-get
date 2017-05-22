@@ -9,4 +9,4 @@ source "$thisDir/.constants.sh" \
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
 
-"$thisDir/docker-deboot-chroot" "$targetDir" apt-get -o Acquire::Check-Valid-Until=false "$@"
+"$thisDir/debuerreotype-chroot" "$targetDir" apt-get -o Acquire::Check-Valid-Until=false "$@"

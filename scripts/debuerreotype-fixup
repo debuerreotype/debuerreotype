@@ -8,7 +8,7 @@ source "$thisDir/.constants.sh" \
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
-epoch="$(< "$targetDir/docker-deboot-epoch")"
+epoch="$(< "$targetDir/debuerreotype-epoch")"
 [ -n "$epoch" ]
 
 # https://github.com/lamby/debootstrap/commit/66b15380814aa62ca4b5807270ac57a3c8a0558d#diff-de4eef4ab836e5c6c9c1f820a2f624baR709

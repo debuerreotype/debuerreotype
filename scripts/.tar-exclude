@@ -1,5 +1,5 @@
 # the file we store the "epoch" of a given rootfs in
-./docker-deboot-epoch
+./debuerreotype-epoch
 
 ./dev/**
 ./proc/**

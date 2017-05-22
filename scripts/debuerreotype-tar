@@ -11,10 +11,10 @@ targetDir="${1:-}"; shift || eusage 'missing target-dir'
 targetTar="${1:-}"; shift || eusage 'missing target-tar'
 [ -n "$targetTar" ]
 
-epoch="$(< "$targetDir/docker-deboot-epoch")"
+epoch="$(< "$targetDir/debuerreotype-epoch")"
 [ -n "$epoch" ]
 
-"$thisDir/docker-deboot-fixup" "$targetDir"
+"$thisDir/debuerreotype-fixup" "$targetDir"
 tar --create \
 	--file "$targetTar" \
 	--auto-compress \

@@ -9,7 +9,7 @@ source "$thisDir/.constants.sh" \
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 cmd="${1:-}"; shift || eusage 'missing command'
 [ -n "$targetDir" ]
-epoch="$(< "$targetDir/docker-deboot-epoch")"
+epoch="$(< "$targetDir/debuerreotype-epoch")"
 [ -n "$epoch" ]
 
 export targetDir epoch

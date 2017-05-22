@@ -27,14 +27,14 @@ debootstrap \
 	--merged-usr \
 	--variant=minbase \
 	"$suite" "$targetDir" "$mirror"
-echo "$epoch" > "$targetDir/docker-deboot-epoch"
+echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
-"$thisDir/docker-deboot-gen-sources-list" "$targetDir" "$suite" "$mirror" "$secmirror"
+"$thisDir/debuerreotype-gen-sources-list" "$targetDir" "$suite" "$mirror" "$secmirror"
 
 # since we're minbase, we know everything included is either essential, or a dependency of essential, so let's get clean "apt-mark showmanual" output
-"$thisDir/docker-deboot-chroot" "$targetDir" apt-mark auto '.*' > /dev/null
+"$thisDir/debuerreotype-chroot" "$targetDir" apt-mark auto '.*' > /dev/null
 
-echo 'docker-deboot' > "$targetDir/etc/hostname"
+echo 'debuerreotype' > "$targetDir/etc/hostname"
 echo "$epoch" \
 	| md5sum \
 	| cut -f1 -d' ' \
@@ -52,7 +52,7 @@ chmod 0644 \
 # adjust field 3 in /etc/shadow and /etc/shadow- to $(( epoch / 60 / 60 / 24 )), if it's larger
 sp_lstchg="$(( epoch / 60 / 60 / 24 ))"
 for shadowFile in etc/shadow etc/shadow-; do
-	newShadowFile="$shadowFile.docker-deboot"
+	newShadowFile="$shadowFile.debuerreotype"
 	awk -F ':' \
 		-v OFS=':' \
 		-v sp_lstchg="$sp_lstchg" \

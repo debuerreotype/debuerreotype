@@ -40,7 +40,7 @@ if docker info | grep -q apparmor; then
 	)
 fi
 
-dockerImage='tianon/docker-deboot'
+dockerImage='tianon/debuerreotype'
 [ -z "$build" ] || docker build -t "$dockerImage" -f "$thisDir/Dockerfile.builder" "$thisDir"
 
 docker run \
@@ -62,11 +62,11 @@ docker run \
 		dpkgArch="$(dpkg --print-architecture)"
 
 		{
-			docker-deboot-init rootfs "$suite" "@$epoch"
+			debuerreotype-init rootfs "$suite" "@$epoch"
 
-			docker-deboot-minimizing-config rootfs
-			docker-deboot-apt-get rootfs update -qq
-			docker-deboot-apt-get rootfs dist-upgrade -yqq
+			debuerreotype-minimizing-config rootfs
+			debuerreotype-apt-get rootfs update -qq
+			debuerreotype-apt-get rootfs dist-upgrade -yqq
 
 			# make a copy of rootfs so we can have a "slim" output too
 			mkdir -p rootfs-slim
@@ -74,26 +74,26 @@ docker run \
 
 			# prefer iproute2 if it exists
 			iproute=iproute2
-			if ! docker-deboot-chroot rootfs apt-cache show iproute2 > /dev/null; then
+			if ! debuerreotype-chroot rootfs apt-cache show iproute2 > /dev/null; then
 				# poor wheezy
 				iproute=iproute
 			fi
 
-			docker-deboot-apt-get rootfs install -y --no-install-recommends inetutils-ping $iproute
+			debuerreotype-apt-get rootfs install -y --no-install-recommends inetutils-ping $iproute
 
-			docker-deboot-slimify rootfs-slim
+			debuerreotype-slimify rootfs-slim
 
 			du -hs rootfs rootfs-slim
 
 			for rootfs in rootfs*/; do
-				docker-deboot-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
+				debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
 			done
 
 			mkdir -p "$outputDir"
 			for variant in "" -slim; do
 				targetBase="$outputDir/$suite$variant-$dpkgArch"
-				docker-deboot-tar "rootfs$variant" "$targetBase.tar.xz"
-				docker-deboot-chroot "rootfs$variant" dpkg-query -W > "$targetBase.manifest"
+				debuerreotype-tar "rootfs$variant" "$targetBase.tar.xz"
+				debuerreotype-chroot "rootfs$variant" dpkg-query -W > "$targetBase.manifest"
 				touch --no-dereference --date="@$epoch" "$targetBase.manifest"
 			done
 		} >&2
