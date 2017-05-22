@@ -21,14 +21,16 @@ The usage of the scripts here center around a "rootfs" directory, which is both 
 
 Available scripts:
 
-- `debuerreotype-init`: create the initial "rootfs", given a suite and a timestamp (in some format `date(1)` can parse); `sources.list` will be pointing at snapshot.debian.org
-- `debuerreotype-chroot`: run a command in the given "rootfs" (using `unshare` to mount `/dev`, `/proc`, and `/sys` from the parent environment in a simple, safe way)
-- `debuerreotype-apt-get`: run `apt-get` via `debuerreotype-chroot`, including `-o Acquire::Check-Valid-Until=false` to account for older snapshots with (now) invalid `Valid-Until` values
-- `debuerreotype-minimizing-config`: apply configuration tweaks to make the rootfs minimal and keep it minimal (especially targeted at Docker images, with comments explicitly describing Docker use cases)
-- `debuerreotype-slimify`: remove files such as documentation to create an even smaller rootfs (used for creating `slim` variants of the Docker images, for example)
-- `debuerreotype-gen-sources-list`: generate an appropriate `sources.list` in the rootfs given a suite, mirror, and secmirror (especially for updating `sources.list` to point at deb.debian.org before generating outputs)
-- `debuerreotype-fixup`: invoked by `debuerreotype-tar` to fixup timestamps and remove known-bad log files for determinism
-- `debuerreotype-tar`: deterministically create a tar file of the rootfs
+| *script* | *purpose* |
+| --- | --- |
+| `debuerreotype-init` | create the initial "rootfs", given a suite and a timestamp (in some format `date(1)` can parse); `sources.list` will be pointing at snapshot.debian.org |
+| `debuerreotype-chroot` | run a command in the given "rootfs" (using `unshare` to mount `/dev`, `/proc`, and `/sys` from the parent environment in a simple, safe way) |
+| `debuerreotype-apt-get` | run `apt-get` via `debuerreotype-chroot`, including `-o Acquire::Check-Valid-Until=false` to account for older snapshots with (now) invalid `Valid-Until` values |
+| `debuerreotype-minimizing-config` | apply configuration tweaks to make the rootfs minimal and keep it minimal (especially targeted at Docker images, with comments explicitly describing Docker use cases) |
+| `debuerreotype-slimify` | remove files such as documentation to create an even smaller rootfs (used for creating `slim` variants of the Docker images, for example) |
+| `debuerreotype-gen-sources-list` | generate an appropriate `sources.list` in the rootfs given a suite, mirror, and secmirror (especially for updating `sources.list` to point at deb.debian.org before generating outputs) |
+| `debuerreotype-fixup` | invoked by `debuerreotype-tar` to fixup timestamps and remove known-bad log files for determinism |
+| `debuerreotype-tar` | deterministically create a tar file of the rootfs |
 
 `Dockerfile.builder` is provided for using these scripts in a simple deterministic environment based on Docker, but given a recent enough version of `debootstrap`, they should run fine outside Docker as well (and their deterministic properties have been verified on at least a Gentoo host in addition to the provided Debian-based Docker environment).
 
