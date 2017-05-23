@@ -1,6 +1,6 @@
 # Debuerreotype
 
-[![Build Status](https://travis-ci.org/tianon/debuerreotype.svg?branch=master)](https://travis-ci.org/tianon/debuerreotype)
+[![Build Status](https://travis-ci.org/tianon/debuerreotype.svg?branch=master)](https://travis-ci.org/tianon/debuerreotype/branches)
 
 Reproducible, [snapshot](http://snapshot.debian.org)-based Debian rootfs builds (especially for Docker).
 
