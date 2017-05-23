@@ -40,7 +40,7 @@ if docker info | grep -q apparmor; then
 	)
 fi
 
-dockerImage='tianon/debuerreotype'
+dockerImage='debuerreotype/debuerreotype'
 [ -z "$build" ] || docker build -t "$dockerImage" "$thisDir"
 
 docker run \

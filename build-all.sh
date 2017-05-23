@@ -41,7 +41,7 @@ timestamp="${1:-}"; shift || eusage 'missing timestamp'
 mkdir -p "$outputDir"
 outputDir="$(readlink -f "$outputDir")"
 
-dockerImage='tianon/debuerreotype'
+dockerImage='debuerreotype/debuerreotype'
 [ -z "$build" ] || docker build -t "$dockerImage" "$thisDir"
 
 mirror="$("$thisDir/scripts/.snapshot-url.sh" "$timestamp")"
