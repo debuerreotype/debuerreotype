@@ -6,6 +6,7 @@ serial="$(TZ=UTC date --date "@$epoch" +%Y%m%d)"
 
 set -x
 
+./scripts/debuerreotype-version
 ./build.sh travis "$SUITE" "@$epoch"
 
 real="$(sha256sum "travis/$serial/$SUITE-amd64.tar.xz" | cut -d' ' -f1)"
