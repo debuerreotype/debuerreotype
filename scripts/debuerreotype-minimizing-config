@@ -61,7 +61,7 @@ cat > "$targetDir/etc/apt/apt.conf.d/docker-clean" <<-EOF
 	Dir::Cache::srcpkgcache "";
 
 	# Note that we do realize this isn't the ideal way to do this, and are always
-	# open to better suggestions (https://github.com/tianon/debuerreotype/issues).
+	# open to better suggestions (https://github.com/debuerreotype/debuerreotype/issues).
 EOF
 chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-clean"
 

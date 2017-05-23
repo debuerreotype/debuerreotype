@@ -1,6 +1,6 @@
 # Debuerreotype
 
-[![Build Status](https://travis-ci.org/tianon/debuerreotype.svg?branch=master)](https://travis-ci.org/tianon/debuerreotype/branches)
+[![Build Status](https://travis-ci.org/debuerreotype/debuerreotype.svg?branch=master)](https://travis-ci.org/debuerreotype/debuerreotype/branches)
 
 Reproducible, [snapshot](http://snapshot.debian.org)-based Debian rootfs builds (especially for Docker).
 
@@ -89,7 +89,7 @@ Processing triggers for libc-bin (2.24-8) ...
 $ debuerreotype-gen-sources-list rootfs stretch http://deb.debian.org/debian http://security.debian.org
 
 $ debuerreotype-tar rootfs - | sha256sum
-8073c6de0879f516e89a8acd298bfe84e2a404ea1e685c9744d41be7c0066e32  -
+0542bec04135ed60ed5763f0bcf90381d4e5e33786d57aba5aa4b0fc4e43478a  -
 
 $ # try it!  you should get that same sha256sum value!
 ```
