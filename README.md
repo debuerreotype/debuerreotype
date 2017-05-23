@@ -35,6 +35,7 @@ Available scripts:
 | `debuerreotype-gen-sources-list` | generate an appropriate `sources.list` in the rootfs given a suite, mirror, and secmirror (especially for updating `sources.list` to point at deb.debian.org before generating outputs) |
 | `debuerreotype-fixup` | invoked by `debuerreotype-tar` to fixup timestamps and remove known-bad log files for determinism |
 | `debuerreotype-tar` | deterministically create a tar file of the rootfs |
+| `debuerreotype-version` | print out the version of the current `debuerreotype` installation |
 
 A simple `Dockerfile` is provided for using these scripts in a simple deterministic environment based on Docker, but given a recent enough version of `debootstrap`, they should run fine outside Docker as well (and their deterministic properties have been verified on at least a Gentoo host in addition to the provided Debian-based Docker environment).
 
