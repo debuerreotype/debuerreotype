@@ -58,8 +58,15 @@ docker run \
 		epoch="$(date --date "$timestamp" +%s)"
 		serial="$(date --date "@$epoch" +%Y%m%d)"
 		exportDir="output"
-		outputDir="$exportDir/$serial"
+		outputDir="$exportDir/$serial/$suite"
 		dpkgArch="$(dpkg --print-architecture)"
+
+		touch_epoch() {
+			while [ "$#" -gt 0 ]; do
+				local f="$1"; shift
+				touch --no-dereference --date="@$epoch" "$f"
+			done
+		}
 
 		{
 			debuerreotype-init rootfs "$suite" "@$epoch"
@@ -89,12 +96,23 @@ docker run \
 				debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
 			done
 
-			mkdir -p "$outputDir"
-			for variant in "" -slim; do
-				targetBase="$outputDir/$suite$variant-$dpkgArch"
-				debuerreotype-tar "rootfs$variant" "$targetBase.tar.xz"
-				debuerreotype-chroot "rootfs$variant" dpkg-query -W > "$targetBase.manifest"
-				touch --no-dereference --date="@$epoch" "$targetBase.manifest"
+			for variant in "" slim; do
+				variantDir="$outputDir/$variant"
+				mkdir -p "$variantDir"
+
+				targetBase="$variantDir/rootfs-$dpkgArch"
+				rootfs="rootfs${variant:+-$variant}"
+
+				debuerreotype-tar "$rootfs" "$targetBase.tar.xz"
+
+				debuerreotype-chroot "$rootfs" dpkg-query -W > "$targetBase.manifest"
+				echo "$epoch" > "$targetBase.debuerreotype-epoch"
+				touch_epoch "$targetBase.manifest" "$targetBase.debuerreotype-epoch"
+
+				for f in debian_version os-release; do
+					cp "$rootfs/etc/$f" "$targetBase.$f"
+					touch_epoch "$targetBase.$f"
+				done
 			done
 		} >&2
 
