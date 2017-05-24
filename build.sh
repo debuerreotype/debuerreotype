@@ -40,7 +40,9 @@ if docker info | grep -q apparmor; then
 	)
 fi
 
-dockerImage='debuerreotype/debuerreotype'
+ver="$("$thisDir/scripts/debuerreotype-version")"
+ver="${ver%% *}"
+dockerImage="debuerreotype/debuerreotype:$ver"
 [ -z "$build" ] || docker build -t "$dockerImage" "$thisDir"
 
 docker run \
