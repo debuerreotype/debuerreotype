@@ -111,9 +111,10 @@ docker run \
 				echo "$epoch" > "$targetBase.debuerreotype-epoch"
 				touch_epoch "$targetBase.manifest" "$targetBase.debuerreotype-epoch"
 
-				for f in debian_version os-release; do
-					cp "$rootfs/etc/$f" "$targetBase.$f"
-					touch_epoch "$targetBase.$f"
+				for f in debian_version os-release apt/sources.list; do
+					targetFile="$targetBase.$(basename "$f" | sed -r "s/[^a-zA-Z0-9_-]+/-/g")"
+					cp "$rootfs/etc/$f" "$targetFile"
+					touch_epoch "$targetFile"
 				done
 			done
 		} >&2
