@@ -2,15 +2,15 @@
 set -Eeuo pipefail
 
 suites=(
-	oldstable
-	stable
-	testing
 	unstable
+	testing
+	stable
+	oldstable
 
-	wheezy
-	jessie
-	stretch
 	sid
+	stretch
+	jessie
+	wheezy
 )
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
