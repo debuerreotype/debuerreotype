@@ -59,9 +59,10 @@ docker run \
 
 		epoch="$(date --date "$timestamp" +%s)"
 		serial="$(date --date "@$epoch" +%Y%m%d)"
-		exportDir="output"
-		outputDir="$exportDir/$serial/$suite"
 		dpkgArch="$(dpkg --print-architecture)"
+
+		exportDir="output"
+		outputDir="$exportDir/$serial/$suite/$dpkgArch"
 
 		touch_epoch() {
 			while [ "$#" -gt 0 ]; do
@@ -87,25 +88,29 @@ docker run \
 				# poor wheezy
 				iproute=iproute
 			fi
-
 			debuerreotype-apt-get rootfs install -y --no-install-recommends inetutils-ping $iproute
 
 			debuerreotype-slimify rootfs-slim
 
-			du -hs rootfs rootfs-slim
-
 			for rootfs in rootfs*/; do
-				debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
-			done
+				rootfs="${rootfs%/}" # "rootfs", "rootfs-slim", ...
 
-			for variant in "" slim; do
+				debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
+				du -hsx "$rootfs"
+
+				variant="${rootfs#rootfs}" # "", "-slim", ...
+				variant="${variant#-}" # "", "slim", ...
+
 				variantDir="$outputDir/$variant"
 				mkdir -p "$variantDir"
 
-				targetBase="$variantDir/rootfs-$dpkgArch"
-				rootfs="rootfs${variant:+-$variant}"
+				targetBase="$variantDir/rootfs"
 
 				debuerreotype-tar "$rootfs" "$targetBase.tar.xz"
+				du -hsx "$targetBase.tar.xz"
+
+				sha256sum "$targetBase.tar.xz" | cut -d" " -f1 > "$targetBase.tar.xz.sha256"
+				touch_epoch "$targetBase.tar.xz.sha256"
 
 				debuerreotype-chroot "$rootfs" dpkg-query -W > "$targetBase.manifest"
 				echo "$epoch" > "$targetBase.debuerreotype-epoch"
