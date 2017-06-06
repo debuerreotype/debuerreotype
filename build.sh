@@ -62,7 +62,7 @@ docker run \
 		dpkgArch="$(dpkg --print-architecture)"
 
 		exportDir="output"
-		outputDir="$exportDir/$serial/$suite/$dpkgArch"
+		outputDir="$exportDir/$serial/$dpkgArch/$suite"
 
 		touch_epoch() {
 			while [ "$#" -gt 0 ]; do
