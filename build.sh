@@ -78,9 +78,11 @@ docker run \
 			debuerreotype-apt-get rootfs update -qq
 			debuerreotype-apt-get rootfs dist-upgrade -yqq
 
-			# make a copy of rootfs so we can have a "slim" output too
-			mkdir -p rootfs-slim
-			tar -cC rootfs . | tar -xC rootfs-slim
+			# make a couple copies of rootfs so we can create other variants
+			for variant in slim sbuild; do
+				mkdir "rootfs-$variant"
+				tar -cC rootfs . | tar -xC "rootfs-$variant"
+			done
 
 			# prefer iproute2 if it exists
 			iproute=iproute2
@@ -91,6 +93,11 @@ docker run \
 			debuerreotype-apt-get rootfs install -y --no-install-recommends inetutils-ping $iproute
 
 			debuerreotype-slimify rootfs-slim
+
+			# this should match the list added to the "buildd" variant in debootstrap and the list installed by sbuild
+			# https://anonscm.debian.org/cgit/d-i/debootstrap.git/tree/scripts/sid?id=706a45681c5bba5e062a9b02e19f079cacf2a3e8#n26
+			# https://anonscm.debian.org/cgit/buildd-tools/sbuild.git/tree/bin/sbuild-createchroot?id=eace3d3e59e48d26eaf069d9b63a6a4c868640e6#n194
+			debuerreotype-apt-get rootfs-sbuild install -y --no-install-recommends build-essential fakeroot
 
 			for rootfs in rootfs*/; do
 				rootfs="${rootfs%/}" # "rootfs", "rootfs-slim", ...
@@ -106,7 +113,21 @@ docker run \
 
 				targetBase="$variantDir/rootfs"
 
-				debuerreotype-tar "$rootfs" "$targetBase.tar.xz"
+				if [ "$variant" != "sbuild" ]; then
+					debuerreotype-tar "$rootfs" "$targetBase.tar.xz"
+				else
+					# schroot is picky about "/dev" contents O:)
+					# (which explicitly excluded in "debuerreotype-tar")
+					# see https://github.com/debuerreotype/debuerreotype/pull/8#issuecomment-305855521
+					debuerreotype-tar "$rootfs" "$targetBase.tar"
+					tar --append \
+						--file "$targetBase.tar" \
+						--directory "$rootfs" \
+						--numeric-owner \
+						--sort name \
+						dev
+					xz --compress "$targetBase.tar"
+				fi
 				du -hsx "$targetBase.tar.xz"
 
 				sha256sum "$targetBase.tar.xz" | cut -d" " -f1 > "$targetBase.tar.xz.sha256"
