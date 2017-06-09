@@ -112,7 +112,7 @@ Wheezy is a little sad, and will have a delta similar to the following (as seen 
 │ │  0000070: 0000 0000 0000 0000 0a00 0000 0000 0000  ................
 ```
 
-Presumably this is some sort of timestamp, but that's just a guess.  Suggestions for ways of fixing this would be most welcome!  (Otherwise, we'll just wait for Wheezy to go EOL and forget this ever happened. :trollface:)
+Presumably this is some sort of timestamp, but that's just a guess.  Suggestions for ways of fixing this would be most welcome!  (Otherwise, we'll just wait for Wheezy to go EOL and forget this ever happened. :trollface:)  See [debuerreotype/debuerreotype#7](https://github.com/debuerreotype/debuerreotype/issues/7) for the current discussion of this issue.
 
 ## How much have you verified this?
 
