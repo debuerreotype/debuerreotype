@@ -32,7 +32,9 @@ usage() {
 	EOU
 }
 eusage() {
-	echo >&2 "error: $1"
+	if [ "$#" -gt 0 ]; then
+		echo >&2 "error: $*"
+	fi
 	usage >&2
 	exit 1
 }

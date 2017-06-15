@@ -102,7 +102,6 @@ docker run \
 			for rootfs in rootfs*/; do
 				rootfs="${rootfs%/}" # "rootfs", "rootfs-slim", ...
 
-				debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
 				du -hsx "$rootfs"
 
 				variant="${rootfs#rootfs}" # "", "-slim", ...
@@ -114,19 +113,15 @@ docker run \
 				targetBase="$variantDir/rootfs"
 
 				if [ "$variant" != "sbuild" ]; then
+					debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
 					debuerreotype-tar "$rootfs" "$targetBase.tar.xz"
 				else
-					# schroot is picky about "/dev" contents O:)
-					# (which explicitly excluded in "debuerreotype-tar")
+					# sbuild needs "deb-src" entries
+					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
+
+					# schroot is picky about "/dev" (which is excluded by default in "debuerreotype-tar")
 					# see https://github.com/debuerreotype/debuerreotype/pull/8#issuecomment-305855521
-					debuerreotype-tar "$rootfs" "$targetBase.tar"
-					tar --append \
-						--file "$targetBase.tar" \
-						--directory "$rootfs" \
-						--numeric-owner \
-						--sort name \
-						dev
-					xz --compress "$targetBase.tar"
+					debuerreotype-tar --include-dev "$rootfs" "$targetBase.tar.xz"
 				fi
 				du -hsx "$targetBase.tar.xz"
 
