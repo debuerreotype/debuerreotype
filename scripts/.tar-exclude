@@ -1,7 +1,8 @@
 # the file we store the "epoch" of a given rootfs in
 ./debuerreotype-epoch
 
-./dev/**
+# "/dev" is a special case in "debuerreotype-tar"
+#./dev/**
 ./proc/**
 ./sys/**
 

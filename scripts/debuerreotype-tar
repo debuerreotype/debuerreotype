@@ -3,8 +3,19 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
-	'<target-dir> <target-tar>' \
+	'[--include-dev] <target-dir> <target-tar>' \
 	'rootfs rootfs.tar'
+
+options="$(getopt -n "$self" -o '' --long 'include-dev' -- "$@")" || eusage
+eval "set -- $options"
+includeDev=
+while true; do
+	flag="$1"; shift
+	case "$flag" in
+		--include-dev) includeDev=1 ;;
+		--) break ;;
+	esac
+done
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
@@ -15,13 +26,24 @@ epoch="$(< "$targetDir/debuerreotype-epoch")"
 [ -n "$epoch" ]
 
 "$thisDir/debuerreotype-fixup" "$targetDir"
-tar --create \
-	--file "$targetTar" \
-	--auto-compress \
-	--directory "$targetDir" \
-	--exclude-from "$thisDir/.tar-exclude" \
-	--numeric-owner \
-	--transform 's,^./,,' \
-	--sort name \
+
+tarArgs=(
+	--create
+	--file "$targetTar"
+	--auto-compress
+	--directory "$targetDir"
+	--exclude-from "$thisDir/.tar-exclude"
+)
+if [ -z "$includeDev" ]; then
+	tarArgs+=( --exclude './dev/**' )
+fi
+tarArgs+=(
+	--numeric-owner
+	--transform 's,^./,,'
+	--sort name
 	.
+)
+
+tar "${tarArgs[@]}"
+
 touch --no-dereference --date="@$epoch" "$targetTar"

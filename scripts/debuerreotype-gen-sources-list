@@ -3,8 +3,19 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
-	'<target-dir> <suite> <mirror> <secmirror>' \
+	'[--deb-src] <target-dir> <suite> <mirror> <secmirror>' \
 	'rootfs stretch http://deb.debian.org/debian http://security.debian.org'
+
+options="$(getopt -n "$self" -o '' --long 'deb-src' -- "$@")" || eusage
+eval "set -- $options"
+debSrc=
+while true; do
+	flag="$1"; shift
+	case "$flag" in
+		--deb-src) debSrc=1 ;;
+		--) break ;;
+	esac
+done
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 suite="${1:-}"; shift || eusage 'missing suite'
@@ -14,17 +25,24 @@ secmirror="${1:-}"; shift || eusage 'missing secmirror'
 
 comp='main'
 
+deb() {
+	echo "deb $*"
+	if [ -n "$debSrc" ]; then
+		echo "deb-src $*"
+	fi
+}
+
 # https://github.com/tianon/go-aptsources/blob/e066ed9cd8cd9eef7198765bd00ec99679e6d0be/target.go#L16-L58
 {
 	case "$suite" in
 		sid|unstable|testing)
-			echo "deb $mirror $suite $comp"
+			deb "$mirror" "$suite" "$comp"
 			;;
 
 		*)
-			echo "deb $mirror $suite $comp"
-			echo "deb $mirror $suite-updates $comp"
-			echo "deb $secmirror $suite/updates $comp"
+			deb "$mirror" "$suite" "$comp"
+			deb "$mirror" "$suite-updates" "$comp"
+			deb "$secmirror" "$suite/updates" "$comp"
 			;;
 	esac
 } > "$targetDir/etc/apt/sources.list"
