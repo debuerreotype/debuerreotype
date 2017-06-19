@@ -8,20 +8,29 @@ usage() {
 	cat <<-EOU
 		usage: $self <output-dir> <suite> <timestamp>
 		   ie: $self output stretch 2017-05-08T00:00:00Z
+		       $self --codename-copy output stable 2017-05-08T00:00:00Z
 	EOU
 }
 eusage() {
-	echo >&2 "error: $1"
+	if [ "$#" -gt 0 ]; then
+		echo >&2 "error: $*"
+	fi
 	usage >&2
 	exit 1
 }
 
-# a silly flag to skip "docker build" (for "build-all.sh")
+options="$(getopt -n "$self" -o '' --long 'no-build,codename-copy' -- "$@")" || eusage
+eval "set -- $options"
 build=1
-if [ "${1:-}" = '--no-build' ]; then
-	shift
-	build=
-fi
+codenameCopy=
+while true; do
+	flag="$1"; shift
+	case "$flag" in
+		--no-build) build= ;; # for skipping "docker build"
+		--codename-copy) codenameCopy=1 ;; # for copying a "stable.tar.xz" to "stretch.tar.xz" with updated sources.list (saves a lot of extra building work)
+		--) break ;;
+	esac
+done
 
 outputDir="${1:-}"; shift || eusage 'missing output-dir'
 suite="${1:-}"; shift || eusage 'missing suite'
@@ -52,6 +61,7 @@ docker run \
 	-w /tmp \
 	-e suite="$suite" \
 	-e timestamp="$timestamp" \
+	-e codenameCopy="$codenameCopy" \
 	-e TZ='UTC' -e LC_ALL='C' \
 	"$dockerImage" \
 	bash -Eeuo pipefail -c '
@@ -70,6 +80,36 @@ docker run \
 				touch --no-dereference --date="@$epoch" "$f"
 			done
 		}
+
+		debuerreotypeScriptsDir="$(dirname "$(readlink -f "$(which debuerreotype-init)")")"
+
+		for archive in "" security; do
+			snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" "${archive:+debian-${archive}}")"
+			snapshotUrlFile="$exportDir/$serial/$dpkgArch/snapshot-url${archive:+-${archive}}"
+			mkdir -p "$(dirname "$snapshotUrlFile")"
+			echo "$snapshotUrl" > "$snapshotUrlFile"
+			touch_epoch "$snapshotUrlFile"
+		done
+
+		snapshotUrl="$(< "$exportDir/$serial/$dpkgArch/snapshot-url")"
+		mkdir -p "$outputDir"
+		wget -O "$outputDir/Release.gpg" "$snapshotUrl/dists/$suite/Release.gpg"
+		wget -O "$outputDir/Release" "$snapshotUrl/dists/$suite/Release"
+		gpgv \
+			--keyring /usr/share/keyrings/debian-archive-keyring.gpg \
+			--keyring /usr/share/keyrings/debian-archive-removed-keys.gpg \
+			"$outputDir/Release.gpg" \
+			"$outputDir/Release"
+
+		codename="$(awk -F ": " "\$1 == \"Codename\" { print \$2; exit }" "$outputDir/Release")"
+		if [ -n "$codenameCopy" ] && [ "$codename" = "$suite" ]; then
+			# if codename already is the same as suite, then making a copy does not make any sense
+			codenameCopy=
+		fi
+		if [ -n "$codenameCopy" ] && [ -z "$codename" ]; then
+			echo >&2 "error: --codename-copy specified but we failed to get a Codename for $suite"
+			exit 1
+		fi
 
 		{
 			debuerreotype-init rootfs "$suite" "@$epoch"
@@ -99,18 +139,15 @@ docker run \
 			# https://anonscm.debian.org/cgit/buildd-tools/sbuild.git/tree/bin/sbuild-createchroot?id=eace3d3e59e48d26eaf069d9b63a6a4c868640e6#n194
 			debuerreotype-apt-get rootfs-sbuild install -y --no-install-recommends build-essential fakeroot
 
-			for rootfs in rootfs*/; do
-				rootfs="${rootfs%/}" # "rootfs", "rootfs-slim", ...
+			create_artifacts() {
+				local targetBase="$1"; shift
+				local rootfs="$1"; shift
+				local suite="$1"; shift
+				local variant="$1"; shift
 
-				du -hsx "$rootfs"
-
-				variant="${rootfs#rootfs}" # "", "-slim", ...
-				variant="${variant#-}" # "", "slim", ...
-
-				variantDir="$outputDir/$variant"
-				mkdir -p "$variantDir"
-
-				targetBase="$variantDir/rootfs"
+				# make a copy of the snapshot-facing sources.list file before we overwrite it
+				cp "$rootfs/etc/apt/sources.list" "$targetBase.sources-list-snapshot"
+				touch_epoch "$targetBase.sources-list-snapshot"
 
 				if [ "$variant" != "sbuild" ]; then
 					debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
@@ -137,7 +174,44 @@ docker run \
 					cp "$rootfs/etc/$f" "$targetFile"
 					touch_epoch "$targetFile"
 				done
+			}
+
+			for rootfs in rootfs*/; do
+				rootfs="${rootfs%/}" # "rootfs", "rootfs-slim", ...
+
+				du -hsx "$rootfs"
+
+				variant="${rootfs#rootfs}" # "", "-slim", ...
+				variant="${variant#-}" # "", "slim", ...
+
+				variantDir="$outputDir/$variant"
+				mkdir -p "$variantDir"
+
+				targetBase="$variantDir/rootfs"
+
+				create_artifacts "$targetBase" "$rootfs" "$suite" "$variant"
 			done
+
+			if [ -n "$codenameCopy" ]; then
+				codenameDir="$exportDir/$serial/$dpkgArch/$codename"
+				mkdir -p "$codenameDir"
+				tar -cC "$outputDir" --exclude="**/rootfs.*" . | tar -xC "$codenameDir"
+
+				for rootfs in rootfs*/; do
+					rootfs="${rootfs%/}" # "rootfs", "rootfs-slim", ...
+
+					variant="${rootfs#rootfs}" # "", "-slim", ...
+					variant="${variant#-}" # "", "slim", ...
+
+					variantDir="$codenameDir/$variant"
+					targetBase="$variantDir/rootfs"
+
+					# point sources.list back at snapshot.debian.org temporarily (but this time pointing at $codename instead of $suite)
+					debuerreotype-gen-sources-list "$rootfs" "$codename" "$(< "$exportDir/$serial/$dpkgArch/snapshot-url")" "$(< "$exportDir/$serial/$dpkgArch/snapshot-url-security")"
+
+					create_artifacts "$targetBase" "$rootfs" "$codename" "$variant"
+				done
+			fi
 		} >&2
 
 		tar -cC "$exportDir" .

@@ -6,11 +6,10 @@ suites=(
 	testing
 	stable
 	oldstable
+	oldoldstable
 
-	sid
-	stretch
-	jessie
-	wheezy
+	# just in case (will no-op with "not supported on 'arch'" unless it exists)
+	oldoldoldstable
 )
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
@@ -23,17 +22,23 @@ usage() {
 	EOU
 }
 eusage() {
-	echo >&2 "error: $1"
+	if [ "$#" -gt 0 ]; then
+		echo >&2 "error: $*"
+	fi
 	usage >&2
 	exit 1
 }
 
-# a silly flag to skip "docker build" (for giggles/debugging)
+options="$(getopt -n "$self" -o '' --long 'no-build' -- "$@")" || eusage
+eval "set -- $options"
 build=1
-if [ "${1:-}" = '--no-build' ]; then
-	shift
-	build=
-fi
+while true; do
+	flag="$1"; shift
+	case "$flag" in
+		--no-build) build= ;; # for skipping "docker build"
+		--) break ;;
+	esac
+done
 
 outputDir="${1:-}"; shift || eusage 'missing output-dir'
 timestamp="${1:-}"; shift || eusage 'missing timestamp'
@@ -54,21 +59,10 @@ echo
 echo "-- BUILDING TARBALLS FOR '$dpkgArch' FROM '$mirror/' --"
 echo
 
-fetch_codename() {
-	local suite="$1"; shift
-	wget -qO- "$mirror/dists/$suite/Release" \
-		| tac|tac \
-		| awk -F ': ' 'tolower($1) == "codename" { print $2; exit }'
-}
-declare -A codenames=(
-	[testing]="$(fetch_codename 'testing')"
-	[unstable]="$(fetch_codename 'unstable')"
-)
-
 for suite in "${suites[@]}"; do
 	testUrl="$secmirror/dists/$suite/updates/main/binary-$dpkgArch/Packages.gz"
 	case "$suite" in
-		testing|unstable|"${codenames[testing]}"|"${codenames[unstable]}")
+		testing|unstable)
 			testUrl="$mirror/dists/$suite/main/binary-$dpkgArch/Packages.gz"
 			;;
 	esac
@@ -78,5 +72,5 @@ for suite in "${suites[@]}"; do
 		echo >&2
 		continue
 	fi
-	"$thisDir/build.sh" --no-build "$outputDir" "$suite" "$timestamp"
+	"$thisDir/build.sh" --no-build --codename-copy "$outputDir" "$suite" "$timestamp"
 done
