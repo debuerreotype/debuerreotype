@@ -1,8 +1,15 @@
 language: bash
 services: docker
 
+addons:
+    apt:
+        packages:
+            - binfmt-support
+            - qemu-user-static
+
 env:
     - SUITE=jessie   CODENAME=        TIMESTAMP=2017-01-01T00:00:00Z SHA256=a674379d30cf457e49a909bb0e254ddcb1f72c27f45c68fe930668d6d9399232
+    - SUITE=jessie   CODENAME=        TIMESTAMP=2017-01-01T00:00:00Z SHA256=e1aa8ecfffc78e0239131ccd46f8a9e03c08084eeb30738b738c284c5197f0a9 ARCH=arm64
     - SUITE=stable   CODENAME=jessie  TIMESTAMP=2017-01-01T00:00:00Z SHA256=a674379d30cf457e49a909bb0e254ddcb1f72c27f45c68fe930668d6d9399232
     - SUITE=stretch  CODENAME=        TIMESTAMP=2017-01-01T00:00:00Z SHA256=139ed970d52ef950c223f9ab325657eb93d0a93c7d6e2fc697fe7510e61760fa
     - SUITE=testing  CODENAME=stretch TIMESTAMP=2017-01-01T00:00:00Z SHA256=139ed970d52ef950c223f9ab325657eb93d0a93c7d6e2fc697fe7510e61760fa

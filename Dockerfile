@@ -13,6 +13,7 @@ FROM debian:stretch-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		debootstrap \
+		qemu-user-static \
 		xz-utils \
 	&& rm -rf /var/lib/apt/lists/*
 

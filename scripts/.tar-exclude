@@ -1,6 +1,9 @@
 # the file we store the "epoch" of a given rootfs in
 ./debuerreotype-epoch
 
+# qemu user static binary
+./usr/bin/qemu-*-static
+
 # "/dev" is a special case in "debuerreotype-tar"
 #./dev/**
 ./proc/**

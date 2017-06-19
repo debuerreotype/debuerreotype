@@ -3,8 +3,19 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
-	'<target-dir> <suite> <timestamp>' \
+	'[--arch=<dpkgArch>] <target-dir> <suite> <timestamp>' \
 	'rootfs stretch 2017-05-08T00:00:00Z'
+
+options="$(getopt -n "$self" -o '' --long 'arch:' -- "$@")" || eusage
+eval "set -- $options"
+arch=
+while true; do
+	flag="$1"; shift
+	case "$flag" in
+		--arch) arch="$1"; shift ;;
+		--) break ;;
+	esac
+done
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 suite="${1:-}"; shift || eusage 'missing suite'
@@ -22,10 +33,14 @@ export SOURCE_DATE_EPOCH="$epoch"
 mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
 secmirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')"
 
-debootstrap \
+# allow for DEBOOTSTRAP=qemu-debootstrap debuerreotype-init ...
+: ${DEBOOTSTRAP:=debootstrap}
+
+${DEBOOTSTRAP} \
 	--force-check-gpg \
 	--merged-usr \
 	--variant=minbase \
+	${arch:+--arch=$arch} \
 	"$suite" "$targetDir" "$mirror"
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
