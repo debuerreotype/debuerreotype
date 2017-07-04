@@ -27,6 +27,7 @@ secmirror="${1:-}"; shift || eusage 'missing secmirror'
 [ -n "$targetDir" ]
 
 comp='main'
+dpkgArch=$(debuerreotype-chroot "$targetDir" dpkg --print-architecture)
 
 deb() {
 	echo "deb $*"
@@ -36,18 +37,13 @@ deb() {
 }
 
 # https://github.com/tianon/go-aptsources/blob/e066ed9cd8cd9eef7198765bd00ec99679e6d0be/target.go#L16-L58
-{
-	case "$suite" in
-		sid|unstable|testing)
-			deb "$mirror" "$suite" "$comp"
-			;;
-
-		*)
-			# https://wiki.debian.org/SourcesList#Example_sources.list
-			deb "$mirror" "$suite" "$comp"
-			deb "$mirror" "$suite-updates" "$comp"
-			deb "$secmirror" "$suite/updates" "$comp"
-			;;
-	esac
-} > "$targetDir/etc/apt/sources.list"
+deb "$mirror" "$suite" "$comp" > "$targetDir/etc/apt/sources.list"
+# https://wiki.debian.org/SourcesList#Example_sources.list
+# https://github.com/moby/moby/blob/master/contrib/mkimage/debootstrap#L195
+if wget --quiet --spider "$mirror/dists/$suite-updates/main/binary-$dpkgArch/Packages.gz"; then
+  deb "$mirror" "$suite-updates" "$comp" >> "$targetDir/etc/apt/sources.list"
+fi
+if wget --quiet --spider "$secmirror/dists/$suite/updates/main/binary-$dpkgArch/Packages.gz"; then
+  deb "$secmirror" "$suite/updates" "$comp" >> "$targetDir/etc/apt/sources.list"
+fi
 chmod 0644 "$targetDir/etc/apt/sources.list"
