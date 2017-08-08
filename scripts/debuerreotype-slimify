@@ -37,17 +37,25 @@ for slimExclude in "${slimExcludes[@]}"; do
 	if [[ "$slimExclude" == *'/*' ]]; then
 		if [ -d "$targetDir/$(dirname "$slimExclude")" ]; then
 			# use two passes so that we don't fail trying to remove directories from $neverExclude
+			# this is our best effort at implementing https://sources.debian.net/src/dpkg/stretch/src/filters.c/#L96-L97 in shell
+
+			# step 1 -- delete everything that doesn't match "$neverExclude" and isn't a directory or a symlink
 			"$thisDir/debuerreotype-chroot" "$targetDir" \
 				find "$(dirname "$slimExclude")" \
 					-mindepth 1 \
 					-not -path "$neverExclude" \
-					-not -type d \
+					-not \( -type d -o -type l \) \
 					-delete
-			"$thisDir/debuerreotype-chroot" "$targetDir" \
-				find "$(dirname "$slimExclude")" \
-					-mindepth 1 \
-					-empty \
-					-delete
+
+			# step 2 -- repeatedly delete any dangling symlinks and empty directories until there aren't any
+			# (might have a dangling symlink in a directory which then makes it empty, or a symlink to an empty directory)
+			while [ "$(
+				"$thisDir/debuerreotype-chroot" "$targetDir" \
+					find "$(dirname "$slimExclude")" \
+						-mindepth 1 \( -empty -o -xtype l \) \
+						-delete -printf '.' \
+					| wc -c
+			)" -gt 0 ]; do true; done
 		fi
 	else
 		"$thisDir/debuerreotype-chroot" "$targetDir" rm -f "$slimExclude"
