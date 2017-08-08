@@ -18,3 +18,7 @@
 
 # wheezy-only file which contains host-kernel info
 ./run/motd.dynamic
+
+# wheezy-only file which APT doesn't even use (and has timestamp embedded in binary data)
+# see https://github.com/debuerreotype/debuerreotype/issues/7
+./etc/apt/trustdb.gpg

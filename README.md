@@ -94,29 +94,9 @@ $ debuerreotype-tar rootfs - | sha256sum
 $ # try it!  you should get that same sha256sum value!
 ```
 
-## Why isn't Wheezy reproducible??
-
-Wheezy is a little sad, and will have a delta similar to the following (as seen via [`diffoscope`](https://diffoscope.org/)):
-
-```
-├── etc/apt/trustdb.gpg
-│ │ @@ -1,8 +1,8 @@
-│ │ -0000000: 0167 7067 0303 0105 0102 0000 591b faa5  .gpg........Y...
-│ │ +0000000: 0167 7067 0303 0105 0102 0000 591b fc0c  .gpg........Y...
-│ │  0000010: 0000 0000 0000 0000 0000 0000 0000 0000  ................
-│ │  0000020: 0000 0000 0000 0001 0a00 0000 0000 0000  ................
-│ │  0000030: 0000 0000 0000 0000 0000 0000 0000 0000  ................
-│ │  0000040: 0000 0000 0000 0000 0000 0000 0000 0000  ................
-│ │  0000050: 0a00 0000 0000 0000 0000 0000 0000 0000  ................
-│ │  0000060: 0000 0000 0000 0000 0000 0000 0000 0000  ................
-│ │  0000070: 0000 0000 0000 0000 0a00 0000 0000 0000  ................
-```
-
-Presumably this is some sort of timestamp, but that's just a guess.  Suggestions for ways of fixing this would be most welcome!  (Otherwise, we'll just wait for Wheezy to go EOL and forget this ever happened. :trollface:)  See [debuerreotype/debuerreotype#7](https://github.com/debuerreotype/debuerreotype/issues/7) for the current discussion of this issue.
-
 ## How much have you verified this?
 
-Well, I ran the scripts across seven explicit architectures (`amd64`, `arm64`, `armel`, `armhf`, `i386`, `ppc64el`, `s390x`) and eight explicit suites (`oldstable`, `stable`, `testing`, `unstable`, `wheezy`, `jessie`, `stretch`, `sid`) for a timestamp of `2017-05-16T00:00:00Z` (where supported, since `wheezy`/`oldstable` didn't or no longer currently supports some of those architectures), and the above `wheezy` delta (a few bytes in `etc/apt/trustdb.gpg`) were the _only_ modification to any of the tarballs after several runs across several days.
+Well, I ran the scripts across seven explicit architectures (`amd64`, `arm64`, `armel`, `armhf`, `i386`, `ppc64el`, `s390x`) and eight explicit suites (`oldstable`, `stable`, `testing`, `unstable`, `wheezy`, `jessie`, `stretch`, `sid`) for a timestamp of `2017-05-16T00:00:00Z` (where supported, since `wheezy`/`oldstable` didn't or no longer currently supports some of those architectures), and there were no modifications to any of the tarballs after several runs across several days.
 
 Additionally, Travis runs with a fixed timestamp value across several suites to verify that their checksums are reproducible, as expected.
 
