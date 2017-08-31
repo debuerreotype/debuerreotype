@@ -156,6 +156,14 @@ docker run \
 					# sbuild needs "deb-src" entries
 					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
 
+					# APT has odd issues with "Acquire::GzipIndexes=false" + "file://..." sources sometimes
+					# (which are used in sbuild for "--extra-package")
+					#   Could not open file /var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages - open (13: Permission denied)
+					#   ...
+					#   E: Failed to fetch store:/var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages  Could not open file /var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages - open (13: Permission denied)
+					rm -f "$rootfs/etc/apt/apt.conf.d/docker-gzip-indexes"
+					# TODO figure out the bug and fix it in APT instead /o\
+
 					# schroot is picky about "/dev" (which is excluded by default in "debuerreotype-tar")
 					# see https://github.com/debuerreotype/debuerreotype/pull/8#issuecomment-305855521
 					debuerreotype-tar --include-dev "$rootfs" "$targetBase.tar.xz"
