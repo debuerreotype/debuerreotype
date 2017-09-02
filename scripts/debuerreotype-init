@@ -6,6 +6,16 @@ source "$thisDir/.constants.sh" \
 	'<target-dir> <suite> <timestamp>' \
 	'rootfs stretch 2017-05-08T00:00:00Z'
 
+eval "$dgetopt"
+while true; do
+	flag="$1"; shift
+	dgetopt-case "$flag"
+	case "$flag" in
+		--) break ;;
+		*) eusage "unknown flag '$flag'" ;;
+	esac
+done
+
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 suite="${1:-}"; shift || eusage 'missing suite'
 timestamp="${1:-}"; shift || eusage 'missing timestamp'
