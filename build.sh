@@ -19,15 +19,17 @@ eusage() {
 	exit 1
 }
 
-options="$(getopt -n "$self" -o '' --long 'no-build,codename-copy' -- "$@")" || eusage
+options="$(getopt -n "$self" -o '' --long 'no-build,codename-copy,dpkg-arch:' -- "$@")" || eusage
 eval "set -- $options"
 build=1
 codenameCopy=
+dpkgArch=
 while true; do
 	flag="$1"; shift
 	case "$flag" in
 		--no-build) build= ;; # for skipping "docker build"
 		--codename-copy) codenameCopy=1 ;; # for copying a "stable.tar.xz" to "stretch.tar.xz" with updated sources.list (saves a lot of extra building work)
+		--dpkg-arch) dpkgArch="$1" ; shift ;; # for specifying which debian arch to build
 		--) break ;;
 	esac
 done
@@ -63,13 +65,19 @@ docker run \
 	-e timestamp="$timestamp" \
 	-e codenameCopy="$codenameCopy" \
 	-e TZ='UTC' -e LC_ALL='C' \
+	${DEBOOTSTRAP:+-e DEBOOTSTRAP="$DEBOOTSTRAP"} \
+	${dpkgArch:+-e dpkgArch="$dpkgArch"} \
 	"$dockerImage" \
 	bash -Eeuo pipefail -c '
 		set -x
 
 		epoch="$(date --date "$timestamp" +%s)"
 		serial="$(date --date "@$epoch" +%Y%m%d)"
-		dpkgArch="$(dpkg --print-architecture)"
+		currentArch="$(dpkg --print-architecture)"
+		dpkgArch="${dpkgArch:=$currentArch}"
+		if [ -z "${DEBOOTSTRAP:-}" -a "$dpkgArch" != "$currentArch" ]; then
+			DEBOOTSTRAP=$(which qemu-debootstrap);
+		fi
 
 		exportDir="output"
 		outputDir="$exportDir/$serial/$dpkgArch/$suite"
@@ -112,7 +120,7 @@ docker run \
 		fi
 
 		{
-			debuerreotype-init rootfs "$suite" "@$epoch"
+			DEBOOTSTRAP=${DEBOOTSTRAP:-} debuerreotype-init --arch=$dpkgArch rootfs "$suite" "@$epoch"
 
 			debuerreotype-minimizing-config rootfs
 			debuerreotype-apt-get rootfs update -qq
