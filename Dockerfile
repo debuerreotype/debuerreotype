@@ -36,4 +36,4 @@ WORKDIR /tmp
 # debuerreotype-init test-jessie jessie 2017-05-08T00:00:00Z
 # debuerreotype-tar test-jessie test-jessie.tar
 # md5sum test-jessie.tar
-#   45624a45af50f60b6b4be7203bf16c86
+#   93ad9886b0e0da17aae584d3a0236d0c
