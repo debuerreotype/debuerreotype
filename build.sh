@@ -2,33 +2,24 @@
 set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
-self="$(basename "$0")"
+source "$thisDir/scripts/.constants.sh" \
+	--flags 'no-build,codename-copy' \
+	-- \
+	'[--no-build] [--codename-copy] <output-dir> <suite> <timestamp>' \
+	'output stretch 2017-05-08T00:00:00Z
+--codename-copy output stable 2017-05-08T00:00:00Z'
 
-usage() {
-	cat <<-EOU
-		usage: $self <output-dir> <suite> <timestamp>
-		   ie: $self output stretch 2017-05-08T00:00:00Z
-		       $self --codename-copy output stable 2017-05-08T00:00:00Z
-	EOU
-}
-eusage() {
-	if [ "$#" -gt 0 ]; then
-		echo >&2 "error: $*"
-	fi
-	usage >&2
-	exit 1
-}
-
-options="$(getopt -n "$self" -o '' --long 'no-build,codename-copy' -- "$@")" || eusage
-eval "set -- $options"
+eval "$dgetopt"
 build=1
 codenameCopy=
 while true; do
 	flag="$1"; shift
+	dgetopt-case "$flag"
 	case "$flag" in
 		--no-build) build= ;; # for skipping "docker build"
 		--codename-copy) codenameCopy=1 ;; # for copying a "stable.tar.xz" to "stretch.tar.xz" with updated sources.list (saves a lot of extra building work)
 		--) break ;;
+		*) eusage "unknown flag '$flag'" ;;
 	esac
 done
 

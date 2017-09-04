@@ -3,17 +3,20 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
+	--flags 'deb-src' \
+	-- \
 	'[--deb-src] <target-dir> <suite> <mirror> <secmirror>' \
 	'rootfs stretch http://deb.debian.org/debian http://security.debian.org'
 
-options="$(getopt -n "$self" -o '' --long 'deb-src' -- "$@")" || eusage
-eval "set -- $options"
+eval "$dgetopt"
 debSrc=
 while true; do
 	flag="$1"; shift
+	dgetopt-case "$flag"
 	case "$flag" in
 		--deb-src) debSrc=1 ;;
 		--) break ;;
+		*) eusage "unknown flag '$flag'" ;;
 	esac
 done
 
