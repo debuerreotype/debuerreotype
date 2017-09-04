@@ -13,6 +13,7 @@ FROM debian:stretch-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		debootstrap \
+		wget ca-certificates \
 		xz-utils \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -35,4 +36,4 @@ WORKDIR /tmp
 # debuerreotype-init test-jessie jessie 2017-05-08T00:00:00Z
 # debuerreotype-tar test-jessie test-jessie.tar
 # md5sum test-jessie.tar
-#   45624a45af50f60b6b4be7203bf16c86
+#   93ad9886b0e0da17aae584d3a0236d0c

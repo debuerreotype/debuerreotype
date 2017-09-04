@@ -3,43 +3,86 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
+	--flags 'debian,non-debian' \
+	--flags 'debootstrap-script:' \
+	--flags 'keyring:,arch:' \
+	--flags 'merged-usr,no-merged-usr' \
+	-- \
 	'<target-dir> <suite> <timestamp>' \
-	'rootfs stretch 2017-05-08T00:00:00Z'
+	'rootfs stretch 2017-05-08T00:00:00Z' \
+	\
+	'--non-debian [--debootstrap-script=xyz] <target-dir> <suite> <mirror>' \
+	'--non-debian rootfs xenial http://archive.ubuntu.com/ubuntu'
 
 eval "$dgetopt"
+nonDebian=
+script=
+keyring=
+arch=
+noMergedUsr=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
+		--debian)     nonDebian=  ;;
+		--non-debian) nonDebian=1 ;;
+		--debootstrap-script) script="$1"; shift ;;
+		--keyring) keyring="$1"; shift ;;
+		--arch) arch="$1"; shift ;;
+		--merged-usr)    noMergedUsr=  ;;
+		--no-merged-usr) noMergedUsr=1 ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
 done
 
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
-suite="${1:-}"; shift || eusage 'missing suite'
-timestamp="${1:-}"; shift || eusage 'missing timestamp'
-[ -n "$targetDir" ] # must be non-empty
-
+[ -n "$targetDir" ] || eusage 'target-dir required' # must be non-empty
 if [ -e "$targetDir" ] && [ -z "$(find "$targetDir" -maxdepth 0 -empty)" ]; then
 	echo >&2 "error: '$targetDir' already exists (and isn't empty)!"
 	exit 1
 fi
 
+suite="${1:-}"; shift || eusage 'missing suite'
+
+timestamp=
+mirror=
+secmirror=
+if [ -z "$nonDebian" ]; then
+	timestamp="${1:-}"; shift || eusage 'missing timestamp'
+else
+	mirror="${1:-}"; shift || eusage 'missing mirror'
+
+	timestamp="$(wget -qO- "$mirror/dists/$suite/Release" | awk -F ': ' '$1 == "Date" { print $2 }')"
+fi
+
 epoch="$(date --date "$timestamp" '+%s')"
 export SOURCE_DATE_EPOCH="$epoch"
 
-mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
-secmirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')"
+if [ -z "$nonDebian" ]; then
+	mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
+	secmirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')"
+fi
 
-debootstrap \
-	--force-check-gpg \
-	--merged-usr \
-	--variant=minbase \
+debootstrapArgs=(
+	--force-check-gpg
+	--variant=minbase
+)
+[ -n "$noMergedUsr" ] || debootstrapArgs+=( --merged-usr )
+[ -z "$keyring" ] || debootstrapArgs+=( --keyring="$keyring" )
+[ -z "$arch" ] || debootstrapArgs+=( --arch="$arch" )
+
+debootstrapArgs+=(
 	"$suite" "$targetDir" "$mirror"
+)
+[ -z "$script" ] || debootstrapArgs+=( "$script" )
+
+debootstrap "${debootstrapArgs[@]}"
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
-"$thisDir/debuerreotype-gen-sources-list" "$targetDir" "$suite" "$mirror" "$secmirror"
+if [ -z "$nonDebian" ]; then
+	"$thisDir/debuerreotype-gen-sources-list" "$targetDir" "$suite" "$mirror" "$secmirror"
+fi
 
 # since we're minbase, we know everything included is either essential, or a dependency of essential, so let's get clean "apt-mark showmanual" output
 "$thisDir/debuerreotype-chroot" "$targetDir" apt-mark auto '.*' > /dev/null
