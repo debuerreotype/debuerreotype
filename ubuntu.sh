@@ -60,9 +60,18 @@ docker run \
 	bash -Eeuo pipefail -c '
 		set -x
 
-		mirror="http://archive.ubuntu.com/ubuntu"
-
 		dpkgArch="$(dpkg --print-architecture)"
+
+		case "$dpkgArch" in
+			amd64|i386)
+				mirror="http://archive.ubuntu.com/ubuntu"
+				secmirror="http://security.ubuntu.com/ubuntu"
+				;;
+			*)
+				mirror="http://ports.ubuntu.com/ubuntu-ports"
+				secmirror="$mirror" # no separate security mirror for ports
+				;;
+		esac
 
 		exportDir="output"
 		outputDir="$exportDir/ubuntu/$dpkgArch/$suite"
