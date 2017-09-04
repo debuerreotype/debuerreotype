@@ -22,3 +22,7 @@
 # wheezy-only file which APT doesn't even use (and has timestamp embedded in binary data)
 # see https://github.com/debuerreotype/debuerreotype/issues/7
 ./etc/apt/trustdb.gpg
+
+# Ubuntu puts some cruft here
+# (according to "man 1 journalctl", this is automatically recreated by "journalctl --update-catalog")
+./var/lib/systemd/catalog/database
