@@ -7,8 +7,8 @@ scriptsDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 self="$(basename "$0")"
 
 options="$(getopt -n "$BASH_SOURCE" -o '+' --long 'flags:,flags-short:' -- "$@")"
-dFlags=
-dFlagsShort=
+dFlags='help,version'
+dFlagsShort='h?'
 usageStr=
 __cgetopt() {
 	eval "set -- $options" # in a function since otherwise "set" will overwrite the parent script's positional args too
@@ -17,8 +17,8 @@ __cgetopt() {
 	while true; do
 		local flag="$1"; shift
 		case "$flag" in
-			--flags) dFlags="$1"; shift ;;
-			--flags-short) dFlagsShort="$1"; shift ;;
+			--flags) dFlags="${dFlags:+$dFlags,}$1"; shift ;;
+			--flags-short) dFlagsShort="${dFlagsShort}$1"; shift ;;
 			--) break ;;
 			*) echo >&2 "error: unexpected $BASH_SOURCE flag '$flag'"; exit 1 ;;
 		esac
@@ -71,8 +71,8 @@ eusage() {
 }
 _dgetopt() {
 	getopt -n "$self" \
-		-o "+h?${dFlagsShort}" \
-		--long "help,version${dFlags:+,$dFlags}" \
+		-o "+$dFlagsShort" \
+		--long "$dFlags" \
 		-- "$@" \
 		|| eusage 'getopt failed'
 }
