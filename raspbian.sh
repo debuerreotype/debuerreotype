@@ -114,7 +114,13 @@ docker run \
 				tar -cC rootfs . | tar -xC "rootfs-$variant"
 			done
 
-			debuerreotype-apt-get rootfs install -y --no-install-recommends iproute2 iputils-ping
+			# prefer iproute2 if it exists
+			iproute=iproute2
+			if ! debuerreotype-chroot rootfs apt-cache show iproute2 > /dev/null; then
+				# poor wheezy
+				iproute=iproute
+			fi
+			debuerreotype-apt-get rootfs install -y --no-install-recommends inetutils-ping $iproute
 
 			debuerreotype-slimify rootfs-slim
 
