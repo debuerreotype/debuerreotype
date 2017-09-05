@@ -103,7 +103,16 @@ docker run \
 		fi
 
 		{
-			debuerreotype-init rootfs "$suite" "@$epoch"
+			initArgs=( --debian )
+			releaseSuite="$(awk -F ": " "\$1 == \"Suite\" { print \$2; exit }" "$outputDir/Release")"
+			case "$suite" in
+				# see https://bugs.debian.org/src:usrmerge for why merged-usr should not be in stable yet (mostly "dpkg" related bugs)
+				*oldstable|stable)
+					initArgs+=( --no-merged-usr )
+					;;
+			esac
+
+			debuerreotype-init "${initArgs[@]}" rootfs "$suite" "@$epoch"
 
 			debuerreotype-minimizing-config rootfs
 			debuerreotype-apt-get rootfs update -qq

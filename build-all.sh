@@ -51,13 +51,19 @@ echo "-- BUILDING TARBALLS FOR '$dpkgArch' FROM '$mirror/' --"
 echo
 
 for suite in "${suites[@]}"; do
-	testUrl="$secmirror/dists/$suite/updates/main/binary-$dpkgArch/Packages.gz"
+	doSkip=
 	case "$suite" in
-		testing|unstable)
-			testUrl="$mirror/dists/$suite/main/binary-$dpkgArch/Packages.gz"
+		testing|unstable) ;;
+		*)
+			if ! wget --quiet --spider "$secmirror/dists/$suite/updates/main/binary-$dpkgArch/Packages.gz"; then
+				doSkip=1
+			fi
 			;;
 	esac
-	if ! wget --quiet --spider "$testUrl"; then
+	if ! wget --quiet --spider "$mirror/dists/$suite/main/binary-$dpkgArch/Packages.gz"; then
+		doSkip=1
+	fi
+	if [ -n "$doSkip" ]; then
 		echo >&2
 		echo >&2 "warning: '$suite' not supported on '$dpkgArch' (at '$timestamp'); skipping"
 		echo >&2
