@@ -3,17 +3,20 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
+	--flags 'exclude:' \
 	--flags 'include-dev' \
 	-- \
 	'[--include-dev] <target-dir> <target-tar>' \
 	'rootfs rootfs.tar'
 
 eval "$dgetopt"
+excludes=()
 includeDev=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
+		--exclude) excludes+=( "$1" ); shift ;;
 		--include-dev) includeDev=1 ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
@@ -38,8 +41,11 @@ tarArgs=(
 	--exclude-from "$thisDir/.tar-exclude"
 )
 if [ -z "$includeDev" ]; then
-	tarArgs+=( --exclude './dev/**' )
+	excludes+=( './dev/**' )
 fi
+for exclude in "${excludes[@]}"; do
+	tarArgs+=( --exclude "$exclude" )
+done
 tarArgs+=(
 	--numeric-owner
 	--transform 's,^./,,'
