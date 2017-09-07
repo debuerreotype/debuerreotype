@@ -3,20 +3,18 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/scripts/.constants.sh" \
-	--flags 'no-build,codename-copy' \
+	--flags 'no-build' \
 	-- \
-	'[--no-build] [--codename-copy] <output-dir> <suite>' \
+	'[--no-build] <output-dir> <suite>' \
 	'output stretch'
 
 eval "$dgetopt"
 build=1
-codenameCopy=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
 		--no-build) build= ;; # for skipping "docker build"
-		--codename-copy) codenameCopy=1 ;; # for copying a "stable.tar.xz" to "stretch.tar.xz" with updated sources.list (saves a lot of extra building work)
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -57,7 +55,6 @@ docker run \
 	-v /tmp \
 	-w /tmp \
 	-e suite="$suite" \
-	-e codenameCopy="$codenameCopy" \
 	-e TZ='UTC' -e LC_ALL='C' \
 	"$raspbianDockerImage" \
 	bash -Eeuo pipefail -c '
@@ -79,16 +76,6 @@ docker run \
 			--keyring /usr/share/keyrings/raspbian-archive-keyring.gpg \
 			"$outputDir/Release.gpg" \
 			"$outputDir/Release"
-
-		codename="$(awk -F ": " "\$1 == \"Codename\" { print \$2; exit }" "$outputDir/Release")"
-		if [ -n "$codenameCopy" ] && [ "$codename" = "$suite" ]; then
-			# if codename already is the same as suite, then making a copy does not make any sense
-			codenameCopy=
-		fi
-		if [ -n "$codenameCopy" ] && [ -z "$codename" ]; then
-			echo >&2 "error: --codename-copy specified but we failed to get a Codename for $suite"
-			exit 1
-		fi
 
 		{
 			debuerreotype-init --non-debian \
@@ -184,27 +171,6 @@ docker run \
 
 				create_artifacts "$targetBase" "$rootfs" "$suite" "$variant"
 			done
-
-			if [ -n "$codenameCopy" ]; then
-				codenameDir="$exportDir/$serial/$dpkgArch/$codename"
-				mkdir -p "$codenameDir"
-				tar -cC "$outputDir" --exclude="**/rootfs.*" . | tar -xC "$codenameDir"
-
-				for rootfs in rootfs*/; do
-					rootfs="${rootfs%/}" # "rootfs", "rootfs-slim", ...
-
-					variant="${rootfs#rootfs}" # "", "-slim", ...
-					variant="${variant#-}" # "", "slim", ...
-
-					variantDir="$codenameDir/$variant"
-					targetBase="$variantDir/rootfs"
-
-					# point sources.list back at snapshot.debian.org temporarily (but this time pointing at $codename instead of $suite)
-					debuerreotype-gen-sources-list "$rootfs" "$codename" "$(< "$exportDir/$serial/$dpkgArch/snapshot-url")" "$(< "$exportDir/$serial/$dpkgArch/snapshot-url-security")"
-
-					create_artifacts "$targetBase" "$rootfs" "$codename" "$variant"
-				done
-			fi
 		} >&2
 
 		tar -cC "$exportDir" .
