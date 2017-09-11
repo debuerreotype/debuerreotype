@@ -62,7 +62,7 @@ docker run \
 
 		mirror="http://archive.raspbian.org/raspbian"
 
-		dpkgArch="$(dpkg --print-architecture)"
+		dpkgArch="armhf"
 
 		exportDir="output"
 		outputDir="$exportDir/raspbian/$dpkgArch/$suite"
@@ -79,7 +79,7 @@ docker run \
 
 		{
 			debuerreotype-init --non-debian \
-				--arch armhf \
+				--arch "$dpkgArch" \
 				--keyring /usr/share/keyrings/raspbian-archive-keyring.gpg \
 				rootfs "$suite" "$mirror"
 
