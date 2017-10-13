@@ -1,3 +1,6 @@
+# Notice
+This fork is to ensure that we have an audited copy of debuerreotype to use for our builds. For the original, see [debuerreotype/debuerreotype](https://github.com/debuerreotype/debuerreotype)
+
 # Debuerreotype
 
 Reproducible, [snapshot](http://snapshot.debian.org)-based Debian rootfs builds (especially for Docker).
