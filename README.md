@@ -1,6 +1,7 @@
-# Debuerreotype
+# Notice
+This fork is to ensure that we have an audited copy of debuerreotype to use for our builds. For the original, see [debuerreotype/debuerreotype](https://github.com/debuerreotype/debuerreotype)
 
-[![Build Status](https://travis-ci.org/debuerreotype/debuerreotype.svg?branch=master)](https://travis-ci.org/debuerreotype/debuerreotype/branches)
+# Debuerreotype
 
 Reproducible, [snapshot](http://snapshot.debian.org)-based Debian rootfs builds (especially for Docker).
 
@@ -37,11 +38,7 @@ Available scripts:
 | `debuerreotype-tar` | deterministically create a tar file of the rootfs |
 | `debuerreotype-version` | print out the version of the current `debuerreotype` installation |
 
-A simple `Dockerfile` is provided for using these scripts in a simple deterministic environment based on Docker, but given a recent enough version of `debootstrap`, they should run fine outside Docker as well (and their deterministic properties have been verified on at least a Gentoo host in addition to the provided Debian-based Docker environment).
-
-The provided `Dockerfile` also includes comments with hints for bootstrapping the environment on a new architecture (which then presumably doesn't have a `debian` Docker base image yet).
-
-Full example: (see [`build.sh`](build.sh) for this in practice)
+Full example:
 
 ```console
 $ debuerreotype-init rootfs stretch 2017-01-01T00:00:00Z
