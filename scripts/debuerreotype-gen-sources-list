@@ -43,6 +43,7 @@ deb() {
 			;;
 
 		*)
+			# https://wiki.debian.org/SourcesList#Example_sources.list
 			deb "$mirror" "$suite" "$comp"
 			deb "$mirror" "$suite-updates" "$comp"
 			deb "$secmirror" "$suite/updates" "$comp"
