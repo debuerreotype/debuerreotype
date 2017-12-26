@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		debootstrap \
 		wget ca-certificates \
 		xz-utils \
+		\
+		gnupg dirmngr \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY scripts /opt/debuerreotype/scripts

@@ -45,7 +45,7 @@ dockerImage="debuerreotype/debuerreotype:$ver"
 mirror="$("$thisDir/scripts/.snapshot-url.sh" "$timestamp")"
 secmirror="$("$thisDir/scripts/.snapshot-url.sh" "$timestamp" 'debian-security')"
 
-dpkgArch="$(docker run --rm "$dockerImage" dpkg --print-architecture)"
+dpkgArch="$(docker run --rm "$dockerImage" dpkg --print-architecture | awk -F- '{ print $NF }')"
 echo
 echo "-- BUILDING TARBALLS FOR '$dpkgArch' FROM '$mirror/' --"
 echo

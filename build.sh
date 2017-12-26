@@ -4,20 +4,27 @@ set -Eeuo pipefail
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/scripts/.constants.sh" \
 	--flags 'no-build,codename-copy' \
+	--flags 'eol,arch:' \
 	-- \
-	'[--no-build] [--codename-copy] <output-dir> <suite> <timestamp>' \
+	'[--no-build] [--codename-copy] [--eol] [--arch=<arch>] <output-dir> <suite> <timestamp>' \
 	'output stretch 2017-05-08T00:00:00Z
---codename-copy output stable 2017-05-08T00:00:00Z'
+--codename-copy output stable 2017-05-08T00:00:00Z
+--eol output squeeze 2016-03-14T00:00:00Z
+--eol --arch i386 output sarge 2016-03-14T00:00:00Z' \
 
 eval "$dgetopt"
 build=1
 codenameCopy=
+eol=
+arch=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
 		--no-build) build= ;; # for skipping "docker build"
 		--codename-copy) codenameCopy=1 ;; # for copying a "stable.tar.xz" to "stretch.tar.xz" with updated sources.list (saves a lot of extra building work)
+		--eol) eol=1 ;; # for using "archive.debian.org"
+		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -40,6 +47,13 @@ if docker info | grep -q apparmor; then
 	)
 fi
 
+if [ "$suite" = 'potato' ]; then
+	# --debian-eol potato wants to run "chroot ... mount ... /proc" which gets blocked (i386, ancient binaries, blah blah blah)
+	securityArgs+=(
+		--security-opt seccomp=unconfined
+	)
+fi
+
 ver="$("$thisDir/scripts/debuerreotype-version")"
 ver="${ver%% *}"
 dockerImage="debuerreotype/debuerreotype:$ver"
@@ -53,14 +67,17 @@ docker run \
 	-e suite="$suite" \
 	-e timestamp="$timestamp" \
 	-e codenameCopy="$codenameCopy" \
+	-e eol="$eol" \
+	-e arch="$arch" \
 	-e TZ='UTC' -e LC_ALL='C' \
+	--hostname debuerreotype \
 	"$dockerImage" \
 	bash -Eeuo pipefail -c '
 		set -x
 
 		epoch="$(date --date "$timestamp" +%s)"
 		serial="$(date --date "@$epoch" +%Y%m%d)"
-		dpkgArch="$(dpkg --print-architecture)"
+		dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- "{ print \$NF }")}"
 
 		exportDir="output"
 		outputDir="$exportDir/$serial/$dpkgArch/$suite"
@@ -75,20 +92,36 @@ docker run \
 		debuerreotypeScriptsDir="$(dirname "$(readlink -f "$(which debuerreotype-init)")")"
 
 		for archive in "" security; do
-			snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" "${archive:+debian-${archive}}")"
+			if [ -z "$eol" ]; then
+				snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" "${archive:+debian-${archive}}")"
+			else
+				snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" "debian-archive")/debian${archive:+-${archive}}"
+			fi
 			snapshotUrlFile="$exportDir/$serial/$dpkgArch/snapshot-url${archive:+-${archive}}"
 			mkdir -p "$(dirname "$snapshotUrlFile")"
 			echo "$snapshotUrl" > "$snapshotUrlFile"
 			touch_epoch "$snapshotUrlFile"
 		done
 
+		if [ -z "$eol" ]; then
+			keyring=/usr/share/keyrings/debian-archive-keyring.gpg
+		else
+			keyring=/usr/share/keyrings/debian-archive-removed-keys.gpg
+
+			if [ "$suite" = potato ]; then
+				# src:debian-archive-keyring was created in 2006, thus does not include a key for potato
+				export GNUPGHOME="$(mktemp -d)"
+				keyring="$GNUPGHOME/debian-archive-$suite-keyring.gpg"
+				gpg --no-default-keyring --keyring "$keyring" --keyserver ha.pool.sks-keyservers.net --recv-keys 8FD47FF1AA9372C37043DC28AA7DEB7B722F1AED
+			fi
+		fi
+
 		snapshotUrl="$(< "$exportDir/$serial/$dpkgArch/snapshot-url")"
 		mkdir -p "$outputDir"
 		wget -O "$outputDir/Release.gpg" "$snapshotUrl/dists/$suite/Release.gpg"
 		wget -O "$outputDir/Release" "$snapshotUrl/dists/$suite/Release"
 		gpgv \
-			--keyring /usr/share/keyrings/debian-archive-keyring.gpg \
-			--keyring /usr/share/keyrings/debian-archive-removed-keys.gpg \
+			--keyring "$keyring" \
 			"$outputDir/Release.gpg" \
 			"$outputDir/Release"
 
@@ -103,7 +136,13 @@ docker run \
 		fi
 
 		{
-			initArgs=( --debian )
+			initArgs=( --arch="$dpkgArch" )
+			if [ -z "$eol" ]; then
+				initArgs+=( --debian )
+			else
+				initArgs+=( --debian-eol )
+			fi
+			initArgs+=( --keyring "$keyring" )
 			releaseSuite="$(awk -F ": " "\$1 == \"Suite\" { print \$2; exit }" "$outputDir/Release")"
 			case "$suite" in
 				# see https://bugs.debian.org/src:usrmerge for why merged-usr should not be in stable yet (mostly "dpkg" related bugs)
@@ -118,26 +157,44 @@ docker run \
 			debuerreotype-apt-get rootfs update -qq
 			debuerreotype-apt-get rootfs dist-upgrade -yqq
 
+			aptVersion="$("$debuerreotypeScriptsDir/.apt-version.sh" rootfs)"
+			case "$aptVersion" in
+				# --debian-eol etch and lower do not support --no-install-recommends
+				0.6.*|0.5.*) noInstallRecommends="-o APT::Install-Recommends=0" ;;
+
+				*) noInstallRecommends="--no-install-recommends" ;;
+			esac
+
 			# make a couple copies of rootfs so we can create other variants
 			for variant in slim sbuild; do
 				mkdir "rootfs-$variant"
 				tar -cC rootfs . | tar -xC "rootfs-$variant"
 			done
 
-			# prefer iproute2 if it exists
-			iproute=iproute2
-			if ! debuerreotype-chroot rootfs apt-cache show iproute2 > /dev/null; then
-				# poor wheezy
-				iproute=iproute
+			# prefer iproute2 and inetutils-ping if they exist
+			case "$aptVersion" in
+				0.5.*) iproute=iproute; ping=iputils-ping ;; # --debian-eol woody and below have bad apt-cache which only warns for missing packages
+				*)
+					iproute=iproute2
+					ping=inetutils-ping
+					if ! debuerreotype-chroot rootfs apt-cache show iproute2 > /dev/null; then
+						# poor wheezy
+						iproute=iproute
+					fi
+					;;
+			esac
+			if debuerreotype-chroot rootfs bash -c "command -v ping > /dev/null"; then
+				# if we already have "ping" (as in --debian-eol potato), skip installing any extra ping package
+				ping=
 			fi
-			debuerreotype-apt-get rootfs install -y --no-install-recommends inetutils-ping $iproute
+			debuerreotype-apt-get rootfs install -y $noInstallRecommends $ping $iproute
 
 			debuerreotype-slimify rootfs-slim
 
 			# this should match the list added to the "buildd" variant in debootstrap and the list installed by sbuild
 			# https://anonscm.debian.org/cgit/d-i/debootstrap.git/tree/scripts/sid?id=706a45681c5bba5e062a9b02e19f079cacf2a3e8#n26
 			# https://anonscm.debian.org/cgit/buildd-tools/sbuild.git/tree/bin/sbuild-createchroot?id=eace3d3e59e48d26eaf069d9b63a6a4c868640e6#n194
-			debuerreotype-apt-get rootfs-sbuild install -y --no-install-recommends build-essential fakeroot
+			debuerreotype-apt-get rootfs-sbuild install -y $noInstallRecommends build-essential fakeroot
 
 			create_artifacts() {
 				local targetBase="$1"; shift
@@ -149,12 +206,21 @@ docker run \
 				cp "$rootfs/etc/apt/sources.list" "$targetBase.sources-list-snapshot"
 				touch_epoch "$targetBase.sources-list-snapshot"
 
+				local mirror secmirror
+				if [ -z "$eol" ]; then
+					mirror="http://deb.debian.org/debian"
+					secmirror="http://security.debian.org/debian-security"
+				else
+					mirror="http://archive.debian.org/debian"
+					secmirror="http://archive.debian.org/debian-security"
+				fi
+
 				if [ "$variant" != "sbuild" ]; then
-					debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org/debian-security
+					debuerreotype-gen-sources-list "$rootfs" "$suite" "$mirror" "$secmirror"
 					debuerreotype-tar "$rootfs" "$targetBase.tar.xz"
 				else
 					# sbuild needs "deb-src" entries
-					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org/debian-security
+					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" "$mirror" "$secmirror"
 
 					# APT has odd issues with "Acquire::GzipIndexes=false" + "file://..." sources sometimes
 					# (which are used in sbuild for "--extra-package")
@@ -173,14 +239,22 @@ docker run \
 				sha256sum "$targetBase.tar.xz" | cut -d" " -f1 > "$targetBase.tar.xz.sha256"
 				touch_epoch "$targetBase.tar.xz.sha256"
 
-				debuerreotype-chroot "$rootfs" dpkg-query -W > "$targetBase.manifest"
+				debuerreotype-chroot "$rootfs" bash -c "
+					if ! dpkg-query -W; then
+						# --debian-eol woody has no dpkg-query
+						dpkg -l
+					fi
+				" > "$targetBase.manifest"
 				echo "$epoch" > "$targetBase.debuerreotype-epoch"
 				touch_epoch "$targetBase.manifest" "$targetBase.debuerreotype-epoch"
 
 				for f in debian_version os-release apt/sources.list; do
 					targetFile="$targetBase.$(basename "$f" | sed -r "s/[^a-zA-Z0-9_-]+/-/g")"
-					cp "$rootfs/etc/$f" "$targetFile"
-					touch_epoch "$targetFile"
+					if [ -e "$rootfs/etc/$f" ]; then
+						# /etc/os-release does not exist in --debian-eol squeeze, for example (hence the existence check)
+						cp "$rootfs/etc/$f" "$targetFile"
+						touch_epoch "$targetFile"
+					fi
 				done
 			}
 

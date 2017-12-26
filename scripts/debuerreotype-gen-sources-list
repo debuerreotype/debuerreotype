@@ -27,11 +27,22 @@ secmirror="${1:-}"; shift || eusage 'missing secmirror'
 [ -n "$targetDir" ]
 
 comp='main'
+arch="$("$thisDir/.dpkg-arch.sh" "$targetDir")"
 
 deb() {
-	echo "deb $*"
+	local mirror="$1"; shift
+	local suite="$1"; shift
+	local comp="$1"; shift
+
+	# http://snapshot.debian.org/archive/debian-archive/20160314T000000Z/debian/dists/squeeze-updates/main/binary-amd64/Packages.gz
+	if ! wget --quiet --spider -O /dev/null -o /dev/null "$mirror/dists/$suite/$comp/binary-$arch/Packages.gz"; then
+		echo >&2 "warning: $mirror does not appear to support $suite/$comp on $arch; skipping"
+		return
+	fi
+
+	echo "deb $mirror $suite $comp"
 	if [ -n "$debSrc" ]; then
-		echo "deb-src $*"
+		echo "deb-src $mirror $suite $comp"
 	fi
 }
 
@@ -51,3 +62,8 @@ deb() {
 	esac
 } > "$targetDir/etc/apt/sources.list"
 chmod 0644 "$targetDir/etc/apt/sources.list"
+
+if [ ! -s "$targetDir/etc/apt/sources.list" ]; then
+	echo >&2 "error: sources.list ended up empty -- something is definitely wrong"
+	exit 1
+fi

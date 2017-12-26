@@ -60,7 +60,7 @@ docker run \
 	bash -Eeuo pipefail -c '
 		set -x
 
-		dpkgArch="$(dpkg --print-architecture)"
+		dpkgArch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"
 
 		case "$dpkgArch" in
 			amd64|i386)

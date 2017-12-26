@@ -26,7 +26,10 @@ export targetDir epoch
 unshare --mount bash -Eeuo pipefail -c '
 	[ -n "$targetDir" ] # just to be safe
 	for dir in dev proc sys; do
-		mount --rbind "/$dir" "$targetDir/$dir"
+		if [ -e "$targetDir/$dir" ]; then
+			# --debian-eol woody and below have no /sys
+			mount --rbind "/$dir" "$targetDir/$dir"
+		fi
 	done
 	exec chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$@"
 ' -- "$cmd" "$@"
