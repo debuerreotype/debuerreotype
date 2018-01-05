@@ -150,6 +150,9 @@ docker run \
 					initArgs+=( --no-merged-usr )
 					;;
 			esac
+			if [ "$dpkgArch" != "$currentArch" ]; then
+				initArgs+=( --debootstrap qemu-debootstrap --arch $dpkgArch )
+			fi
 
 			debuerreotype-init "${initArgs[@]}" rootfs "$suite" "@$epoch"
 
@@ -202,6 +205,11 @@ docker run \
 				local suite="$1"; shift
 				local variant="$1"; shift
 
+				local tarArgs=( )
+				if [ "$dpkgArch" != "$currentArch" ]; then
+					tarArgs+=( --exclude "./usr/bin/qemu-*-static" )
+				fi
+
 				# make a copy of the snapshot-facing sources.list file before we overwrite it
 				cp "$rootfs/etc/apt/sources.list" "$targetBase.sources-list-snapshot"
 				touch_epoch "$targetBase.sources-list-snapshot"
@@ -217,7 +225,6 @@ docker run \
 
 				if [ "$variant" != "sbuild" ]; then
 					debuerreotype-gen-sources-list "$rootfs" "$suite" "$mirror" "$secmirror"
-					debuerreotype-tar "$rootfs" "$targetBase.tar.xz"
 				else
 					# sbuild needs "deb-src" entries
 					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" "$mirror" "$secmirror"
@@ -232,8 +239,10 @@ docker run \
 
 					# schroot is picky about "/dev" (which is excluded by default in "debuerreotype-tar")
 					# see https://github.com/debuerreotype/debuerreotype/pull/8#issuecomment-305855521
-					debuerreotype-tar --include-dev "$rootfs" "$targetBase.tar.xz"
+					tarArgs+=( --include-dev )
 				fi
+
+				debuerreotype-tar "${tarArgs[@]}" "$rootfs" "$targetBase.tar.xz"
 				du -hsx "$targetBase.tar.xz"
 
 				sha256sum "$targetBase.tar.xz" | cut -d" " -f1 > "$targetBase.tar.xz.sha256"

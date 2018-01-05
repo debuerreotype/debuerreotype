@@ -11,9 +11,12 @@ if [ "$SUITE" = 'eol' ]; then
 elif [ -n "${CODENAME:-}" ]; then
 	buildArgs+=( '--codename-copy' )
 fi
+if [ -n "${ARCH:-}" ]; then
+	buildArgs+=( "--arch=${ARCH}" )
+fi
 buildArgs+=( travis "$SUITE" "@$epoch" )
 
-checkFile="travis/$serial/amd64/${CODENAME:-$SUITE}/rootfs.tar.xz"
+checkFile="travis/$serial/${ARCH:=amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
 
 set -x
 
