@@ -6,7 +6,7 @@ source "$thisDir/.constants.sh" \
 	--flags 'deb-src' \
 	-- \
 	'[--deb-src] <target-dir> <suite> <mirror> <secmirror>' \
-	'rootfs stretch http://deb.debian.org/debian http://security.debian.org'
+	'rootfs stretch http://deb.debian.org/debian http://security.debian.org/debian-security'
 
 eval "$dgetopt"
 debSrc=
