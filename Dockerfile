@@ -3,7 +3,7 @@
 # bootstrapping a new architecture?
 #   ./scripts/debuerreotype-init /tmp/docker-rootfs stretch now
 #   ./scripts/debuerreotype-minimizing-config /tmp/docker-rootfs
-#   ./scripts/debuerreotype-gen-sources-list /tmp/docker-rootfs stretch http://deb.debian.org/debian http://security.debian.org
+#   ./scripts/debuerreotype-gen-sources-list /tmp/docker-rootfs stretch http://deb.debian.org/debian http://security.debian.org/debian-security
 #   ./scripts/debuerreotype-tar /tmp/docker-rootfs - | docker import - debian:stretch-slim
 # alternate:
 #   debootstrap --variant=minbase stretch /tmp/docker-rootfs

@@ -150,11 +150,11 @@ docker run \
 				touch_epoch "$targetBase.sources-list-snapshot"
 
 				if [ "$variant" != "sbuild" ]; then
-					debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
+					debuerreotype-gen-sources-list "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org/debian-security
 					debuerreotype-tar "$rootfs" "$targetBase.tar.xz"
 				else
 					# sbuild needs "deb-src" entries
-					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org
+					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" http://deb.debian.org/debian http://security.debian.org/debian-security
 
 					# APT has odd issues with "Acquire::GzipIndexes=false" + "file://..." sources sometimes
 					# (which are used in sbuild for "--extra-package")

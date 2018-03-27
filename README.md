@@ -86,10 +86,10 @@ Setting up inetutils-ping (2:1.9.4-2+b1) ...
 Setting up iproute2 (4.9.0-1) ...
 Processing triggers for libc-bin (2.24-8) ...
 
-$ debuerreotype-gen-sources-list rootfs stretch http://deb.debian.org/debian http://security.debian.org
+$ debuerreotype-gen-sources-list rootfs stretch http://deb.debian.org/debian http://security.debian.org/debian-security
 
 $ debuerreotype-tar rootfs - | sha256sum
-0542bec04135ed60ed5763f0bcf90381d4e5e33786d57aba5aa4b0fc4e43478a  -
+7c5905d3b3556818c098274383974364e96da1ef7ed1735c48e5124040a42a6f  -
 
 $ # try it!  you should get that same sha256sum value!
 ```
