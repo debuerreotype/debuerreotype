@@ -6,7 +6,7 @@ source "$thisDir/.constants.sh" \
 	--flags 'debian,non-debian' \
 	--flags 'debootstrap:' \
 	--flags 'debootstrap-script:' \
-	--flags 'keyring:,arch:' \
+	--flags 'keyring:,arch:,include:,exclude:' \
 	--flags 'merged-usr,no-merged-usr' \
 	-- \
 	'<target-dir> <suite> <timestamp>' \
@@ -21,6 +21,8 @@ debootstrap=
 script=
 keyring=
 arch=
+include=
+exclude=
 noMergedUsr=
 while true; do
 	flag="$1"; shift
@@ -32,6 +34,8 @@ while true; do
 		--debootstrap-script) script="$1"; shift ;;
 		--keyring) keyring="$1"; shift ;;
 		--arch) arch="$1"; shift ;;
+		--include) include="${include:+$include,}$1"; shift ;;
+		--exclude) exclude="${exclude:+$exclude,}$1"; shift ;;
 		--merged-usr)    noMergedUsr=  ;;
 		--no-merged-usr) noMergedUsr=1 ;;
 		--) break ;;
@@ -74,6 +78,8 @@ debootstrapArgs=(
 [ -n "$noMergedUsr" ] || debootstrapArgs+=( --merged-usr )
 [ -z "$keyring" ] || debootstrapArgs+=( --keyring="$keyring" )
 [ -z "$arch" ] || debootstrapArgs+=( --arch="$arch" )
+[ -z "$include" ] || debootstrapArgs+=( --include="$include" )
+[ -z "$exclude" ] || debootstrapArgs+=( --exclude="$exclude" )
 
 debootstrapArgs+=(
 	"$suite" "$targetDir" "$mirror"
@@ -89,6 +95,11 @@ fi
 
 # since we're minbase, we know everything included is either essential, or a dependency of essential, so let's get clean "apt-mark showmanual" output
 "$thisDir/debuerreotype-chroot" "$targetDir" apt-mark auto '.*' > /dev/null
+if [ -n "$include" ]; then
+	# if the user asked for anything to be included extra (like "xyz-archive-keyring"), mark those packages as manually installed
+	IFS=','; includePackages=( $include ); unset IFS
+	"$thisDir/debuerreotype-chroot" "$targetDir" apt-mark manual "${includePackages[@]}"
+fi
 
 echo 'debuerreotype' > "$targetDir/etc/hostname"
 echo "$epoch" \

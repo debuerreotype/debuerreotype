@@ -5,7 +5,7 @@ thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/scripts/.constants.sh" \
 	--flags 'no-build' \
 	-- \
-	'[--no-build] <output-dir>' \
+	'[--no-build] <output-dir> [suite]' \
 	'output'
 
 eval "$dgetopt"
@@ -21,6 +21,7 @@ while true; do
 done
 
 outputDir="${1:-}"; shift || eusage 'missing output-dir'
+suite="${1:-brewmaster}" # http://repo.steampowered.com/steamos/dists/
 
 mkdir -p "$outputDir"
 outputDir="$(readlink -f "$outputDir")"
@@ -43,6 +44,7 @@ dockerImage="debuerreotype/debuerreotype:$ver"
 steamDockerImage="$dockerImage-steamos"
 [ -z "$build" ] || docker build -t "$steamDockerImage" - <<-EODF
 	FROM $dockerImage
+	# http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/?C=M;O=D
 	RUN wget -O valve.deb 'http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/valve-archive-keyring_0.5+bsos3_all.deb' \\
 		&& apt install -y ./valve.deb \\
 		&& rm valve.deb
@@ -53,13 +55,12 @@ docker run \
 	"${securityArgs[@]}" \
 	--tmpfs /tmp:dev,exec,suid,noatime \
 	-w /tmp \
+	-e suite="$suite" \
 	-e TZ='UTC' -e LC_ALL='C' \
 	"$steamDockerImage" \
 	bash -Eeuo pipefail -c '
 		set -x
 
-		# http://repo.steampowered.com/steamos/dists/
-		suite="brewmaster"
 		mirror="http://repo.steampowered.com/steamos"
 
 		dpkgArch="$(dpkg --print-architecture)"
@@ -81,6 +82,8 @@ docker run \
 			debuerreotype-init --non-debian \
 				--debootstrap-script /usr/share/debootstrap/scripts/jessie \
 				--keyring /usr/share/keyrings/valve-archive-keyring.gpg \
+				--include valve-archive-keyring \
+				--exclude debian-archive-keyring \
 				--no-merged-usr \
 				rootfs "$suite" "$mirror"
 			echo "deb $mirror $suite main contrib non-free" | tee rootfs/etc/apt/sources.list
@@ -103,14 +106,30 @@ docker run \
 				tar -cC rootfs . | tar -xC "rootfs-$variant"
 			done
 
-			debuerreotype-apt-get rootfs install -y --no-install-recommends iproute2 iputils-ping
+			# prefer iproute2 if it exists
+			iproute=iproute2
+			if ! debuerreotype-chroot rootfs apt-cache show iproute2 > /dev/null; then
+				# poor wheezy
+				iproute=iproute
+			fi
+			ping=inetutils-ping
+			if ! debuerreotype-chroot rootfs apt-cache show inetutils-ping > /dev/null; then
+				# poor alchemist
+				ping=iputils-ping
+			fi
+			debuerreotype-apt-get rootfs install -y --no-install-recommends $ping $iproute
 
 			debuerreotype-slimify rootfs-slim
 
 			# this should match the list added to the "buildd" variant in debootstrap and the list installed by sbuild
 			# https://anonscm.debian.org/cgit/d-i/debootstrap.git/tree/scripts/sid?id=706a45681c5bba5e062a9b02e19f079cacf2a3e8#n26
 			# https://anonscm.debian.org/cgit/buildd-tools/sbuild.git/tree/bin/sbuild-createchroot?id=eace3d3e59e48d26eaf069d9b63a6a4c868640e6#n194
-			debuerreotype-apt-get rootfs-sbuild install -y --no-install-recommends build-essential fakeroot
+			fakeroot=fakeroot
+			if [[ "$suite" == alchemist* ]]; then
+				# poor alchemist
+				fakeroot=
+			fi
+			debuerreotype-apt-get rootfs-sbuild install -y --no-install-recommends build-essential $fakeroot
 
 			create_artifacts() {
 				local targetBase="$1"; shift
