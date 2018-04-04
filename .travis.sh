@@ -5,7 +5,10 @@ epoch="$(TZ=UTC date --date "$TIMESTAMP" +%s)"
 serial="$(TZ=UTC date --date "@$epoch" +%Y%m%d)"
 
 buildArgs=()
-if [ -n "${CODENAME:-}" ]; then
+if [ "$SUITE" = 'eol' ]; then
+	buildArgs+=( '--eol' )
+	SUITE="$CODENAME"
+elif [ -n "${CODENAME:-}" ]; then
 	buildArgs+=( '--codename-copy' )
 fi
 buildArgs+=( travis "$SUITE" "@$epoch" )
