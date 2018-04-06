@@ -13,6 +13,9 @@ elif [ -n "${CODENAME:-}" ]; then
 fi
 if [ -n "${ARCH:-}" ]; then
 	buildArgs+=( "--arch=${ARCH}" )
+	if [ "$ARCH" != 'i386' ]; then
+		buildArgs+=( '--qemu' )
+	fi
 fi
 buildArgs+=( travis "$SUITE" "@$epoch" )
 
