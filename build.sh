@@ -4,9 +4,9 @@ set -Eeuo pipefail
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/scripts/.constants.sh" \
 	--flags 'no-build,codename-copy' \
-	--flags 'eol,arch:' \
+	--flags 'eol,arch:,qemu' \
 	-- \
-	'[--no-build] [--codename-copy] [--eol] [--arch=<arch>] <output-dir> <suite> <timestamp>' \
+	'[--no-build] [--codename-copy] [--eol] [--arch=<arch>] [--qemu] <output-dir> <suite> <timestamp>' \
 	'output stretch 2017-05-08T00:00:00Z
 --codename-copy output stable 2017-05-08T00:00:00Z
 --eol output squeeze 2016-03-14T00:00:00Z
@@ -17,6 +17,7 @@ build=1
 codenameCopy=
 eol=
 arch=
+qemu=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
@@ -25,6 +26,7 @@ while true; do
 		--codename-copy) codenameCopy=1 ;; # for copying a "stable.tar.xz" to "stretch.tar.xz" with updated sources.list (saves a lot of extra building work)
 		--eol) eol=1 ;; # for using "archive.debian.org"
 		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
+		--qemu) qemu=1 ;; # for using "qemu-debootstrap"
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -58,6 +60,13 @@ ver="$("$thisDir/scripts/debuerreotype-version")"
 ver="${ver%% *}"
 dockerImage="debuerreotype/debuerreotype:$ver"
 [ -z "$build" ] || docker build -t "$dockerImage" "$thisDir"
+if [ -n "$qemu" ]; then
+	[ -z "$build" ] || docker build -t "$dockerImage-qemu" - <<-EODF
+		FROM $dockerImage
+		RUN apt-get update && apt-get install -y --no-install-recommends qemu-user-static && rm -rf /var/lib/apt/lists/*
+	EODF
+	dockerImage="$dockerImage-qemu"
+fi
 
 docker run \
 	--rm \
@@ -67,8 +76,7 @@ docker run \
 	-e suite="$suite" \
 	-e timestamp="$timestamp" \
 	-e codenameCopy="$codenameCopy" \
-	-e eol="$eol" \
-	-e arch="$arch" \
+	-e eol="$eol" -e arch="$arch" -e qemu="$qemu" \
 	-e TZ='UTC' -e LC_ALL='C' \
 	--hostname debuerreotype \
 	"$dockerImage" \
@@ -143,6 +151,7 @@ docker run \
 				initArgs+=( --debian-eol )
 			fi
 			initArgs+=( --keyring "$keyring" )
+
 			releaseSuite="$(awk -F ": " "\$1 == \"Suite\" { print \$2; exit }" "$outputDir/Release")"
 			case "$suite" in
 				# see https://bugs.debian.org/src:usrmerge for why merged-usr should not be in stable yet (mostly "dpkg" related bugs)
@@ -150,6 +159,10 @@ docker run \
 					initArgs+=( --no-merged-usr )
 					;;
 			esac
+
+			if [ -n "$qemu" ]; then
+				initArgs+=( --debootstrap="qemu-debootstrap" )
+			fi
 
 			debuerreotype-init "${initArgs[@]}" rootfs "$suite" "@$epoch"
 
@@ -215,9 +228,13 @@ docker run \
 					secmirror="http://archive.debian.org/debian-security"
 				fi
 
+				local tarArgs=()
+				if [ -n "$qemu" ]; then
+					tarArgs+=( --exclude="./usr/bin/qemu-*-static" )
+				fi
+
 				if [ "$variant" != "sbuild" ]; then
 					debuerreotype-gen-sources-list "$rootfs" "$suite" "$mirror" "$secmirror"
-					debuerreotype-tar "$rootfs" "$targetBase.tar.xz"
 				else
 					# sbuild needs "deb-src" entries
 					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" "$mirror" "$secmirror"
@@ -232,8 +249,10 @@ docker run \
 
 					# schroot is picky about "/dev" (which is excluded by default in "debuerreotype-tar")
 					# see https://github.com/debuerreotype/debuerreotype/pull/8#issuecomment-305855521
-					debuerreotype-tar --include-dev "$rootfs" "$targetBase.tar.xz"
+					tarArgs+=( --include-dev )
 				fi
+
+				debuerreotype-tar "${tarArgs[@]}" "$rootfs" "$targetBase.tar.xz"
 				du -hsx "$targetBase.tar.xz"
 
 				sha256sum "$targetBase.tar.xz" | cut -d" " -f1 > "$targetBase.tar.xz.sha256"
