@@ -3,20 +3,22 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
-	--flags 'debian,non-debian' \
+	--flags 'debian,debian-eol,non-debian' \
 	--flags 'debootstrap:' \
 	--flags 'debootstrap-script:' \
 	--flags 'keyring:,arch:,include:,exclude:' \
 	--flags 'merged-usr,no-merged-usr' \
 	-- \
 	'<target-dir> <suite> <timestamp>' \
-	'rootfs stretch 2017-05-08T00:00:00Z' \
+	'rootfs stretch 2017-05-08T00:00:00Z
+--debian-eol rootfs squeeze 2016-03-14T00:00:00Z' \
 	\
 	'--non-debian [--debootstrap-script=xyz] <target-dir> <suite> <mirror>' \
 	'--non-debian rootfs xenial http://archive.ubuntu.com/ubuntu'
 
 eval "$dgetopt"
 nonDebian=
+debianEol=
 debootstrap=
 script=
 keyring=
@@ -28,8 +30,9 @@ while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
-		--debian)     nonDebian=  ;;
-		--non-debian) nonDebian=1 ;;
+		--debian)     nonDebian= ; debianEol=  ;;
+		--debian-eol) nonDebian= ; debianEol=1 ;;
+		--non-debian) nonDebian=1; debianEol=  ;;
 		--debootstrap) debootstrap="$1"; shift ;;
 		--debootstrap-script) script="$1"; shift ;;
 		--keyring) keyring="$1"; shift ;;
@@ -67,14 +70,38 @@ epoch="$(date --date "$timestamp" '+%s')"
 export SOURCE_DATE_EPOCH="$epoch"
 
 if [ -z "$nonDebian" ]; then
-	mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
-	secmirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')"
+	if [ -z "$debianEol" ]; then
+		mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
+		secmirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')"
+	else
+		mirrorbase="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
+		mirror="$mirrorbase/debian"
+		secmirror="$mirrorbase/debian-security"
+	fi
 fi
 
 debootstrapArgs=(
 	--force-check-gpg
-	--variant=minbase
 )
+
+minbaseSupported="$(
+	scriptFile="$(
+		if [ -n "$script" ]; then
+			readlink -f "$script"
+		else
+			cd /usr/share/debootstrap/scripts
+			readlink -f "$suite"
+		fi
+	)"
+	if grep -q 'minbase' "$scriptFile"; then
+		echo 1
+	fi
+)"
+if [ -n "$minbaseSupported" ]; then
+	# --debian-eol sarge and older do not support minbase
+	debootstrapArgs+=( --variant=minbase )
+fi
+
 [ -n "$noMergedUsr" ] || debootstrapArgs+=( --merged-usr )
 [ -z "$keyring" ] || debootstrapArgs+=( --keyring="$keyring" )
 [ -z "$arch" ] || debootstrapArgs+=( --arch="$arch" )
@@ -86,7 +113,23 @@ debootstrapArgs+=(
 )
 [ -z "$script" ] || debootstrapArgs+=( "$script" )
 
-"${debootstrap:-debootstrap}" "${debootstrapArgs[@]}"
+: "${debootstrap:=debootstrap}"
+if ! "$debootstrap" "${debootstrapArgs[@]}"; then
+	if [ -f "$targetDir/debootstrap/debootstrap.log" ]; then
+		echo >&2
+		echo >&2 "error: '$debootstrap' failed!"
+		echo >&2
+		echo >&2 '  Full command:'
+		echo >&2
+		echo >&2 "   $(printf ' %q' "$debootstrap" "${debootstrapArgs[@]}")"
+		echo >&2
+		echo >&2 '  Logs:'
+		echo >&2
+		cat >&2 "$targetDir/debootstrap/debootstrap.log"
+		echo >&2
+	fi
+	exit 1
+fi
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
 if [ -z "$nonDebian" ]; then
@@ -94,12 +137,19 @@ if [ -z "$nonDebian" ]; then
 fi
 
 # since we're minbase, we know everything included is either essential, or a dependency of essential, so let's get clean "apt-mark showmanual" output
-"$thisDir/debuerreotype-chroot" "$targetDir" apt-mark auto '.*' > /dev/null
-if [ -n "$include" ]; then
-	# if the user asked for anything to be included extra (like "xyz-archive-keyring"), mark those packages as manually installed
-	IFS=','; includePackages=( $include ); unset IFS
-	"$thisDir/debuerreotype-chroot" "$targetDir" apt-mark manual "${includePackages[@]}"
-fi
+"$thisDir/debuerreotype-chroot" "$targetDir" bash -c '
+	# --debian-eol squeeze and below do not have python in minbase, thus "apt-mark" fails to run
+	# bash: /usr/bin/apt-mark: /usr/bin/python: bad interpreter: No such file or directory
+	# (also, squeeze APT does not treat essential packages as special, and will offer to purge them if they get marked as auto-installed)
+	if apt-mark --help > /dev/null; then
+		apt-mark auto ".*" > /dev/null
+		if [ -n "$1" ]; then
+			# if the user asked for anything to be included extra (like "xyz-archive-keyring"), mark those packages as manually installed
+			IFS=","; includePackages=( $1 ); unset IFS
+			apt-mark manual "${includePackages[@]}"
+		fi
+	fi
+' -- "$include"
 
 echo 'debuerreotype' > "$targetDir/etc/hostname"
 echo "$epoch" \
@@ -119,6 +169,9 @@ chmod 0644 \
 # adjust field 3 in /etc/shadow and /etc/shadow- to $(( epoch / 60 / 60 / 24 )), if it's larger
 sp_lstchg="$(( epoch / 60 / 60 / 24 ))"
 for shadowFile in etc/shadow etc/shadow-; do
+	# --debian-eol etch and older do not include /etc/shadow-
+	[ -e "$targetDir/$shadowFile" ] || continue
+
 	newShadowFile="$shadowFile.debuerreotype"
 	awk -F ':' \
 		-v OFS=':' \

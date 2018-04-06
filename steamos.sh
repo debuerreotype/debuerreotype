@@ -63,7 +63,7 @@ docker run \
 
 		mirror="http://repo.steampowered.com/steamos"
 
-		dpkgArch="$(dpkg --print-architecture)"
+		dpkgArch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"
 
 		exportDir="output"
 		outputDir="$exportDir/steamos/$dpkgArch/$suite"
