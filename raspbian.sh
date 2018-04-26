@@ -107,7 +107,7 @@ docker run \
 				# poor wheezy
 				iproute=iproute
 			fi
-			debuerreotype-apt-get rootfs install -y --no-install-recommends inetutils-ping $iproute
+			debuerreotype-apt-get rootfs install -y --no-install-recommends iputils-ping $iproute
 
 			debuerreotype-slimify rootfs-slim
 

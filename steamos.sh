@@ -112,12 +112,7 @@ docker run \
 				# poor wheezy
 				iproute=iproute
 			fi
-			ping=inetutils-ping
-			if ! debuerreotype-chroot rootfs apt-cache show inetutils-ping > /dev/null; then
-				# poor alchemist
-				ping=iputils-ping
-			fi
-			debuerreotype-apt-get rootfs install -y --no-install-recommends $ping $iproute
+			debuerreotype-apt-get rootfs install -y --no-install-recommends iputils-ping $iproute
 
 			debuerreotype-slimify rootfs-slim
 

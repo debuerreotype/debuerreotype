@@ -184,18 +184,18 @@ docker run \
 				tar -cC rootfs . | tar -xC "rootfs-$variant"
 			done
 
-			# prefer iproute2 and inetutils-ping if they exist
+			# prefer iproute2 if it exists
 			case "$aptVersion" in
-				0.5.*) iproute=iproute; ping=iputils-ping ;; # --debian-eol woody and below have bad apt-cache which only warns for missing packages
+				0.5.*) iproute=iproute ;; # --debian-eol woody and below have bad apt-cache which only warns for missing packages
 				*)
 					iproute=iproute2
-					ping=inetutils-ping
 					if ! debuerreotype-chroot rootfs apt-cache show iproute2 > /dev/null; then
 						# poor wheezy
 						iproute=iproute
 					fi
 					;;
 			esac
+			ping=iputils-ping
 			if debuerreotype-chroot rootfs bash -c "command -v ping > /dev/null"; then
 				# if we already have "ping" (as in --debian-eol potato), skip installing any extra ping package
 				ping=
