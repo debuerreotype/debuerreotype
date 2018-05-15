@@ -165,6 +165,10 @@ chmod 0644 \
 	"$targetDir/etc/machine-id" \
 	"$targetDir/etc/resolv.conf"
 
+# fix ownership/permissions on / (otherwise "debootstrap" leaves them as-is which causes reproducibility issues)
+chown 0:0 "$targetDir"
+chmod 0755 "$targetDir"
+
 # https://bugs.debian.org/857803
 # adjust field 3 in /etc/shadow and /etc/shadow- to $(( epoch / 60 / 60 / 24 )), if it's larger
 sp_lstchg="$(( epoch / 60 / 60 / 24 ))"
