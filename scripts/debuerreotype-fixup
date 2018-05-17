@@ -28,6 +28,11 @@ rm -f \
 	"$targetDir/var/log/alternatives.log" \
 	"$targetDir/var/cache/ldconfig/aux-cache"
 
+# https://github.com/debuerreotype/debuerreotype/pull/32
+rm -f "$targetDir/run/mount/utab"
+# (also remove the directory, but only if it's empty)
+rmdir "$targetDir/run/mount" 2>/dev/null || :
+
 find "$targetDir" \
 	-newermt "@$epoch" \
 	-exec touch --no-dereference --date="@$epoch" '{}' +
