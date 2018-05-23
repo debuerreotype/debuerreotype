@@ -1,5 +1,6 @@
 #   This file contains the list of files/directories which will be removed for "slim" image variants.
 #  https://github.com/tianon/docker-brew-debian/issues/48
+
 # https://wiki.ubuntu.com/ReducingDiskFootprint#Drop_unnecessary_files
 /usr/share/doc/*
 /usr/share/groff/*
@@ -8,3 +9,11 @@
 /usr/share/lintian/overrides/*
 /usr/share/locale/*
 /usr/share/man/*
+
+# https://anonscm.debian.org/cgit/collab-maint/localepurge.git/tree/usr/share/localepurge/gen-dpkg-cfg.pl?id=b32c8d46d43be2027096f5a202ac789a637ceb39#n9
+/usr/share/locale/*
+/usr/share/gnome/help/*/*
+/usr/share/doc/kde/HTML/*/*
+/usr/share/omf/*/*-*.emf
+
+# see also .slimify-includes
