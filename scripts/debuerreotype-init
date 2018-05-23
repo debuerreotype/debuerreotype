@@ -102,7 +102,7 @@ if [ -n "$minbaseSupported" ]; then
 	debootstrapArgs+=( --variant=minbase )
 fi
 
-[ -n "$noMergedUsr" ] || debootstrapArgs+=( --merged-usr )
+[ -n "$noMergedUsr" ] && debootstrapArgs+=( --no-merged-usr ) || debootstrapArgs+=( --merged-usr )
 [ -z "$keyring" ] || debootstrapArgs+=( --keyring="$keyring" )
 [ -z "$arch" ] || debootstrapArgs+=( --arch="$arch" )
 [ -z "$include" ] || debootstrapArgs+=( --include="$include" )
