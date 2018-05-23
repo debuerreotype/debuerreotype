@@ -153,7 +153,7 @@ docker run \
 			initArgs+=( --keyring "$keyring" )
 
 			releaseSuite="$(awk -F ": " "\$1 == \"Suite\" { print \$2; exit }" "$outputDir/Release")"
-			case "$suite" in
+			case "$releaseSuite" in
 				# see https://bugs.debian.org/src:usrmerge for why merged-usr should not be in stable yet (mostly "dpkg" related bugs)
 				*oldstable|stable)
 					initArgs+=( --no-merged-usr )
