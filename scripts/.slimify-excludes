@@ -5,6 +5,6 @@
 /usr/share/groff/*
 /usr/share/info/*
 /usr/share/linda/*
-/usr/share/lintian/*
+/usr/share/lintian/overrides/*
 /usr/share/locale/*
 /usr/share/man/*
