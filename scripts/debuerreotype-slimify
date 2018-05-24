@@ -21,6 +21,7 @@ targetDir="${1:-}"; shift || eusage 'missing target-dir'
 
 IFS=$'\n'; set -o noglob
 slimExcludes=( $(grep -vE '^#|^$' "$thisDir/.slimify-excludes" | sort -u) )
+slimIncludes=( $(grep -vE '^#|^$' "$thisDir/.slimify-includes" | sort -u) )
 set +o noglob; unset IFS
 
 dpkgCfgFile="$targetDir/etc/dpkg/dpkg.cfg.d/docker"
@@ -31,7 +32,13 @@ mkdir -p "$(dirname "$dpkgCfgFile")"
 	echo '# and this configuration file keeps them that way.'
 } > "$dpkgCfgFile"
 
-neverExclude='/usr/share/doc/*/copyright'
+findMatchIncludes=()
+for slimInclude in "${slimIncludes[@]}"; do
+	[ "${#findMatchIncludes[@]}" -eq 0 ] || findMatchIncludes+=( '-o' )
+	findMatchIncludes+=( -path "$slimInclude" )
+done
+findMatchIncludes=( '(' "${findMatchIncludes[@]}" ')' )
+
 for slimExclude in "${slimExcludes[@]}"; do
 	{
 		echo
@@ -46,14 +53,14 @@ for slimExclude in "${slimExcludes[@]}"; do
 
 	if [[ "$slimExclude" == *'/*' ]]; then
 		if [ -d "$targetDir/$(dirname "$slimExclude")" ]; then
-			# use two passes so that we don't fail trying to remove directories from $neverExclude
+			# use two passes so that we don't fail trying to remove directories from $slimIncludes
 			# this is our best effort at implementing https://sources.debian.net/src/dpkg/stretch/src/filters.c/#L96-L97 in shell
 
-			# step 1 -- delete everything that doesn't match "$neverExclude" and isn't a directory or a symlink
+			# step 1 -- delete everything that doesn't match "$slimIncludes" and isn't a directory or a symlink
 			"$thisDir/debuerreotype-chroot" "$targetDir" \
 				find "$(dirname "$slimExclude")" \
 					-depth -mindepth 1 \
-					-not -path "$neverExclude" \
+					-not "${findMatchIncludes[@]}" \
 					-not \( -type d -o -type l \) \
 					-exec rm -f '{}' ';'
 
@@ -73,7 +80,8 @@ for slimExclude in "${slimExcludes[@]}"; do
 done
 {
 	echo
-	echo '# always include these files, especially for license compliance'
-	echo "path-include $neverExclude"
+	for slimInclude in "${slimIncludes[@]}"; do
+		echo "path-include $slimInclude"
+	done
 } >> "$dpkgCfgFile"
 chmod 0644 "$dpkgCfgFile"
