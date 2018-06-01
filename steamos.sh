@@ -28,6 +28,7 @@ outputDir="$(readlink -f "$outputDir")"
 
 securityArgs=(
 	--cap-add SYS_ADMIN
+	--cap-drop SETFCAP
 )
 if docker info | grep -q apparmor; then
 	# AppArmor blocks mount :)
