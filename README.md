@@ -89,7 +89,7 @@ Processing triggers for libc-bin (2.24-8) ...
 $ debuerreotype-gen-sources-list rootfs stretch http://deb.debian.org/debian http://security.debian.org/debian-security
 
 $ debuerreotype-tar rootfs - | sha256sum
-541ccb5b2aa56217141185a3d7eaa5f81549d0191b9452082cf6e29feec6ad35  -
+799e1d60e516d6ba41a17a6cfe7c26c0e5749721efe18f30618e799f41c9cd65  -
 
 $ # try it!  you should get that same sha256sum value!
 ```
