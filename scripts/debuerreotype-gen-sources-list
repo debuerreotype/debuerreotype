@@ -54,10 +54,11 @@ deb() {
 			;;
 
 		*)
+			# https://salsa.debian.org/installer-team/apt-setup/tree/d7a642fb5fc76e4f0b684db53984bdb9123f8360/generators
+			deb "$mirror" "$suite" "$comp"            # "50mirror"
+			deb "$secmirror" "$suite/updates" "$comp" # "91security"
+			deb "$mirror" "$suite-updates" "$comp"    # "92updates"
 			# https://wiki.debian.org/SourcesList#Example_sources.list
-			deb "$mirror" "$suite" "$comp"
-			deb "$mirror" "$suite-updates" "$comp"
-			deb "$secmirror" "$suite/updates" "$comp"
 			;;
 	esac
 } > "$targetDir/etc/apt/sources.list"
