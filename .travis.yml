@@ -15,6 +15,10 @@ env:
     - SUITE=eol CODENAME=woody ARCH=i386 TIMESTAMP=2017-01-01T00:00:00Z SHA256=36eecde5411e245927745043e3c20651d3ed41c7aad47404d39d1ee97ae80f09
     # qemu-debootstrap testing
     - ARCH=arm64 SUITE=jessie CODENAME= TIMESTAMP=2017-01-01T00:00:00Z SHA256=27daa0fd15340367965e689e75bff4839e63a44cc2db48196b99bc9257bf3277
+    # a few entries for "today" to try and catch issues like https://github.com/debuerreotype/debuerreotype/issues/41 sooner
+    - SUITE=unstable  CODENAME= TIMESTAMP="today 00:00:00" SHA256=
+    - SUITE=stable    CODENAME= TIMESTAMP="today 00:00:00" SHA256=
+    - SUITE=oldstable CODENAME= TIMESTAMP="today 00:00:00" SHA256=
 
 addons:
     apt:
