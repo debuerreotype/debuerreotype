@@ -157,8 +157,9 @@ echo "$epoch" \
 	| cut -f1 -d' ' \
 	> "$targetDir/etc/machine-id" # TODO should we only do this if "/etc/machine-id" already exists?
 {
-	echo 'nameserver 8.8.8.8'
-	echo 'nameserver 8.8.4.4'
+	echo '# https://1.1.1.1 (privacy-focused, highly-available DNS service)'
+	echo 'nameserver 1.1.1.1'
+	echo 'nameserver 1.0.0.1'
 } > "$targetDir/etc/resolv.conf"
 chmod 0644 \
 	"$targetDir/etc/hostname" \
