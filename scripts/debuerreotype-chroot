@@ -31,5 +31,6 @@ unshare --mount bash -Eeuo pipefail -c '
 			mount --rbind "/$dir" "$targetDir/$dir"
 		fi
 	done
+	mount --rbind --read-only /etc/resolv.conf "$targetDir/etc/resolv.conf"
 	exec chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$@"
 ' -- "$cmd" "$@"
