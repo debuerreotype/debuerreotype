@@ -37,9 +37,9 @@ WORKDIR /tmp
 # debuerreotype-init test-stretch stretch 2017-05-08T00:00:00Z
 # debuerreotype-tar test-stretch test-stretch.tar
 # md5sum test-stretch.tar
-#   983b79e9c4ba158e269ef9964dbab60b
+#   14206d5b9b2991e98f5214c3d310e4fa
 
 # debuerreotype-init test-jessie jessie 2017-05-08T00:00:00Z
 # debuerreotype-tar test-jessie test-jessie.tar
 # md5sum test-jessie.tar
-#   93ad9886b0e0da17aae584d3a0236d0c
+#   57f98d3636000630080e5ba208508e10

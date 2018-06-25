@@ -118,13 +118,20 @@ case "$aptVersion" in
 
 			Acquire::GzipIndexes "true";
 		EOF
-		if [[ "$aptVersion" == 0.* ]] || "$thisDir/debuerreotype-chroot" "$targetDir" dpkg --compare-versions "$aptVersion" '<<' '1.0.9.2~'; then
+		# https://github.com/debuerreotype/debuerreotype/issues/41
+		isDebianJessie="$([ -f "$targetDir/etc/os-release" ] && source "$targetDir/etc/os-release" && [ "${ID:-}" = 'debian' ] && [ "${VERSION_ID:-}" = '8' ] && echo '1')" || :
+		if [ -n "$isDebianJessie" ] || [[ "$aptVersion" == 0.* ]] || "$thisDir/debuerreotype-chroot" "$targetDir" dpkg --compare-versions "$aptVersion" '<<' '1.0.9.2~'; then
 			cat >> "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
 
 				# https://salsa.debian.org/apt-team/apt/commit/b0f4b486e6850c5f98520ccf19da71d0ed748ae4; released in src:apt 1.0.9.2, 2014-10-02
 				# prior to src:apt 1.0.9.2, "Acquire::GzipIndexes" _only_ applied to gzip-compressed list files, so we need to prefer those on older releases
 				Acquire::CompressionTypes::Order:: "gz";
 			EOF
+			if [ -n "$isDebianJessie" ]; then
+				cat >> "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
+					# see also https://github.com/debuerreotype/debuerreotype/issues/41 (details of a bug that's apparently specific to Debian Jessie)
+				EOF
+			fi
 		fi
 		chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes"
 
