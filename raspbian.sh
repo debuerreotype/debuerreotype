@@ -68,8 +68,6 @@ docker run \
 		exportDir="output"
 		outputDir="$exportDir/raspbian/$dpkgArch/$suite"
 
-		debuerreotypeScriptsDir="$(dirname "$(readlink -f "$(which debuerreotype-init)")")"
-
 		mkdir -p "$outputDir"
 		wget -O "$outputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg"
 		wget -O "$outputDir/Release" "$mirror/dists/$suite/Release"
