@@ -26,8 +26,14 @@ addons:
             - binfmt-support
             - qemu-user-static
 
+before_script:
+    - docker run -d --name squignix --restart always tianon/squignix # TODO temporary!! (once https://github.com/tianon/pgp-happy-eyeballs/tree/travis-squignix is deleted, this should be) -- squignix is necessary for building etch and woody who otherwise are so poorly behaved they get rate limited by snapshot.d.o (https://travis-ci.org/debuerreotype/debuerreotype/builds/479633791)
+    - wget -qO- https://github.com/tianon/pgp-happy-eyeballs/raw/713f2a81bf3eac1752f0c41b271444f5b57e93c9/hack-my-builds.sh | bash
+
 script:
     - travis_retry ./.travis.sh
 
 after_script:
     - docker images
+    - docker logs rawdns
+    - docker logs squignix # TODO temporary!! (see above)
