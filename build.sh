@@ -153,13 +153,11 @@ docker run \
 			fi
 			initArgs+=( --keyring "$keyring" )
 
-			releaseSuite="$(awk -F ": " "\$1 == \"Suite\" { print \$2; exit }" "$outputDir/Release")"
-			case "$releaseSuite" in
-				# see https://bugs.debian.org/src:usrmerge for why merged-usr should not be in stable yet (mostly "dpkg" related bugs)
-				*oldstable|stable)
-					initArgs+=( --no-merged-usr )
-					;;
-			esac
+			# disable merged-usr (for now?) due to the following compelling arguments:
+			#  - https://bugs.debian.org/src:usrmerge ("dpkg-query" breaks, etc)
+			#  - https://bugs.debian.org/914208 ("buildd" variant disables merged-usr still)
+			#  - https://github.com/debuerreotype/docker-debian-artifacts/issues/60#issuecomment-461426406
+			initArgs+=( --no-merged-usr )
 
 			if [ -n "$qemu" ]; then
 				initArgs+=( --debootstrap="qemu-debootstrap" )
