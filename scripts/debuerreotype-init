@@ -134,6 +134,7 @@ echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
 if [ -z "$nonDebian" ]; then
 	"$thisDir/debuerreotype-gen-sources-list" "$targetDir" "$suite" "$mirror" "$secmirror"
+	"$thisDir/debuerreotype-apt-get" "$targetDir" update -qq
 fi
 
 # since we're minbase, we know everything included is either essential, or a dependency of essential, so let's get clean "apt-mark showmanual" output
