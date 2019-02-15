@@ -222,6 +222,8 @@ docker run \
 					mirror="http://archive.debian.org/debian"
 					secmirror="http://archive.debian.org/debian-security"
 				fi
+				checkmirror="$(< "$exportDir/$serial/$dpkgArch/snapshot-url")"
+				checksecmirror="$(< "$exportDir/$serial/$dpkgArch/snapshot-url-security")"
 
 				local tarArgs=()
 				if [ -n "$qemu" ]; then
@@ -229,10 +231,10 @@ docker run \
 				fi
 
 				if [ "$variant" != "sbuild" ]; then
-					debuerreotype-gen-sources-list "$rootfs" "$suite" "$mirror" "$secmirror"
+					debuerreotype-gen-sources-list "$rootfs" "$suite" "$mirror" "$secmirror" "$checkmirror" "$checksecmirror"
 				else
 					# sbuild needs "deb-src" entries
-					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" "$mirror" "$secmirror"
+					debuerreotype-gen-sources-list --deb-src "$rootfs" "$suite" "$mirror" "$secmirror" "$checkmirror" "$checksecmirror"
 
 					# APT has odd issues with "Acquire::GzipIndexes=false" + "file://..." sources sometimes
 					# (which are used in sbuild for "--extra-package")
