@@ -9,9 +9,9 @@
 /usr/share/gnome/help/*/C/*
 /usr/share/doc/kde/HTML/C/*
 /usr/share/omf/*/*-C.emf
-/usr/share/locale/languages'
-/usr/share/locale/all_languages'
-/usr/share/locale/currency/*'
+/usr/share/locale/languages
+/usr/share/locale/all_languages
+/usr/share/locale/currency/*
 /usr/share/locale/l10n/*
 
 # see also .slimify-excludes
