@@ -142,7 +142,7 @@ fi
 	# --debian-eol squeeze and below do not have python in minbase, thus "apt-mark" fails to run
 	# bash: /usr/bin/apt-mark: /usr/bin/python: bad interpreter: No such file or directory
 	# (also, squeeze APT does not treat essential packages as special, and will offer to purge them if they get marked as auto-installed)
-	if apt-mark --help > /dev/null; then
+	if apt-mark --help &> /dev/null; then
 		apt-mark auto ".*" > /dev/null
 		if [ -n "$1" ]; then
 			# if the user asked for anything to be included extra (like "xyz-archive-keyring"), mark those packages as manually installed

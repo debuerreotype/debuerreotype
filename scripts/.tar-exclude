@@ -30,3 +30,8 @@
 # (according to "man 1 journalctl", this is automatically recreated by "journalctl --update-catalog")
 # Tails also removes this file to achieve reproducibility (https://labs.riseup.net/code/projects/tails/repository/revisions/b1e05c8aac12fc79293f6a220b40a538d4f38c51/diff/config/chroot_local-hooks/99-zzzzzz_reproducible-builds-post-processing)
 ./var/lib/systemd/catalog/database
+
+# for some reason, pototo leaves a core dump (TODO figure out why??)
+./core
+# also, it leaves some junk in /tmp (/tmp/fdmount.conf.tmp.XXX)
+./tmp/fdmount.conf.tmp.*
