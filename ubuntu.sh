@@ -4,17 +4,21 @@ set -Eeuo pipefail
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/scripts/.constants.sh" \
 	--flags 'no-build' \
+	--flags 'arch:' \
 	-- \
-	'[--no-build] <output-dir> <suite>' \
-	'output xenial'
+	'[--no-build] [--arch=<arch>] <output-dir> <suite>' \
+	'output xenial
+--arch arm64 output bionic'
 
 eval "$dgetopt"
 build=1
+arch=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
 		--no-build) build= ;; # for skipping "docker build"
+		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -56,12 +60,13 @@ docker run \
 	-v /tmp \
 	-w /tmp \
 	-e suite="$suite" \
+	-e arch="$arch" \
 	-e TZ='UTC' -e LC_ALL='C' \
 	"$ubuntuDockerImage" \
 	bash -Eeuo pipefail -c '
 		set -x
 
-		dpkgArch="$(dpkg --print-architecture | awk -F- "{ print \$NF }")"
+		dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- "{ print \$NF }")}"
 
 		case "$dpkgArch" in
 			amd64|i386)
@@ -89,7 +94,9 @@ docker run \
 
 		{
 			debuerreotype-init --non-debian \
+				--arch="$dpkgArch" \
 				--keyring /usr/share/keyrings/ubuntu-archive-keyring.gpg \
+				--no-merged-usr \
 				rootfs "$suite" "$mirror"
 			# TODO setup proper sources.list for Ubuntu
 			# deb http://archive.ubuntu.com/ubuntu xenial main restricted universe multiverse
