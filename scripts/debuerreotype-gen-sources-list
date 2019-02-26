@@ -44,9 +44,9 @@ deb() {
 		return
 	fi
 
-	if [ -n "$checkmirror" ]; then
-		echo "# deb $checkmirror $suite $comp"
-	fi
+	#if [ -n "$checkmirror" ]; then
+	#	echo "# deb $checkmirror $suite $comp"
+	#fi
 	echo "deb $mirror $suite $comp"
 	if [ -n "$debSrc" ]; then
 		echo "deb-src $mirror $suite $comp"
