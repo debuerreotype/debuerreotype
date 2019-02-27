@@ -14,7 +14,7 @@ env:
     - SUITE=eol CODENAME=etch            TIMESTAMP=2017-01-01T00:00:00Z SHA256=11257bba9c16e146184e9715a3ec89db4f701bb71d1a4f416e29a68fb20928ff
     - SUITE=eol CODENAME=woody ARCH=i386 TIMESTAMP=2017-01-01T00:00:00Z SHA256=79645a893e1e39a5421a15ba54e20724704b407d9fbb5bbef146a8b03863d1cf
     # qemu-debootstrap testing
-    - ARCH=arm64 SUITE=jessie CODENAME= TIMESTAMP=2017-01-01T00:00:00Z SHA256=414598a463c930ea5ebc5b3ecdfeafdf742c0fc8f564f1951a319cfe389b2cc2
+    - ARCH=arm64 SUITE=jessie CODENAME= TIMESTAMP=2017-01-01T00:00:00Z SHA256=a54b0b74f32d2c03f4036e7c305672471553ac18682ba109d9481da31069dc94
     # a few entries for "today" to try and catch issues like https://github.com/debuerreotype/debuerreotype/issues/41 sooner
     - SUITE=unstable  CODENAME= TIMESTAMP="today 00:00:00" SHA256=
     - SUITE=stable    CODENAME= TIMESTAMP="today 00:00:00" SHA256=
