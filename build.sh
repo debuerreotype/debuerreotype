@@ -256,7 +256,7 @@ docker run \
 				touch_epoch "$targetBase.tar.xz.sha256"
 
 				debuerreotype-chroot "$rootfs" bash -c "
-					if ! dpkg-query -W &> /dev/null; then
+					if ! dpkg-query -W 2> /dev/null; then
 						# --debian-eol woody has no dpkg-query
 						dpkg -l
 					fi
