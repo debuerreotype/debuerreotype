@@ -32,7 +32,7 @@ Available scripts:
 | `debuerreotype-apt-get` | run `apt-get` via `debuerreotype-chroot`, including `-o Acquire::Check-Valid-Until=false` to account for older snapshots with (now) invalid `Valid-Until` values |
 | `debuerreotype-minimizing-config` | apply configuration tweaks to make the rootfs minimal and keep it minimal (especially targeted at Docker images, with comments explicitly describing Docker use cases) |
 | `debuerreotype-slimify` | remove files such as documentation to create an even smaller rootfs (used for creating `slim` variants of the Docker images, for example) |
-| `debuerreotype-gen-sources-list` | generate an appropriate `sources.list` in the rootfs given a suite, mirror, and secmirror (especially for updating `sources.list` to point at deb.debian.org before generating outputs) |
+| `debuerreotype-debian-sources-list` | generate an appropriate Debian `sources.list` in the rootfs given a suite (especially for updating `sources.list` to point at deb.debian.org before generating outputs) |
 | `debuerreotype-fixup` | invoked by `debuerreotype-tar` to fixup timestamps and remove known-bad log files for determinism |
 | `debuerreotype-tar` | deterministically create a tar file of the rootfs |
 | `debuerreotype-version` | print out the version of the current `debuerreotype` installation |
@@ -86,10 +86,10 @@ Setting up inetutils-ping (2:1.9.4-2+b1) ...
 Setting up iproute2 (4.9.0-1) ...
 Processing triggers for libc-bin (2.24-8) ...
 
-$ debuerreotype-gen-sources-list rootfs stretch http://deb.debian.org/debian http://security.debian.org/debian-security
+$ debuerreotype-debian-sources-list rootfs stretch
 
 $ debuerreotype-tar rootfs - | sha256sum
-4465b2ba26c06c39f5bfe702e1b22964b3a13386e86abab71bfefab409b64000  -
+a076d4cd04f68ee117e598a40cc947ad051fc8b063340da015fdceddeb1b0e75  -
 
 $ # try it!  you should get that same sha256sum value!
 ```

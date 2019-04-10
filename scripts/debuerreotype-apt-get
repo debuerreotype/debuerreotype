@@ -19,4 +19,7 @@ done
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
 
+epoch="$(< "$targetDir/debuerreotype-epoch")"
+export SOURCE_DATE_EPOCH="$epoch"
+
 "$thisDir/debuerreotype-chroot" "$targetDir" apt-get -o Acquire::Check-Valid-Until=false "$@"
