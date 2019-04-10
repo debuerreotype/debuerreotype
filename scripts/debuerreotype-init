@@ -57,7 +57,6 @@ suite="${1:-}"; shift || eusage 'missing suite'
 
 timestamp=
 mirror=
-secmirror=
 if [ -z "$nonDebian" ]; then
 	timestamp="${1:-}"; shift || eusage 'missing timestamp'
 else
@@ -72,11 +71,9 @@ export SOURCE_DATE_EPOCH="$epoch"
 if [ -z "$nonDebian" ]; then
 	if [ -z "$debianEol" ]; then
 		mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
-		secmirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')"
 	else
 		mirrorbase="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
 		mirror="$mirrorbase/debian"
-		secmirror="$mirrorbase/debian-security"
 	fi
 fi
 
@@ -133,7 +130,7 @@ fi
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
 if [ -z "$nonDebian" ]; then
-	"$thisDir/debuerreotype-gen-sources-list" "$targetDir" "$suite" "$mirror" "$secmirror"
+	"$thisDir/debuerreotype-debian-sources-list" --snapshot $([ -z "$debianEol" ] || echo '--eol') "$targetDir" "$suite"
 	"$thisDir/debuerreotype-apt-get" "$targetDir" update -qq
 fi
 

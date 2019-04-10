@@ -1,0 +1,118 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+source "$thisDir/.constants.sh" \
+	--flags 'eol,snapshot' \
+	--flags 'deb-src' \
+	-- \
+	'[--deb-src] [--eol] [--no-snapshot] <target-dir> <suite>' \
+	'--snapshot rootfs stretch
+--eol rootfs wheezy'
+
+eval "$dgetopt"
+eol=
+snapshot=
+debSrc=
+while true; do
+	flag="$1"; shift
+	dgetopt-case "$flag"
+	case "$flag" in
+		--eol) eol=1 ;;
+		--snapshot) snapshot=1 ;;
+		--deb-src) debSrc=1 ;;
+		--) break ;;
+		*) eusage "unknown flag '$flag'" ;;
+	esac
+done
+
+targetDir="${1:-}"; shift || eusage 'missing target-dir'
+suite="${1:-}"; shift || eusage 'missing suite'
+[ -n "$targetDir" ]
+
+epoch="$(< "$targetDir/debuerreotype-epoch")"
+
+standardMirror='http://deb.debian.org/debian'
+snapshotStandardMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch")" )
+
+securityMirror='http://security.debian.org/debian-security'
+snapshotSecurityMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')" )
+
+if [ -n "$eol" ]; then
+	archiveSnapshotMirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
+
+	standardMirror='http://archive.debian.org/debian'
+	snapshotStandardMirrors=( "$archiveSnapshotMirror/debian" "${snapshotStandardMirrors[@]}" )
+
+	securityMirror='http://archive.debian.org/debian-security'
+	snapshotSecurityMirrors=( "$archiveSnapshotMirror/debian-security" "${snapshotSecurityMirrors[@]}" )
+fi
+
+comp='main'
+arch="$("$thisDir/.dpkg-arch.sh" "$targetDir")"
+
+deb() {
+	local suite="$1"; shift
+	local comp="$1"; shift
+	local target="$1"; shift # "standard" or "security"
+
+	local nonSnapshotMirror= snapshotMirrors=()
+	case "$target" in
+		standard) nonSnapshotMirror="$standardMirror"; snapshotMirrors=( "${snapshotStandardMirrors[@]}" ) ;;
+		security) nonSnapshotMirror="$securityMirror"; snapshotMirrors=( "${snapshotSecurityMirrors[@]}" ) ;;
+		*) echo >&2 "error: unknown 'deb' line target: '$target'"; exit 1 ;;
+	esac
+
+	local found= mirror
+	for mirror in "${snapshotMirrors[@]}"; do
+		# http://snapshot.debian.org/archive/debian-archive/20160314T000000Z/debian/dists/squeeze-updates/main/binary-amd64/Packages.gz
+		if wget --quiet --spider -O /dev/null -o /dev/null "$mirror/dists/$suite/$comp/binary-$arch/Packages.gz"; then
+			found="$mirror"
+			break
+		fi
+	done
+	if [ -z "$found" ]; then
+		echo >&2 "warning: no apparent '$suite/$comp' for '$arch' on any of the following; skipping"
+		for mirror in "${snapshotMirrors[@]}"; do echo >&2 "  - $mirror"; done
+		return
+	fi
+
+	if [ -n "$snapshot" ]; then
+		mirror="$found"
+	else
+		echo "# deb $found $suite $comp"
+		mirror="$nonSnapshotMirror"
+	fi
+	echo "deb $mirror $suite $comp"
+	if [ -n "$debSrc" ]; then
+		echo "deb-src $mirror $suite $comp"
+	fi
+}
+
+# https://github.com/tianon/go-aptsources/blob/e066ed9cd8cd9eef7198765bd00ec99679e6d0be/target.go#L16-L58
+{
+	case "$suite" in
+		sid|unstable|testing)
+			deb "$suite" "$comp" standard
+			;;
+
+		*)
+			# https://salsa.debian.org/installer-team/apt-setup/tree/d7a642fb5fc76e4f0b684db53984bdb9123f8360/generators
+			deb "$suite"         "$comp" standard # "50mirror"
+			deb "$suite/updates" "$comp" security # "91security"
+			deb "$suite-updates" "$comp" standard # "92updates"
+			# https://wiki.debian.org/SourcesList#Example_sources.list
+
+			if [ "$suite" = 'squeeze' ]; then
+				# https://wiki.debian.org/DebianSqueeze#FAQ
+				deb "$suite-lts" "$comp" standard
+			fi
+			;;
+	esac
+} > "$targetDir/etc/apt/sources.list"
+chmod 0644 "$targetDir/etc/apt/sources.list"
+
+if [ ! -s "$targetDir/etc/apt/sources.list" ]; then
+	echo >&2 "error: sources.list ended up empty -- something is definitely wrong"
+	exit 1
+fi
