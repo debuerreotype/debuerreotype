@@ -56,95 +56,93 @@ if [ -d "$targetDir/etc/dpkg/dpkg.cfg.d" ]; then
 	chmod 0644 "$targetDir/etc/dpkg/dpkg.cfg.d/docker-apt-speedup"
 fi
 
-case "$aptVersion" in
-	# not supported on --debian-eol lenny and older
-	0.7.*|0.6.*|0.5.*) ;;
+if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
+	# update "autoremove" configuration to be aggressive about removing suggests deps that weren't manually installed
+	cat > "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests" <<-'EOF'
+		# Since Docker users are looking for the smallest possible final images, the
+		# following emerges as a very common pattern:
 
-	*)
-		# update "autoremove" configuration to be aggressive about removing suggests deps that weren't manually installed
-		cat > "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests" <<-'EOF'
-			# Since Docker users are looking for the smallest possible final images, the
-			# following emerges as a very common pattern:
+		#   RUN apt-get update \
+		#       && apt-get install -y <packages> \
+		#       && <do some compilation work> \
+		#       && apt-get purge -y --auto-remove <packages>
 
-			#   RUN apt-get update \
-			#       && apt-get install -y <packages> \
-			#       && <do some compilation work> \
-			#       && apt-get purge -y --auto-remove <packages>
+		# By default, APT will actually _keep_ packages installed via Recommends or
+		# Depends if another package Suggests them, even and including if the package
+		# that originally caused them to be installed is removed.  Setting this to
+		# "false" ensures that APT is appropriately aggressive about removing the
+		# packages it added.
 
-			# By default, APT will actually _keep_ packages installed via Recommends or
-			# Depends if another package Suggests them, even and including if the package
-			# that originally caused them to be installed is removed.  Setting this to
-			# "false" ensures that APT is appropriately aggressive about removing the
-			# packages it added.
+		# https://aptitude.alioth.debian.org/doc/en/ch02s05s05.html#configApt-AutoRemove-SuggestsImportant
+		Apt::AutoRemove::SuggestsImportant "false";
+	EOF
+	chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests"
+	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests"
 
-			# https://aptitude.alioth.debian.org/doc/en/ch02s05s05.html#configApt-AutoRemove-SuggestsImportant
-			Apt::AutoRemove::SuggestsImportant "false";
+	# keep us lean by effectively running "apt-get clean" after every install
+	aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
+	cat > "$targetDir/etc/apt/apt.conf.d/docker-clean" <<-EOF
+		# Since for most Docker users, package installs happen in "docker build" steps,
+		# they essentially become individual layers due to the way Docker handles
+		# layering, especially using CoW filesystems.  What this means for us is that
+		# the caches that APT keeps end up just wasting space in those layers, making
+		# our layers unnecessarily large (especially since we'll normally never use
+		# these caches again and will instead just "docker build" again and make a brand
+		# new image).
+
+		# Ideally, these would just be invoking "apt-get clean", but in our testing,
+		# that ended up being cyclic and we got stuck on APT's lock, so we get this fun
+		# creation that's essentially just "apt-get clean".
+		DPkg::Post-Invoke { $aptGetClean };
+		APT::Update::Post-Invoke { $aptGetClean };
+
+		Dir::Cache::pkgcache "";
+		Dir::Cache::srcpkgcache "";
+
+		# Note that we do realize this isn't the ideal way to do this, and are always
+		# open to better suggestions (https://github.com/debuerreotype/debuerreotype/issues).
+	EOF
+	chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-clean"
+	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-clean"
+
+	cat > "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
+		# Since Docker users using "RUN apt-get update && apt-get install -y ..." in
+		# their Dockerfiles don't go delete the lists files afterwards, we want them to
+		# be as small as possible on-disk, so we explicitly request that Apt keep them
+		# compressed on-disk too instead of decompressing them.
+
+		# For comparison, an "apt-get update" layer without this on a pristine
+		# "debian:wheezy" base image was "29.88 MB", where with this it was only
+		# "8.273 MB".
+
+		Acquire::GzipIndexes "true";
+	EOF
+	# https://github.com/debuerreotype/debuerreotype/issues/41
+	isDebianJessie="$([ -f "$targetDir/etc/os-release" ] && source "$targetDir/etc/os-release" && [ "${ID:-}" = 'debian' ] && [ "${VERSION_ID:-}" = '8' ] && echo '1')" || :
+	if [ -n "$isDebianJessie" ] || [[ "$aptVersion" == 0.* ]] || "$thisDir/debuerreotype-chroot" "$targetDir" dpkg --compare-versions "$aptVersion" '<<' '1.0.9.2~'; then
+		cat >> "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
+
+			# https://salsa.debian.org/apt-team/apt/commit/b0f4b486e6850c5f98520ccf19da71d0ed748ae4; released in src:apt 1.0.9.2, 2014-10-02
+			# prior to src:apt 1.0.9.2, "Acquire::GzipIndexes" _only_ applied to gzip-compressed list files, so we need to prefer those on older releases
+			Acquire::CompressionTypes::Order:: "gz";
 		EOF
-		chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests"
-
-		# keep us lean by effectively running "apt-get clean" after every install
-		aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
-		cat > "$targetDir/etc/apt/apt.conf.d/docker-clean" <<-EOF
-			# Since for most Docker users, package installs happen in "docker build" steps,
-			# they essentially become individual layers due to the way Docker handles
-			# layering, especially using CoW filesystems.  What this means for us is that
-			# the caches that APT keeps end up just wasting space in those layers, making
-			# our layers unnecessarily large (especially since we'll normally never use
-			# these caches again and will instead just "docker build" again and make a brand
-			# new image).
-
-			# Ideally, these would just be invoking "apt-get clean", but in our testing,
-			# that ended up being cyclic and we got stuck on APT's lock, so we get this fun
-			# creation that's essentially just "apt-get clean".
-			DPkg::Post-Invoke { $aptGetClean };
-			APT::Update::Post-Invoke { $aptGetClean };
-
-			Dir::Cache::pkgcache "";
-			Dir::Cache::srcpkgcache "";
-
-			# Note that we do realize this isn't the ideal way to do this, and are always
-			# open to better suggestions (https://github.com/debuerreotype/debuerreotype/issues).
-		EOF
-		chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-clean"
-
-		cat > "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
-			# Since Docker users using "RUN apt-get update && apt-get install -y ..." in
-			# their Dockerfiles don't go delete the lists files afterwards, we want them to
-			# be as small as possible on-disk, so we explicitly request that Apt keep them
-			# compressed on-disk too instead of decompressing them.
-
-			# For comparison, an "apt-get update" layer without this on a pristine
-			# "debian:wheezy" base image was "29.88 MB", where with this it was only
-			# "8.273 MB".
-
-			Acquire::GzipIndexes "true";
-		EOF
-		# https://github.com/debuerreotype/debuerreotype/issues/41
-		isDebianJessie="$([ -f "$targetDir/etc/os-release" ] && source "$targetDir/etc/os-release" && [ "${ID:-}" = 'debian' ] && [ "${VERSION_ID:-}" = '8' ] && echo '1')" || :
-		if [ -n "$isDebianJessie" ] || [[ "$aptVersion" == 0.* ]] || "$thisDir/debuerreotype-chroot" "$targetDir" dpkg --compare-versions "$aptVersion" '<<' '1.0.9.2~'; then
+		if [ -n "$isDebianJessie" ]; then
 			cat >> "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
-
-				# https://salsa.debian.org/apt-team/apt/commit/b0f4b486e6850c5f98520ccf19da71d0ed748ae4; released in src:apt 1.0.9.2, 2014-10-02
-				# prior to src:apt 1.0.9.2, "Acquire::GzipIndexes" _only_ applied to gzip-compressed list files, so we need to prefer those on older releases
-				Acquire::CompressionTypes::Order:: "gz";
+				# see also https://github.com/debuerreotype/debuerreotype/issues/41 (details of a bug that's apparently specific to Debian Jessie)
 			EOF
-			if [ -n "$isDebianJessie" ]; then
-				cat >> "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
-					# see also https://github.com/debuerreotype/debuerreotype/issues/41 (details of a bug that's apparently specific to Debian Jessie)
-				EOF
-			fi
 		fi
-		chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes"
+	fi
+	chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes"
+	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes"
 
-		# remove apt-cache translations for faster "apt-get update"
-		cat > "$targetDir/etc/apt/apt.conf.d/docker-no-languages" <<-'EOF'
-			# In Docker, we don't often need the "Translations" files, so we're just wasting
-			# time and space by downloading them, and this inhibits that.  For users that do
-			# need them, it's a simple matter to delete this file and "apt-get update". :)
+	# remove apt-cache translations for faster "apt-get update"
+	cat > "$targetDir/etc/apt/apt.conf.d/docker-no-languages" <<-'EOF'
+		# In Docker, we don't often need the "Translations" files, so we're just wasting
+		# time and space by downloading them, and this inhibits that.  For users that do
+		# need them, it's a simple matter to delete this file and "apt-get update". :)
 
-			Acquire::Languages "none";
-		EOF
-		chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-no-languages"
-
-		;;
-esac
+		Acquire::Languages "none";
+	EOF
+	chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-no-languages"
+	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-no-languages"
+fi
