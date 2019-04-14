@@ -166,17 +166,28 @@ docker run \
 
 			debuerreotype-init "${initArgs[@]}" rootfs "$suite" "@$epoch"
 
+			if [ -n "$eol" ]; then
+				debuerreotype-gpgv-ignore-expiration-config rootfs
+			fi
+
 			debuerreotype-minimizing-config rootfs
 			debuerreotype-apt-get rootfs update -qq
 			debuerreotype-apt-get rootfs dist-upgrade -yqq
 
 			aptVersion="$("$debuerreotypeScriptsDir/.apt-version.sh" rootfs)"
-			case "$aptVersion" in
+			if dpkg --compare-versions "$aptVersion" ">=" "0.7.14~"; then
+				# https://salsa.debian.org/apt-team/apt/commit/06d79436542ccf3e9664306da05ba4c34fba4882
+				noInstallRecommends="--no-install-recommends"
+			else
 				# --debian-eol etch and lower do not support --no-install-recommends
-				0.6.*|0.5.*) noInstallRecommends="-o APT::Install-Recommends=0" ;;
+				noInstallRecommends="-o APT::Install-Recommends=0"
+			fi
 
-				*) noInstallRecommends="--no-install-recommends" ;;
-			esac
+			if [ -n "$eol" ] && dpkg --compare-versions "$aptVersion" ">=" "0.7.26~"; then
+				# https://salsa.debian.org/apt-team/apt/commit/1ddb859611d2e0f3d9ea12085001810f689e8c99
+				echo "Acquire::Check-Valid-Until \"false\";" > rootfs/etc/apt/apt.conf.d/check-valid-until.conf
+				# TODO make this a real script so it can have a nice comment explaining why we do it for EOL releases?
+			fi
 
 			# make a couple copies of rootfs so we can create other variants
 			for variant in slim sbuild; do
@@ -237,6 +248,18 @@ docker run \
 					# see https://github.com/debuerreotype/debuerreotype/pull/8#issuecomment-305855521
 					tarArgs+=( --include-dev )
 				fi
+
+				case "$suite" in
+					sarge)
+						# for some reason, sarge creates "/var/cache/man/index.db" with some obvious embedded unix timestamps (but if we exclude it, "man" still works properly, so *shrug*)
+						tarArgs+=( --exclude ./var/cache/man/index.db )
+						;;
+
+					woody)
+						# woody not only contains "exim", but launches it during our build process and tries to email "root@debuerreotype" (which fails and creates non-reproducibility)
+						tarArgs+=( --exclude ./var/spool/exim --exclude ./var/log/exim )
+						;;
+				esac
 
 				debuerreotype-tar "${tarArgs[@]}" "$rootfs" "$targetBase.tar.xz"
 				du -hsx "$targetBase.tar.xz"
