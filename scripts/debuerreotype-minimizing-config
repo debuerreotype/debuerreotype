@@ -57,6 +57,9 @@ if [ -d "$targetDir/etc/dpkg/dpkg.cfg.d" ]; then
 fi
 
 if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
+	# TODO make some (all?) of these conditional based on the version of APT that added the feature
+	# (perhaps it's finally time for an "apt-version-cmp.sh" helper script to test whether APT is X or newer one version component at a time? "dpkg --compare-versions"!!!)
+
 	# update "autoremove" configuration to be aggressive about removing suggests deps that weren't manually installed
 	cat > "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests" <<-'EOF'
 		# Since Docker users are looking for the smallest possible final images, the

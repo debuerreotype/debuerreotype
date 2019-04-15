@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+source "$thisDir/.constants.sh" \
+	'<target-dir>' \
+	'rootfs'
+
+eval "$dgetopt"
+while true; do
+	flag="$1"; shift
+	dgetopt-case "$flag"
+	case "$flag" in
+		--) break ;;
+		*) eusage "unknown flag '$flag'" ;;
+	esac
+done
+
+targetDir="${1:-}"; shift || eusage 'missing target-dir'
+[ -n "$targetDir" ]
+
+aptVersion="$("$thisDir/.apt-version.sh" "$targetDir")"
+# if we're on APT 0.6 or lower, this isn't relevant
+# (added in 0.7.21 / 0.7.20.2+lenny1; https://salsa.debian.org/apt-team/apt/commit/0b77f4775db7bc45964e0337b8978a170b3f0483)
+if dpkg --compare-versions "$aptVersion" '<<' '0.7.20~'; then
+	echo >&2 "note: skipping $self: APT version ($aptVersion) too old to be relevant"
+	exit
+fi
+
+sourceFile="$thisDir/.gpgv-ignore-expiration.sh"
+targetPath='/usr/local/bin/.debuerreotype-gpgv-ignore-expiration'
+targetFile="$targetDir$targetPath"
+cp -T "$sourceFile" "$targetFile"
+chmod 0755 "$targetFile"
+
+# APT 1.1+ changed to use "apt-key verify" instead of invoking "gpgv" directly
+# (https://salsa.debian.org/apt-team/apt/commit/12841e8320aa499554ac50b102b222900bb1b879)
+aptConfigKey='Apt::Key::gpgvcommand'
+case "$aptVersion" in
+	0.* | 1.0*) aptConfigKey='Dir::Bin::gpg' ;;
+esac
+
+cat > "$targetDir/etc/apt/apt.conf.d/debuerreotype-gpgv-ignore-expiration" <<-EOF
+	# For the sake of EOL releases (whose archive keys have often expired), we need
+	# a fake "gpgv" substitute that will essentially ignore *just* key expiration.
+	# (So we get *some* signature validation instead of using something like
+	# "--allow-unauthenticated" or "--force-yes" which disable security entirely
+	# instead.)
+
+	$aptConfigKey "$targetPath";
+EOF
+chmod 0644 "$targetDir/etc/apt/apt.conf.d/debuerreotype-gpgv-ignore-expiration"
+"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/debuerreotype-gpgv-ignore-expiration"

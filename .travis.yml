@@ -12,7 +12,8 @@ env:
     - SUITE=wheezy    CODENAME=       TIMESTAMP=2017-01-01T00:00:00Z SHA256=f1bd72548e3c25ce222fb9e2bb57a5b6d4b01042180894fb05d83a0251e6dab1
     # EOL suites testing
     - SUITE=eol CODENAME=etch            TIMESTAMP=2017-01-01T00:00:00Z SHA256=eb005e297101b8e4555a08e96395fa0575cbdddf4901a081948b17a4039939bd
-    - SUITE=eol CODENAME=woody ARCH=i386 TIMESTAMP=2017-01-01T00:00:00Z SHA256=46a1330121271abd01e107a886b7f85ce72edb0ae9fdf9c139562dc0fba806b1
+    - SUITE=eol CODENAME=lenny           TIMESTAMP=2017-01-01T00:00:00Z SHA256=6bcd3bfe6916dcf6e4f923d8eddcb41105fc8c0d002765fbca7d9f95e346019e
+    - SUITE=eol CODENAME=woody ARCH=i386 TIMESTAMP=2017-01-01T00:00:00Z SHA256=a1457a071c39bd0c54755a27430475896dd1623a743a7d34c6a1b951a4aaea0a
     # qemu-debootstrap testing
     - ARCH=arm64 SUITE=jessie CODENAME= TIMESTAMP=2017-01-01T00:00:00Z SHA256=893efc1b9db1ba2df4f171d4422194a408f9810d3b55d9b0cd66fcc7722f7567
     # a few entries for "today" to try and catch issues like https://github.com/debuerreotype/debuerreotype/issues/41 sooner
