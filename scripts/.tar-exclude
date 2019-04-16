@@ -6,8 +6,14 @@
 ./proc/**
 ./sys/**
 
-./var/cache/apt/**
-./var/lib/apt/lists/**
+# targeted exclusions to get rid of everything except "/var/cache/apt/archives/partial" and "/var/lib/apt/lists/partial"
+# (https://salsa.debian.org/apt-team/apt/commit/1cd1c398d18b78f4aa9d882a5de5385f4538e0be)
+./var/cache/apt/*.bin
+./var/cache/apt/archives/*.deb
+./var/cache/apt/archives/lock
+./var/lib/apt/lists/*Packages*
+./var/lib/apt/lists/*Release*
+./var/lib/apt/lists/lock
 
 # ends up with host-kernel info
 ./etc/apt/apt.conf.d/01autoremove-kernels
