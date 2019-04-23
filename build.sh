@@ -259,6 +259,16 @@ docker run \
 						# woody not only contains "exim", but launches it during our build process and tries to email "root@debuerreotype" (which fails and creates non-reproducibility)
 						tarArgs+=( --exclude ./var/spool/exim --exclude ./var/log/exim )
 						;;
+
+					potato)
+						tarArgs+=(
+							# for some reason, pototo leaves a core dump (TODO figure out why??)
+							--exclude "./core"
+							--exclude "./qemu*.core"
+							# also, it leaves some junk in /tmp (/tmp/fdmount.conf.tmp.XXX)
+							--exclude "./tmp/fdmount.conf.tmp.*"
+						)
+						;;
 				esac
 
 				debuerreotype-tar "${tarArgs[@]}" "$rootfs" "$targetBase.tar.xz"
