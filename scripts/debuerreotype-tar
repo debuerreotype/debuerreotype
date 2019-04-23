@@ -38,7 +38,9 @@ if dpkg --compare-versions "$aptVersion" '>=' '0.8~'; then
 	excludes+=(
 		'./var/cache/apt/**'
 		'./var/lib/apt/lists/**'
+		'./var/state/apt/lists/**'
 	)
+	# (see also the targeted exclusions in ".tar-exclude" that these are overriding)
 fi
 
 "$thisDir/debuerreotype-fixup" "$targetDir"
