@@ -66,12 +66,20 @@ deb() {
 	local found= mirror
 	for mirror in "${snapshotMirrors[@]}"; do
 		# http://snapshot.debian.org/archive/debian-archive/20160314T000000Z/debian/dists/squeeze-updates/main/binary-amd64/Packages.gz
-		if wget --quiet --spider -O /dev/null -o /dev/null "$mirror/dists/$suite/$comp/binary-$arch/Packages.gz"; then
+		if \
+			wget --quiet --spider -O /dev/null -o /dev/null "$mirror/dists/$suite/$comp/binary-$arch/Packages.xz" \
+			|| wget --quiet --spider -O /dev/null -o /dev/null "$mirror/dists/$suite/$comp/binary-$arch/Packages.gz" \
+		; then
 			found="$mirror"
 			break
 		fi
 	done
 	if [ -z "$found" ]; then
+		if [ "$target" = 'security' ] && [[ "$suite" == *-security ]]; then
+			# https://lists.debian.org/debian-devel-announce/2019/07/msg00004.html
+			deb "${suite%-security}/updates" "$comp" "$target"
+			return
+		fi
 		echo >&2 "warning: no apparent '$suite/$comp' for '$arch' on any of the following; skipping"
 		for mirror in "${snapshotMirrors[@]}"; do echo >&2 "  - $mirror"; done
 		return
@@ -98,9 +106,9 @@ deb() {
 
 		*)
 			# https://salsa.debian.org/installer-team/apt-setup/tree/d7a642fb5fc76e4f0b684db53984bdb9123f8360/generators
-			deb "$suite"         "$comp" standard # "50mirror"
-			deb "$suite/updates" "$comp" security # "91security"
-			deb "$suite-updates" "$comp" standard # "92updates"
+			deb "$suite"          "$comp" standard # "50mirror"
+			deb "$suite-security" "$comp" security # "91security"
+			deb "$suite-updates"  "$comp" standard # "92updates"
 			# https://wiki.debian.org/SourcesList#Example_sources.list
 
 			if [ "$suite" = 'squeeze' ]; then

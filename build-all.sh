@@ -55,7 +55,13 @@ for suite in "${suites[@]}"; do
 	case "$suite" in
 		testing|unstable) ;;
 		*)
-			if ! wget --quiet --spider "$secmirror/dists/$suite/updates/main/binary-$dpkgArch/Packages.gz"; then
+			# https://lists.debian.org/debian-devel-announce/2019/07/msg00004.html
+			if \
+				! wget --quiet --spider "$secmirror/dists/$suite-security/main/binary-$dpkgArch/Packages.xz" \
+				&& ! wget --quiet --spider "$secmirror/dists/$suite-security/main/binary-$dpkgArch/Packages.gz" \
+				&& ! wget --quiet --spider "$secmirror/dists/$suite/updates/main/binary-$dpkgArch/Packages.xz" \
+				&& ! wget --quiet --spider "$secmirror/dists/$suite/updates/main/binary-$dpkgArch/Packages.gz" \
+			; then
 				doSkip=1
 			fi
 			;;
