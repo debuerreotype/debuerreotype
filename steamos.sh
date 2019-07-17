@@ -71,18 +71,27 @@ docker run \
 
 		debuerreotypeScriptsDir="$(dirname "$(readlink -f "$(which debuerreotype-init)")")"
 
+		keyring='/usr/share/keyrings/valve-archive-keyring.gpg'
+
 		mkdir -p "$outputDir"
-		wget -O "$outputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg"
-		wget -O "$outputDir/Release" "$mirror/dists/$suite/Release"
-		gpgv \
-			--keyring /usr/share/keyrings/valve-archive-keyring.gpg \
-			"$outputDir/Release.gpg" \
-			"$outputDir/Release"
+		if wget -O "$outputDir/InRelease" "$mirror/dists/$suite/InRelease"; then
+			gpgv \
+				--keyring "$keyring" \
+				--output "$outputDir/Release" \
+				"$outputDir/InRelease"
+		else
+			wget -O "$outputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg"
+			wget -O "$outputDir/Release" "$mirror/dists/$suite/Release"
+			gpgv \
+				--keyring "$keyring" \
+				"$outputDir/Release.gpg" \
+				"$outputDir/Release"
+		fi
 
 		{
 			debuerreotype-init --non-debian \
 				--debootstrap-script /usr/share/debootstrap/scripts/jessie \
-				--keyring /usr/share/keyrings/valve-archive-keyring.gpg \
+				--keyring "$keyring" \
 				--include valve-archive-keyring \
 				--exclude debian-archive-keyring \
 				--no-merged-usr \

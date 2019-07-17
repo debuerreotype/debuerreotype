@@ -128,12 +128,19 @@ docker run \
 
 		snapshotUrl="$(< "$exportDir/$serial/$dpkgArch/snapshot-url")"
 		mkdir -p "$outputDir"
-		wget -O "$outputDir/Release.gpg" "$snapshotUrl/dists/$suite/Release.gpg"
-		wget -O "$outputDir/Release" "$snapshotUrl/dists/$suite/Release"
-		gpgv \
-			--keyring "$keyring" \
-			"$outputDir/Release.gpg" \
-			"$outputDir/Release"
+		if wget -O "$outputDir/InRelease" "$snapshotUrl/dists/$suite/InRelease"; then
+			gpgv \
+				--keyring "$keyring" \
+				--output "$outputDir/Release" \
+				"$outputDir/InRelease"
+		else
+			wget -O "$outputDir/Release.gpg" "$snapshotUrl/dists/$suite/Release.gpg"
+			wget -O "$outputDir/Release" "$snapshotUrl/dists/$suite/Release"
+			gpgv \
+				--keyring "$keyring" \
+				"$outputDir/Release.gpg" \
+				"$outputDir/Release"
+		fi
 
 		codename="$(awk -F ": " "\$1 == \"Codename\" { print \$2; exit }" "$outputDir/Release")"
 		if [ -n "$codenameCopy" ] && [ "$codename" = "$suite" ]; then

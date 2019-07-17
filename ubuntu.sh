@@ -84,18 +84,27 @@ docker run \
 
 		debuerreotypeScriptsDir="$(dirname "$(readlink -f "$(which debuerreotype-init)")")"
 
+		keyring='/usr/share/keyrings/ubuntu-archive-keyring.gpg'
+
 		mkdir -p "$outputDir"
-		wget -O "$outputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg"
-		wget -O "$outputDir/Release" "$mirror/dists/$suite/Release"
-		gpgv \
-			--keyring /usr/share/keyrings/ubuntu-archive-keyring.gpg \
-			"$outputDir/Release.gpg" \
-			"$outputDir/Release"
+		if wget -O "$outputDir/InRelease" "$mirror/dists/$suite/InRelease"; then
+			gpgv \
+				--keyring "$keyring" \
+				--output "$outputDir/Release" \
+				"$outputDir/InRelease"
+		else
+			wget -O "$outputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg"
+			wget -O "$outputDir/Release" "$mirror/dists/$suite/Release"
+			gpgv \
+				--keyring "$keyring" \
+				"$outputDir/Release.gpg" \
+				"$outputDir/Release"
+		fi
 
 		{
 			debuerreotype-init --non-debian \
 				--arch="$dpkgArch" \
-				--keyring /usr/share/keyrings/ubuntu-archive-keyring.gpg \
+				--keyring "$keyring" \
 				--no-merged-usr \
 				rootfs "$suite" "$mirror"
 			# TODO setup proper sources.list for Ubuntu
