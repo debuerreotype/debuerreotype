@@ -62,7 +62,13 @@ if [ -z "$nonDebian" ]; then
 else
 	mirror="${1:-}"; shift || eusage 'missing mirror'
 
-	timestamp="$(wget -qO- "$mirror/dists/$suite/Release" | awk -F ': ' '$1 == "Date" { print $2 }')"
+	timestamp="$(
+		{
+			wget -qO- "$mirror/dists/$suite/InRelease" 2>/dev/null \
+				|| wget -qO- "$mirror/dists/$suite/Release"
+		} |tac|tac| awk -F ': ' '$1 == "Date" { print $2; exit }'
+	)"
+	# TODO re-calculate "timestamp" during debuerreotype-tar/fixup (possibly scraping from /var/lib/apt/lists/*Release* instead?)
 fi
 
 epoch="$(date --date "$timestamp" '+%s')"
