@@ -84,7 +84,7 @@ docker run \
 
 		debuerreotypeScriptsDir="$(dirname "$(readlink -f "$(which debuerreotype-init)")")"
 
-		keyring='/usr/share/keyrings/ubuntu-archive-keyring.gpg'
+		keyring="/usr/share/keyrings/ubuntu-archive-keyring.gpg"
 
 		mkdir -p "$outputDir"
 		if wget -O "$outputDir/InRelease" "$mirror/dists/$suite/InRelease"; then

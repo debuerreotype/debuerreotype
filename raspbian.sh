@@ -68,7 +68,7 @@ docker run \
 		exportDir="output"
 		outputDir="$exportDir/raspbian/$dpkgArch/$suite"
 
-		keyring='/usr/share/keyrings/raspbian-archive-keyring.gpg'
+		keyring="/usr/share/keyrings/raspbian-archive-keyring.gpg"
 
 		mkdir -p "$outputDir"
 		if wget -O "$outputDir/InRelease" "$mirror/dists/$suite/InRelease"; then
