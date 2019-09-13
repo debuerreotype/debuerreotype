@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
-	--flags 'debian,debian-eol,non-debian' \
+	--flags 'debian,debian-eol,non-debian,ports' \
 	--flags 'debootstrap:' \
 	--flags 'debootstrap-script:' \
 	--flags 'keyring:,arch:,include:,exclude:' \
@@ -41,6 +41,7 @@ while true; do
 		--exclude) exclude="${exclude:+$exclude,}$1"; shift ;;
 		--merged-usr)    noMergedUsr=  ;;
 		--no-merged-usr) noMergedUsr=1 ;;
+		--ports) ports=1;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -77,11 +78,15 @@ export SOURCE_DATE_EPOCH="$epoch"
 if [ -z "$nonDebian" ]; then
 	if [ -z "$debianEol" ]; then
 		mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
+		if [ $ports ]; then
+			mirror="$("$thisDir/.snapshot-url.sh" "@$epoch" debian-ports)"
+		fi
 	else
 		mirrorbase="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
 		mirror="$mirrorbase/debian"
 	fi
 fi
+
 
 debootstrapArgs=(
 	--force-check-gpg
@@ -136,7 +141,7 @@ fi
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
 if [ -z "$nonDebian" ]; then
-	"$thisDir/debuerreotype-debian-sources-list" --snapshot $([ -z "$debianEol" ] || echo '--eol') "$targetDir" "$suite"
+	"$thisDir/debuerreotype-debian-sources-list" --snapshot $([ -z "$debianEol" ] || echo '--eol') $([ -z "$ports" ] || echo '--ports') "$targetDir" "$suite"
 	"$thisDir/debuerreotype-apt-get" "$targetDir" update -qq
 fi
 

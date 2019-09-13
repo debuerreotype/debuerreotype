@@ -4,9 +4,9 @@ set -Eeuo pipefail
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/scripts/.constants.sh" \
 	--flags 'no-build,codename-copy' \
-	--flags 'eol,arch:,qemu' \
+	--flags 'eol,arch:,qemu,ports' \
 	-- \
-	'[--no-build] [--codename-copy] [--eol] [--arch=<arch>] [--qemu] <output-dir> <suite> <timestamp>' \
+	'[--no-build] [--codename-copy] [--eol] [--arch=<arch>] [--qemu] [--ports] <output-dir> <suite> <timestamp>' \
 	'output stretch 2017-05-08T00:00:00Z
 --codename-copy output stable 2017-05-08T00:00:00Z
 --eol output squeeze 2016-03-14T00:00:00Z
@@ -18,6 +18,7 @@ codenameCopy=
 eol=
 arch=
 qemu=
+ports=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
@@ -27,6 +28,7 @@ while true; do
 		--eol) eol=1 ;; # for using "archive.debian.org"
 		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
 		--qemu) qemu=1 ;; # for using "qemu-debootstrap"
+		--ports) ports=1 ;; # Use debian-ports repositories
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -69,6 +71,10 @@ if [ -n "$qemu" ]; then
 	dockerImage="$dockerImage-qemu"
 fi
 
+if [ "$ports" ]; then
+	ports="ports"
+fi
+
 docker run \
 	--rm \
 	"${securityArgs[@]}" \
@@ -79,6 +85,7 @@ docker run \
 	-e codenameCopy="$codenameCopy" \
 	-e eol="$eol" -e arch="$arch" -e qemu="$qemu" \
 	-e TZ='UTC' -e LC_ALL='C' \
+	-e ports="$ports" \
 	--hostname debuerreotype \
 	"$dockerImage" \
 	bash -Eeuo pipefail -c '
@@ -100,7 +107,7 @@ docker run \
 
 		debuerreotypeScriptsDir="$(dirname "$(readlink -f "$(which debuerreotype-init)")")"
 
-		for archive in "" security; do
+		for archive in "$ports" security; do
 			if [ -z "$eol" ]; then
 				snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" "${archive:+debian-${archive}}")"
 			else
@@ -113,7 +120,11 @@ docker run \
 		done
 
 		export GNUPGHOME="$(mktemp -d)"
-		keyring="$GNUPGHOME/debian-archive-$suite-keyring.gpg"
+		if [ "$ports" ]; then
+			keyring="$GNUPGHOME/debian-ports-archive-keyring.gpg"
+		else
+			keyring="$GNUPGHOME/debian-archive-$suite-keyring.gpg"
+		fi
 		if [ "$suite" = potato ]; then
 			# src:debian-archive-keyring was created in 2006, thus does not include a key for potato
 			gpg --batch --no-default-keyring --keyring "$keyring" \
@@ -123,10 +134,10 @@ docker run \
 			# check against all releases (ie, combine both "debian-archive-keyring.gpg" and "debian-archive-removed-keys.gpg"), since we cannot really know whether the target release became EOL later than the snapshot date we are targeting
 			gpg --batch --no-default-keyring --keyring "$keyring" --import \
 				/usr/share/keyrings/debian-archive-keyring.gpg \
+				/usr/share/keyrings/debian-ports-archive-keyring.gpg \
 				/usr/share/keyrings/debian-archive-removed-keys.gpg
 		fi
-
-		snapshotUrl="$(< "$exportDir/$serial/$dpkgArch/snapshot-url")"
+		snapshotUrl="$(< "$exportDir/$serial/$dpkgArch/snapshot-url${ports:+-${ports}}")"
 		mkdir -p "$outputDir"
 		if wget -O "$outputDir/InRelease" "$snapshotUrl/dists/$suite/InRelease"; then
 			gpgv \
@@ -158,6 +169,10 @@ docker run \
 				initArgs+=( --debian )
 			else
 				initArgs+=( --debian-eol )
+			fi
+			if [ "$ports" ]; then
+				initArgs+=( --ports )
+				initArgs+=( --include=debian-ports-archive-keyring )
 			fi
 			initArgs+=( --keyring "$keyring" )
 
@@ -238,10 +253,10 @@ docker run \
 				fi
 
 				if [ "$variant" != "sbuild" ]; then
-					debuerreotype-debian-sources-list $([ -z "$eol" ] || echo "--eol") "$rootfs" "$suite"
+					debuerreotype-debian-sources-list $([ -z "$eol" ] || echo "--eol") $([ -z "$ports" ] || echo '--ports') "$rootfs" "$suite"
 				else
 					# sbuild needs "deb-src" entries
-					debuerreotype-debian-sources-list --deb-src $([ -z "$eol" ] || echo "--eol") "$rootfs" "$suite"
+					debuerreotype-debian-sources-list --deb-src $([ -z "$eol" ] || echo "--eol") $([ -z "$ports" ] || echo '--ports') "$rootfs" "$suite"
 
 					# APT has odd issues with "Acquire::GzipIndexes=false" + "file://..." sources sometimes
 					# (which are used in sbuild for "--extra-package")
@@ -335,7 +350,7 @@ docker run \
 					targetBase="$variantDir/rootfs"
 
 					# point sources.list back at snapshot.debian.org temporarily (but this time pointing at $codename instead of $suite)
-					debuerreotype-debian-sources-list --snapshot $([ -z "$eol" ] || echo "--eol") "$rootfs" "$codename"
+					debuerreotype-debian-sources-list --snapshot $([ -z "$eol" ] || echo "--eol") $([ -z "$ports" ] || echo '--ports') "$rootfs" "$codename"
 
 					create_artifacts "$targetBase" "$rootfs" "$codename" "$variant"
 				done
