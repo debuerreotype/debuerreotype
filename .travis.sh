@@ -17,6 +17,11 @@ if [ -n "${ARCH:-}" ]; then
 		buildArgs+=( '--qemu' )
 	fi
 fi
+# Check if architecture is in "ports" repositories 
+if curl -sL http://deb.debian.org/debian-ports/dists/unstable/InRelease |grep "Architectures" | grep "\s${ARCH}\s";
+then
+    buildArgs+=( "--ports" )
+fi
 buildArgs+=( travis "$SUITE" "@$epoch" )
 
 checkFile="travis/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"

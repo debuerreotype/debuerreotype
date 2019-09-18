@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
-	--flags 'debian,debian-eol,non-debian,ports' \
+	--flags 'debian,debian-eol,debian-ports,non-debian' \
 	--flags 'debootstrap:' \
 	--flags 'debootstrap-script:' \
 	--flags 'keyring:,arch:,include:,exclude:' \
@@ -19,6 +19,7 @@ source "$thisDir/.constants.sh" \
 eval "$dgetopt"
 nonDebian=
 debianEol=
+debianPorts=
 debootstrap=
 script=
 keyring=
@@ -32,6 +33,7 @@ while true; do
 	case "$flag" in
 		--debian)     nonDebian= ; debianEol=  ;;
 		--debian-eol) nonDebian= ; debianEol=1 ;;
+		--debian-ports) nonDebian= ; debianPorts=1 ;;
 		--non-debian) nonDebian=1; debianEol=  ;;
 		--debootstrap) debootstrap="$1"; shift ;;
 		--debootstrap-script) script="$1"; shift ;;
@@ -41,7 +43,6 @@ while true; do
 		--exclude) exclude="${exclude:+$exclude,}$1"; shift ;;
 		--merged-usr)    noMergedUsr=  ;;
 		--no-merged-usr) noMergedUsr=1 ;;
-		--ports) ports=1;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -77,16 +78,16 @@ export SOURCE_DATE_EPOCH="$epoch"
 
 if [ -z "$nonDebian" ]; then
 	if [ -z "$debianEol" ]; then
-		mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
-		if [ $ports ]; then
-			mirror="$("$thisDir/.snapshot-url.sh" "@$epoch" debian-ports)"
+		if [ -z "$debianPorts" ]; then
+			mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
+		else
+			mirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-ports')"
 		fi
 	else
 		mirrorbase="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
 		mirror="$mirrorbase/debian"
 	fi
 fi
-
 
 debootstrapArgs=(
 	--force-check-gpg
@@ -141,7 +142,10 @@ fi
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
 if [ -z "$nonDebian" ]; then
-	"$thisDir/debuerreotype-debian-sources-list" --snapshot $([ -z "$debianEol" ] || echo '--eol') $([ -z "$ports" ] || echo '--ports') "$targetDir" "$suite"
+	"$thisDir/debuerreotype-debian-sources-list" --snapshot \
+		$([ -z "$debianEol" ] || echo '--eol') \
+		$([ -z "$debianPorts" ] || echo '--ports') \
+		"$targetDir" "$suite"
 	"$thisDir/debuerreotype-apt-get" "$targetDir" update -qq
 fi
 

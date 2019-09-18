@@ -20,6 +20,7 @@ env:
     - SUITE=unstable  CODENAME= TIMESTAMP="today 00:00:00" SHA256=
     - SUITE=stable    CODENAME= TIMESTAMP="today 00:00:00" SHA256=
     - SUITE=oldstable CODENAME= TIMESTAMP="today 00:00:00" SHA256=
+    - SUITE=unstable ARCH=riscv64 CODENAME= TIMESTAMP="today 00:00:00" SHA256=
 
 addons:
     apt:

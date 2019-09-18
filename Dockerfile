@@ -12,8 +12,8 @@
 FROM debian:buster-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-		debootstrap \
 		debian-ports-archive-keyring \
+		debootstrap \
 		wget ca-certificates \
 		xz-utils \
 		\
