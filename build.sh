@@ -81,7 +81,6 @@ docker run \
 	-e codenameCopy="$codenameCopy" \
 	-e eol="$eol" -e ports="$ports" -e arch="$arch" -e qemu="$qemu" \
 	-e TZ='UTC' -e LC_ALL='C' \
-	-e ports="$ports" \
 	--hostname debuerreotype \
 	"$dockerImage" \
 	bash -Eeuo pipefail -c '
@@ -103,25 +102,23 @@ docker run \
 
 		debuerreotypeScriptsDir="$(dirname "$(readlink -f "$(which debuerreotype-init)")")"
 
-		if [ -n $ports ]; then
-			repo=""
-		else
-			repo="ports"
-		fi
-		for archive in "$repo" security; do
+		for archive in "" security; do
+			snapshotUrlFile="$exportDir/$serial/$dpkgArch/snapshot-url${archive:+-${archive}}"
+			if [ -n "$ports" ] && [ -z "$archive" ]; then
+				archive='ports'
+			fi
 			if [ -z "$eol" ]; then
 				snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" "${archive:+debian-${archive}}")"
 			else
 				snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" "debian-archive")/debian${archive:+-${archive}}"
 			fi
-			snapshotUrlFile="$exportDir/$serial/$dpkgArch/snapshot-url${archive:+-${archive}}"
 			mkdir -p "$(dirname "$snapshotUrlFile")"
 			echo "$snapshotUrl" > "$snapshotUrlFile"
 			touch_epoch "$snapshotUrlFile"
 		done
 
 		export GNUPGHOME="$(mktemp -d)"
-		keyring="$GNUPGHOME/debian-ports-archive-keyring.gpg"
+		keyring="$GNUPGHOME/debian-archive-$suite-keyring.gpg"
 		if [ "$suite" = potato ]; then
 			# src:debian-archive-keyring was created in 2006, thus does not include a key for potato
 			gpg --batch --no-default-keyring --keyring "$keyring" \
@@ -137,6 +134,7 @@ docker run \
 			gpg --batch --no-default-keyring --keyring "$keyring" --import \
 				/usr/share/keyrings/debian-ports-archive-keyring.gpg
 		fi
+
 		snapshotUrl="$(< "$exportDir/$serial/$dpkgArch/snapshot-url")"
 		mkdir -p "$outputDir"
 		if wget -O "$outputDir/InRelease" "$snapshotUrl/dists/$suite/InRelease"; then
@@ -239,16 +237,16 @@ docker run \
 			# https://anonscm.debian.org/cgit/buildd-tools/sbuild.git/tree/bin/sbuild-createchroot?id=eace3d3e59e48d26eaf069d9b63a6a4c868640e6#n194
 			debuerreotype-apt-get rootfs-sbuild install -y $noInstallRecommends build-essential fakeroot
 
+			sourcesListArgs=()
+			[ -z "$eol" ] || sourcesListArgs+=( --eol )
+			[ -z "$ports" ] || sourcesListArgs+=( --ports )
+
 			create_artifacts() {
 				local targetBase="$1"; shift
 				local rootfs="$1"; shift
 				local suite="$1"; shift
 				local variant="$1"; shift
 
-				sourcesListArgs=()
-				[ -z "$eol" ] || sourcesListArgs+=( --eol )
-				[ -z "$ports" ] || sourcesListArgs+=( --ports )
-				sourcesListArgs+=( "$rootfs" )
 
 				# make a copy of the snapshot-facing sources.list file before we overwrite it
 				cp "$rootfs/etc/apt/sources.list" "$targetBase.sources-list-snapshot"
@@ -260,10 +258,10 @@ docker run \
 				fi
 
 				if [ "$variant" != "sbuild" ]; then
-					debuerreotype-debian-sources-list "${sourcesListArgs[@]}" "$suite"
+					debuerreotype-debian-sources-list "${sourcesListArgs[@]}" "$rootfs" "$suite"
 				else
 					# sbuild needs "deb-src" entries
-					debuerreotype-debian-sources-list --deb-src "${sourcesListArgs[@]}" "$suite"
+					debuerreotype-debian-sources-list --deb-src "${sourcesListArgs[@]}" "$rootfs" "$suite"
 
 					# APT has odd issues with "Acquire::GzipIndexes=false" + "file://..." sources sometimes
 					# (which are used in sbuild for "--extra-package")
@@ -357,7 +355,7 @@ docker run \
 					targetBase="$variantDir/rootfs"
 
 					# point sources.list back at snapshot.debian.org temporarily (but this time pointing at $codename instead of $suite)
-					debuerreotype-debian-sources-list --snapshot "${sourcesListArgs[@]}" "$codename"
+					debuerreotype-debian-sources-list --snapshot "${sourcesListArgs[@]}" "$rootfs" "$codename"
 
 					create_artifacts "$targetBase" "$rootfs" "$codename" "$variant"
 				done

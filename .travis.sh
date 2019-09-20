@@ -13,14 +13,13 @@ elif [ -n "${CODENAME:-}" ]; then
 fi
 if [ -n "${ARCH:-}" ]; then
 	buildArgs+=( "--arch=${ARCH}" )
+	# Check if architecture is in "ports" repositories
+	if [ "$ARCH" = 'riscv64' ] || [ "$ARCH" = 'sparc64' ]; then
+		buildArgs+=( '--ports' )
+	fi
 	if [ "$ARCH" != 'i386' ]; then
 		buildArgs+=( '--qemu' )
 	fi
-fi
-# Check if architecture is in "ports" repositories 
-if curl -sL http://deb.debian.org/debian-ports/dists/unstable/InRelease |grep "Architectures" | grep "\s${ARCH}\s";
-then
-    buildArgs+=( "--ports" )
 fi
 buildArgs+=( travis "$SUITE" "@$epoch" )
 
