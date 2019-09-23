@@ -16,9 +16,9 @@ eval "$dgetopt"
 build=1
 codenameCopy=
 eol=
+ports=
 arch=
 qemu=
-ports=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
@@ -105,7 +105,7 @@ docker run \
 		for archive in "" security; do
 			snapshotUrlFile="$exportDir/$serial/$dpkgArch/snapshot-url${archive:+-${archive}}"
 			if [ -n "$ports" ] && [ -z "$archive" ]; then
-				archive='ports'
+				archive="ports"
 			fi
 			if [ -z "$eol" ]; then
 				snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" "${archive:+debian-${archive}}")"
@@ -129,10 +129,11 @@ docker run \
 			gpg --batch --no-default-keyring --keyring "$keyring" --import \
 				/usr/share/keyrings/debian-archive-keyring.gpg \
 				/usr/share/keyrings/debian-archive-removed-keys.gpg
-		fi
-		if [ -n "$ports" ]; then
-			gpg --batch --no-default-keyring --keyring "$keyring" --import \
-				/usr/share/keyrings/debian-ports-archive-keyring.gpg
+
+			if [ -n "$ports" ]; then
+				gpg --batch --no-default-keyring --keyring "$keyring" --import \
+					/usr/share/keyrings/debian-ports-archive-keyring.gpg
+			fi
 		fi
 
 		snapshotUrl="$(< "$exportDir/$serial/$dpkgArch/snapshot-url")"
@@ -246,7 +247,6 @@ docker run \
 				local rootfs="$1"; shift
 				local suite="$1"; shift
 				local variant="$1"; shift
-
 
 				# make a copy of the snapshot-facing sources.list file before we overwrite it
 				cp "$rootfs/etc/apt/sources.list" "$targetBase.sources-list-snapshot"

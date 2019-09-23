@@ -31,10 +31,10 @@ while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
-		--debian)     nonDebian= ; debianEol=  ;;
-		--debian-eol) nonDebian= ; debianEol=1 ;;
+		--debian)       nonDebian= ;;
+		--debian-eol)   nonDebian= ; debianEol=1 ;;
 		--debian-ports) nonDebian= ; debianPorts=1 ;;
-		--non-debian) nonDebian=1; debianEol=  ;;
+		--non-debian)   nonDebian=1 ;;
 		--debootstrap) debootstrap="$1"; shift ;;
 		--debootstrap-script) script="$1"; shift ;;
 		--keyring) keyring="$1"; shift ;;
