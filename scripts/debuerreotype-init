@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
-	--flags 'debian,debian-eol,non-debian' \
+	--flags 'debian,debian-eol,debian-ports,non-debian' \
 	--flags 'debootstrap:' \
 	--flags 'debootstrap-script:' \
 	--flags 'keyring:,arch:,include:,exclude:' \
@@ -19,6 +19,7 @@ source "$thisDir/.constants.sh" \
 eval "$dgetopt"
 nonDebian=
 debianEol=
+debianPorts=
 debootstrap=
 script=
 keyring=
@@ -30,9 +31,10 @@ while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
-		--debian)     nonDebian= ; debianEol=  ;;
-		--debian-eol) nonDebian= ; debianEol=1 ;;
-		--non-debian) nonDebian=1; debianEol=  ;;
+		--debian)       nonDebian= ;;
+		--debian-eol)   nonDebian= ; debianEol=1 ;;
+		--debian-ports) nonDebian= ; debianPorts=1 ;;
+		--non-debian)   nonDebian=1 ;;
 		--debootstrap) debootstrap="$1"; shift ;;
 		--debootstrap-script) script="$1"; shift ;;
 		--keyring) keyring="$1"; shift ;;
@@ -76,7 +78,11 @@ export SOURCE_DATE_EPOCH="$epoch"
 
 if [ -z "$nonDebian" ]; then
 	if [ -z "$debianEol" ]; then
-		mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
+		if [ -z "$debianPorts" ]; then
+			mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
+		else
+			mirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-ports')"
+		fi
 	else
 		mirrorbase="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
 		mirror="$mirrorbase/debian"
@@ -136,7 +142,10 @@ fi
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
 if [ -z "$nonDebian" ]; then
-	"$thisDir/debuerreotype-debian-sources-list" --snapshot $([ -z "$debianEol" ] || echo '--eol') "$targetDir" "$suite"
+	"$thisDir/debuerreotype-debian-sources-list" --snapshot \
+		$([ -z "$debianEol" ] || echo '--eol') \
+		$([ -z "$debianPorts" ] || echo '--ports') \
+		"$targetDir" "$suite"
 	"$thisDir/debuerreotype-apt-get" "$targetDir" update -qq
 fi
 

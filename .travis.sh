@@ -15,6 +15,9 @@ if [ -n "${ARCH:-}" ]; then
 	buildArgs+=( "--arch=${ARCH}" )
 	if [ "$ARCH" != 'i386' ]; then
 		buildArgs+=( '--qemu' )
+		if [ "$ARCH" != 'arm64' ]; then
+			buildArgs+=( '--ports' )
+		fi
 	fi
 fi
 buildArgs+=( travis "$SUITE" "@$epoch" )

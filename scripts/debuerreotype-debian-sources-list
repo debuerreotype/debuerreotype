@@ -3,15 +3,16 @@ set -Eeuo pipefail
 
 thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
-	--flags 'eol,snapshot' \
+	--flags 'eol,ports,snapshot' \
 	--flags 'deb-src' \
 	-- \
-	'[--deb-src] [--eol] [--no-snapshot] <target-dir> <suite>' \
+	'[--deb-src] [--eol] [--ports] [--snapshot] <target-dir> <suite>' \
 	'--snapshot rootfs stretch
 --eol rootfs wheezy'
 
 eval "$dgetopt"
 eol=
+ports=
 snapshot=
 debSrc=
 while true; do
@@ -19,6 +20,7 @@ while true; do
 	dgetopt-case "$flag"
 	case "$flag" in
 		--eol) eol=1 ;;
+		--ports) ports=1 ;;
 		--snapshot) snapshot=1 ;;
 		--deb-src) debSrc=1 ;;
 		--) break ;;
@@ -32,8 +34,13 @@ suite="${1:-}"; shift || eusage 'missing suite'
 
 epoch="$(< "$targetDir/debuerreotype-epoch")"
 
-standardMirror='http://deb.debian.org/debian'
-snapshotStandardMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch")" )
+if [ -z "$ports" ]; then
+	standardMirror='http://deb.debian.org/debian'
+	snapshotStandardMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch")" )
+else
+	standardMirror='http://deb.debian.org/debian-ports'
+	snapshotStandardMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-ports')" )
+fi
 
 securityMirror='http://security.debian.org/debian-security'
 snapshotSecurityMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')" )
