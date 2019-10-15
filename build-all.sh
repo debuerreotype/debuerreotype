@@ -66,7 +66,10 @@ for suite in "${suites[@]}"; do
 			fi
 			;;
 	esac
-	if ! wget --quiet --spider "$mirror/dists/$suite/main/binary-$dpkgArch/Packages.gz"; then
+	if \
+		! wget --quiet --spider "$mirror/dists/$suite/main/binary-$dpkgArch/Packages.xz" \
+		&& ! wget --quiet --spider "$mirror/dists/$suite/main/binary-$dpkgArch/Packages.gz" \
+	; then
 		doSkip=1
 	fi
 	if [ -n "$doSkip" ]; then
