@@ -136,8 +136,8 @@ docker run \
 			debuerreotype-slimify rootfs-slim
 
 			# this should match the list added to the "buildd" variant in debootstrap and the list installed by sbuild
-			# https://anonscm.debian.org/cgit/d-i/debootstrap.git/tree/scripts/sid?id=706a45681c5bba5e062a9b02e19f079cacf2a3e8#n26
-			# https://anonscm.debian.org/cgit/buildd-tools/sbuild.git/tree/bin/sbuild-createchroot?id=eace3d3e59e48d26eaf069d9b63a6a4c868640e6#n194
+			# https://salsa.debian.org/installer-team/debootstrap/blob/da5f17904de373cd7a9224ad7cd69c80b3e7e234/scripts/debian-common#L20
+			# https://salsa.debian.org/debian/sbuild/blob/fc306f4be0d2c57702c5e234273cd94b1dba094d/bin/sbuild-createchroot#L257-260
 			debuerreotype-apt-get rootfs-sbuild install -y --no-install-recommends build-essential fakeroot
 
 			create_artifacts() {
