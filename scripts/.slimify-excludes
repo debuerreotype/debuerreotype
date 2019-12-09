@@ -10,7 +10,7 @@
 /usr/share/locale/*
 /usr/share/man/*
 
-# https://anonscm.debian.org/cgit/collab-maint/localepurge.git/tree/usr/share/localepurge/gen-dpkg-cfg.pl?id=b32c8d46d43be2027096f5a202ac789a637ceb39#n9
+# https://salsa.debian.org/elmig-guest/localepurge/blob/9899763213226f293a29c0ebd2be2e45aace01ee/usr/share/localepurge/gen-dpkg-cfg.pl#L9-20
 /usr/share/locale/*
 /usr/share/gnome/help/*/*
 /usr/share/doc/kde/HTML/*/*
