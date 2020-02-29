@@ -144,6 +144,39 @@ if ! "$debootstrap" "${debootstrapArgs[@]}"; then
 		echo >&2
 		cat >&2 "$targetDir/debootstrap/debootstrap.log"
 		echo >&2
+
+		# older userlands need vsyscall compatibility to run
+		if [ -n "${debianEol}" ]; then
+			kernel_config_candidates=(
+				"/boot/config"
+				"/boot/config-$(uname -r)"
+				"/proc/config.gz"
+			)
+			for i in "${kernel_config_candidates[@]}"; do
+				if [ -r "${i}" ]; then
+					kernel_config="${i}"
+					break;
+				fi
+			done
+
+			if [ -n "${kernel_config}" ] \
+				&& zgrep -Eq \
+					'^CONFIG_LEGACY_VSYSCALL_(EMULATE|NATIVE)=y$' \
+					"${kernel_config}"; then
+				have_vsyscall_compat=true
+			elif grep -Eq '^vsyscall=(emulate|native)$' /proc/cmdline; then
+				have_vsyscall_compat=true
+			else
+				have_vsyscall_compat=false
+			fi
+
+			if ! ${have_vsyscall_compat}; then
+				echo >&2 "Are you trying to run an old glibc"
+				echo >&2 "on a kernel with no vsyscall backward compatibility?"
+				echo >&2 "Then, refer to https://github.com/moby/moby/issues/28705."
+				echo >&2
+			fi
+		fi
 	fi
 	exit 1
 fi
