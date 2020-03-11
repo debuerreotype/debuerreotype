@@ -23,6 +23,13 @@ jobs:
           rm .github/workflows/ci.yml # this file itself will always be a match, but it's the only valid one 👀
           ! grep -rn 'https://snapshot.debian.org'
 
+  shfmt:
+    name: Verify shfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: ./.validate-shfmt.sh
+
   test:
     strategy:
       matrix:
