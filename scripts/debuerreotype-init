@@ -71,9 +71,10 @@ else
 	timestamp="$(
 		{
 			wget -qO- "$mirror/dists/$suite/InRelease" 2>/dev/null \
-				|| wget -qO- "$mirror/dists/$suite/Release"
-		} |tac|tac| awk -F ': ' '$1 == "Date" { print $2; exit }'
-	)"
+				|| wget -qO- "$mirror/dists/$suite/Release" 2>/dev/null
+		} | awk -F ': ' '$1 == "Date" { print $2; exit }'
+	)" || :
+	[ -n "$timestamp" ]
 	# TODO re-calculate "timestamp" during debuerreotype-tar/fixup (possibly scraping from /var/lib/apt/lists/*Release* instead?)
 fi
 
