@@ -1,10 +1,10 @@
 # docker run --cap-add SYS_ADMIN --cap-drop SETFCAP --tmpfs /tmp:dev,exec,suid,noatime ...
 
 # bootstrapping a new architecture?
-#   ./scripts/debuerreotype-init /tmp/docker-rootfs buster now
-#   ./scripts/debuerreotype-minimizing-config /tmp/docker-rootfs
-#   ./scripts/debuerreotype-debian-sources-list /tmp/docker-rootfs buster
-#   ./scripts/debuerreotype-tar /tmp/docker-rootfs - | docker import - debian:buster-slim
+#   debuerreotype-init /tmp/docker-rootfs buster now
+#   debuerreotype-minimizing-config /tmp/docker-rootfs
+#   debuerreotype-debian-sources-list /tmp/docker-rootfs buster
+#   debuerreotype-tar /tmp/docker-rootfs - | docker import - debian:buster-slim
 # alternate:
 #   debootstrap --variant=minbase buster /tmp/docker-rootfs
 #   tar -cC /tmp/docker-rootfs . | docker import - debian:buster-slim
