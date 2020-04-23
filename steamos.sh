@@ -45,9 +45,9 @@ dockerImage="debuerreotype/debuerreotype:$ver"
 steamDockerImage="$dockerImage-steamos"
 [ -z "$build" ] || docker build -t "$steamDockerImage" - <<-EODF
 	FROM $dockerImage
-	# http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/?C=M;O=D
-	RUN wget -O valve.deb 'http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/valve-archive-keyring_0.5+bsos3_all.deb' \\
-		&& apt install -y ./valve.deb \\
+	# http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/?C=M&O=D
+	RUN wget -O valve.deb 'http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/valve-archive-keyring_0.6+bsosc2_all.deb' \\
+		&& apt-get install -y ./valve.deb \\
 		&& rm valve.deb
 EODF
 

@@ -45,8 +45,9 @@ dockerImage="debuerreotype/debuerreotype:$ver"
 raspbianDockerImage="$dockerImage-raspbian"
 [ -z "$build" ] || docker build -t "$raspbianDockerImage" - <<-EODF
 	FROM $dockerImage
+	# https://archive.raspbian.org/raspbian/pool/main/r/raspbian-archive-keyring/
 	RUN wget -O raspbian.deb 'https://archive.raspbian.org/raspbian/pool/main/r/raspbian-archive-keyring/raspbian-archive-keyring-udeb_20120528.2_all.udeb' \\
-		&& apt install -y ./raspbian.deb \\
+		&& apt-get install -y ./raspbian.deb \\
 		&& rm raspbian.deb
 EODF
 
