@@ -1,0 +1,62 @@
+name: GitHub CI
+
+on:
+  pull_request:
+  push:
+  schedule:
+    - cron: 0 0 * * 0
+
+defaults:
+  run:
+    shell: 'bash -Eeuo pipefail -x {0}'
+
+jobs:
+
+  test:
+    strategy:
+      matrix:
+        include:
+          - { SUITE: stable,    CODENAME: jessie,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 55ba54fdca819df18d813be36503b0a02abf1570c3bf5999b10891ccca5448e2 }
+          - { SUITE: jessie,    CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 55ba54fdca819df18d813be36503b0a02abf1570c3bf5999b10891ccca5448e2 }
+          - { SUITE: testing,   CODENAME: stretch, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 1608c820c1d9c9d8adf210f80b1d751e5c26179aa27a1c1ddb8e41ae0222d8c4 }
+          - { SUITE: stretch,   CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 1608c820c1d9c9d8adf210f80b1d751e5c26179aa27a1c1ddb8e41ae0222d8c4 }
+          - { SUITE: unstable,  CODENAME: sid,     TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 49a5152822ec9f0e1a61ff1d02671681f12fc1aba083f39e972f6ff897b69c80 }
+          - { SUITE: sid,       CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 49a5152822ec9f0e1a61ff1d02671681f12fc1aba083f39e972f6ff897b69c80 }
+          - { SUITE: oldstable, CODENAME: wheezy,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: f1bd72548e3c25ce222fb9e2bb57a5b6d4b01042180894fb05d83a0251e6dab1 }
+          - { SUITE: wheezy,    CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: f1bd72548e3c25ce222fb9e2bb57a5b6d4b01042180894fb05d83a0251e6dab1 }
+
+          # EOL suites testing
+          - { SUITE: eol, CODENAME: etch,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: b48e999ab4fda1720b0dc863d38cdd4d6b55530f34f262a28949eb6173102da9 }
+          - { SUITE: eol, CODENAME: lenny, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 1a2fffd34daa4a6bb968aebe86480a4093035a23700ec5f2e883423b9b4dcfa7 }
+          - { SUITE: eol, CODENAME: woody, ARCH: i386, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: ef4bc81e31db51fa9f095811ddbcc8a005f05f098596317d5a138fa90157bf40 }
+
+          # qemu-debootstrap testing
+          - { ARCH: arm64,   SUITE: jessie,   CODENAME: "", TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 893efc1b9db1ba2df4f171d4422194a408f9810d3b55d9b0cd66fcc7722f7567 }
+          - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2019-01-01T00:00:00Z", SHA256: c6bbc35292a0f2d9e3db8a1db3a1925b7d02affbd61a46b8bbc798d6710419db }
+          #- { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2019-09-18T00:00:00Z", SHA256: bed905d70debcd02879f67b647554951338e8a9bbc41e8067583ace9b3cc457e }
+          # (qemu-user-static in Ubuntu 18.04 / Bionic does not support riscv64, so we need to wait for 20.04 / Focal in GitHub Actions)
+
+          # a few entries for "today" to try and catch issues like https://github.com/debuerreotype/debuerreotype/issues/41 sooner
+          - { SUITE: unstable,  CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
+          - { SUITE: stable,    CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
+          - { SUITE: oldstable, CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
+
+          - { DISTRO: ubuntu, SUITE: bionic }
+          #- { DISTRO: ubuntu, SUITE: focal }
+          # (Debian Buster, which is our build environment via Dockerfile, does not contain the "focal" script and this test is not worth getting explicit about the script)
+      fail-fast: false
+    runs-on: ubuntu-latest
+    env: ${{ matrix }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Prepare Environment
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -yqq binfmt-support qemu-user-static
+          docker run -d --name squignix --restart always tianon/squignix
+          git clone --depth 1 https://github.com/tianon/pgp-happy-eyeballs.git ~/phe
+          ~/phe/hack-my-builds.sh
+          rm -rf ~/phe
+      - name: Build
+        run: |
+          "./.validate-${DISTRO:-debian}.sh"
