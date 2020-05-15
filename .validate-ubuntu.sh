@@ -4,4 +4,4 @@ set -Eeuo pipefail
 set -x
 
 ./scripts/debuerreotype-version
-./ubuntu.sh travis "$SUITE"
+./ubuntu.sh validate "$SUITE"

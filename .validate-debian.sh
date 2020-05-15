@@ -20,9 +20,9 @@ if [ -n "${ARCH:-}" ]; then
 		fi
 	fi
 fi
-buildArgs+=( travis "$SUITE" "@$epoch" )
+buildArgs+=( validate "$SUITE" "@$epoch" )
 
-checkFile="travis/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
+checkFile="validate/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
 
 set -x
 
