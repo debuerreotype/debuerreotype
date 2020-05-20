@@ -10,10 +10,11 @@
 /usr/share/locale/*
 /usr/share/man/*
 
-# https://salsa.debian.org/elmig-guest/localepurge/blob/9899763213226f293a29c0ebd2be2e45aace01ee/usr/share/localepurge/gen-dpkg-cfg.pl#L9-20
-/usr/share/locale/*
-/usr/share/gnome/help/*/*
+# https://salsa.debian.org/elmig-guest/localepurge/-/blob/2608425c05b75c9c65d04ba12f099eb9eab51e35/usr/share/localepurge/gen-dpkg-cfg.pl#L9-21
 /usr/share/doc/kde/HTML/*/*
+/usr/share/gnome/help/*/*
+/usr/share/locale/*
 /usr/share/omf/*/*-*.emf
+/usr/share/X11/locale/*
 
 # see also .slimify-includes
