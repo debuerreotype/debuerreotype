@@ -33,7 +33,7 @@ jobs:
           # qemu-debootstrap testing
           - { ARCH: arm64,   SUITE: jessie,   CODENAME: "", TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 893efc1b9db1ba2df4f171d4422194a408f9810d3b55d9b0cd66fcc7722f7567 }
           - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2019-01-01T00:00:00Z", SHA256: c6bbc35292a0f2d9e3db8a1db3a1925b7d02affbd61a46b8bbc798d6710419db }
-          #- { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2019-09-18T00:00:00Z", SHA256: bed905d70debcd02879f67b647554951338e8a9bbc41e8067583ace9b3cc457e }
+          - { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2019-09-18T00:00:00Z", SHA256: bed905d70debcd02879f67b647554951338e8a9bbc41e8067583ace9b3cc457e }
           # (qemu-user-static in Ubuntu 18.04 / Bionic does not support riscv64, so we need to wait for 20.04 / Focal in GitHub Actions)
 
           # a few entries for "today" to try and catch issues like https://github.com/debuerreotype/debuerreotype/issues/41 sooner
@@ -45,7 +45,7 @@ jobs:
           #- { DISTRO: ubuntu, SUITE: focal }
           # (Debian Buster, which is our build environment via Dockerfile, does not contain the "focal" script and this test is not worth getting explicit about the script)
       fail-fast: false
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     env: ${{ matrix }}
     steps:
       - uses: actions/checkout@v2
