@@ -46,8 +46,6 @@ jobs:
           # (Debian Buster, which is our build environment via Dockerfile, does not contain the "focal" script and this test is not worth getting explicit about the script)
       fail-fast: false
     runs-on: ubuntu-20.04
-    # ubuntu-20.04 and not ubuntu-latest is at the moment needed for riscv64 / qemu-user-static support
-    # runs-on: ubuntu-latest
     env: ${{ matrix }}
     steps:
       - uses: actions/checkout@v2
