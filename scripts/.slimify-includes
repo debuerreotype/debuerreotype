@@ -4,14 +4,14 @@
 # https://wiki.ubuntu.com/ReducingDiskFootprint#Drop_unnecessary_files
 /usr/share/doc/*/copyright
 
-# https://salsa.debian.org/elmig-guest/localepurge/blob/9899763213226f293a29c0ebd2be2e45aace01ee/usr/share/localepurge/gen-dpkg-cfg.pl#L21-47
-/usr/share/locale/locale.alias
-/usr/share/gnome/help/*/C/*
+# https://salsa.debian.org/elmig-guest/localepurge/-/blob/176446028ca719d65993eb01e39d7040fbbcf12d/usr/share/localepurge/gen-dpkg-cfg.pl#L22-47
 /usr/share/doc/kde/HTML/C/*
-/usr/share/omf/*/*-C.emf
-/usr/share/locale/languages
+/usr/share/gnome/help/*/C/*
 /usr/share/locale/all_languages
 /usr/share/locale/currency/*
 /usr/share/locale/l10n/*
+/usr/share/locale/languages
+/usr/share/locale/locale.alias
+/usr/share/omf/*/*-C.emf
 
 # see also .slimify-excludes
