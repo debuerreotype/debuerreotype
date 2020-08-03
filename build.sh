@@ -132,7 +132,8 @@ docker run \
 
 			if [ -n "$ports" ]; then
 				gpg --batch --no-default-keyring --keyring "$keyring" --import \
-					/usr/share/keyrings/debian-ports-archive-keyring.gpg
+					/usr/share/keyrings/debian-ports-archive-keyring.gpg \
+					/usr/share/keyrings/debian-ports-archive-keyring-removed.gpg
 			fi
 		fi
 
