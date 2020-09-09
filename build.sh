@@ -145,6 +145,7 @@ docker run \
 				--output "$outputDir/Release" \
 				"$outputDir/InRelease"
 		else
+			rm -f "$outputDir/InRelease" # remove wget leftovers
 			wget -O "$outputDir/Release.gpg" "$snapshotUrl/dists/$suite/Release.gpg"
 			wget -O "$outputDir/Release" "$snapshotUrl/dists/$suite/Release"
 			gpgv \
