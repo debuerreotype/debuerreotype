@@ -9,6 +9,7 @@ source "$debuerreotypeScriptsDir/.constants.sh" \
 	--flags 'codename-copy,sbuild' \
 	--flags 'eol,ports' \
 	--flags 'arch:,qemu' \
+	--flags 'include:,exclude:' \
 	-- \
 	'[--codename-copy] [--sbuild] [--eol] [--ports] [--arch=<arch>] [--qemu] <output-dir> <suite> <timestamp>' \
 	'output stretch 2017-05-08T00:00:00Z
@@ -21,6 +22,8 @@ codenameCopy=
 eol=
 ports=
 sbuild=
+include=
+exclude=
 arch=
 qemu=
 while true; do
@@ -33,6 +36,8 @@ while true; do
 		--ports) ports=1 ;; # for using "debian-ports"
 		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
 		--qemu) qemu=1 ;; # for using "qemu-debootstrap"
+		--include) include="${include:+$include,}$1"; shift ;;
+		--exclude) exclude="${exclude:+$exclude,}$1"; shift ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -157,6 +162,13 @@ initArgs+=(
 
 if [ -n "$qemu" ]; then
 	initArgs+=( --debootstrap=qemu-debootstrap )
+fi
+
+if [ -n "$include" ]; then
+	initArgs+=( --include="$include" )
+fi
+if [ -n "$exclude" ]; then
+	initArgs+=( --exclude="$exclude" )
 fi
 
 rootfsDir="$tmpDir/rootfs"
