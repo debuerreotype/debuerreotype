@@ -39,8 +39,10 @@ WORKDIR /tmp
 # debuerreotype-tar test-stretch test-stretch.tar
 # md5sum test-stretch.tar
 #   14206d5b9b2991e98f5214c3d310e4fa
+# ./docker-run.sh sh -euxc 'debuerreotype-init /tmp/rootfs stretch 2017-05-08T00:00:00Z; debuerreotype-tar /tmp/rootfs - | md5sum'
 
 # debuerreotype-init test-jessie jessie 2017-05-08T00:00:00Z
 # debuerreotype-tar test-jessie test-jessie.tar
 # md5sum test-jessie.tar
 #   a5b38410ca3f519117966a33474f1267
+# ./docker-run.sh sh -euxc 'debuerreotype-init /tmp/rootfs jessie 2017-05-08T00:00:00Z; debuerreotype-tar /tmp/rootfs - | md5sum'
