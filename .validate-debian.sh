@@ -14,7 +14,6 @@ fi
 if [ -n "${ARCH:-}" ]; then
 	buildArgs+=( "--arch=${ARCH}" )
 	if [ "$ARCH" != 'i386' ]; then
-		buildArgs+=( '--qemu' )
 		if [ "$ARCH" != 'arm64' ]; then
 			buildArgs+=( '--ports' )
 		fi
@@ -23,11 +22,12 @@ fi
 buildArgs+=( validate "$SUITE" "@$epoch" )
 
 checkFile="validate/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
+mkdir -p validate
 
 set -x
 
 ./scripts/debuerreotype-version
-./build.sh "${buildArgs[@]}"
+./docker-run.sh ./examples/debian.sh "${buildArgs[@]}"
 
 real="$(sha256sum "$checkFile" | cut -d' ' -f1)"
 [ -z "$SHA256" ] || [ "$SHA256" = "$real" ]

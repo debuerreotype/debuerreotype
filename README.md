@@ -41,7 +41,7 @@ A simple `Dockerfile` is provided for using these scripts in a simple determinis
 
 The provided `Dockerfile` also includes comments with hints for bootstrapping the environment on a new architecture (which then presumably doesn't have a `debian` Docker base image yet).
 
-Full example: (see [`build.sh`](build.sh) for this in practice)
+Full example: (see [`examples/debian.sh`](examples/debian.sh) for this in practice)
 
 ```console
 $ debuerreotype-init rootfs stretch 2017-01-01T00:00:00Z
@@ -93,6 +93,8 @@ a076d4cd04f68ee117e598a40cc947ad051fc8b063340da015fdceddeb1b0e75  -
 
 $ # try it!  you should get that same sha256sum value!
 ```
+
+(As a one-liner via [`docker-run.sh`](docker-run.sh): `./docker-run.sh sh -euxc 'debuerreotype-init /tmp/rootfs stretch 2017-01-01T00:00:00Z; debuerreotype-minimizing-config /tmp/rootfs; debuerreotype-apt-get /tmp/rootfs update -qq; debuerreotype-apt-get /tmp/rootfs dist-upgrade -yqq; debuerreotype-apt-get /tmp/rootfs install -yqq --no-install-recommends inetutils-ping iproute2; debuerreotype-debian-sources-list /tmp/rootfs stretch; debuerreotype-tar /tmp/rootfs - | sha256sum'`)
 
 ## How much have you verified this?
 
