@@ -42,16 +42,34 @@ export TZ='UTC' LC_ALL='C'
 
 dpkgArch='armhf'
 
-mirror='http://archive.raspbian.org/raspbian'
+#mirror='http://archive.raspbian.org/raspbian'
+mirror='http://mirrordirector.raspbian.org/raspbian'
+# (https://www.raspbian.org/RaspbianMirrors#The_mirror_redirection_system)
 
 exportDir="$tmpDir/output"
 archDir="$exportDir/raspbian/$dpkgArch"
 tmpOutputDir="$archDir/$suite"
 
 keyring='/usr/share/keyrings/raspbian-archive-keyring.gpg'
+if [ ! -s "$keyring" ]; then
+	# since we're using mirrors, we ought to be more explicit about download verification
+	keyUrl='https://archive.raspbian.org/raspbian.public.key'
+	(
+		set +x
+		echo >&2
+		echo >&2 "WARNING: missing '$keyring' (from 'raspbian-archive-keyring' package)"
+		echo >&2 "  downloading '$keyUrl' (without verification)!"
+		echo >&2
+	)
+	sleep 5
+	keyring="$tmpDir/raspbian-archive-keyring.gpg"
+	wget -O "$keyring.asc" "$keyUrl"
+	gpg --batch --no-default-keyring --keyring "$keyring" --import "$keyring.asc"
+	rm -f "$keyring.asc"
+fi
 
 mkdir -p "$tmpOutputDir"
-if wget -O "$tmpOutputDir/InRelease" "$mirror/dists/$suite/InRelease" && [ -f "$keyring" ]; then
+if wget -O "$tmpOutputDir/InRelease" "$mirror/dists/$suite/InRelease"; then
 	gpgv \
 		--keyring "$keyring" \
 		--output "$tmpOutputDir/Release" \
@@ -60,24 +78,19 @@ else
 	rm -f "$tmpOutputDir/InRelease" # remove wget leftovers
 	wget -O "$tmpOutputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg"
 	wget -O "$tmpOutputDir/Release" "$mirror/dists/$suite/Release"
-	if [ -f "$keyring" ]; then
-		gpgv \
-			--keyring "$keyring" \
-			"$tmpOutputDir/Release.gpg" \
-			"$tmpOutputDir/Release"
-	fi
+	gpgv \
+		--keyring "$keyring" \
+		"$tmpOutputDir/Release.gpg" \
+		"$tmpOutputDir/Release"
 fi
 
 initArgs=(
 	--arch "$dpkgArch"
+
 	--non-debian
-)
-if [ -f "$keyring" ]; then
-	initArgs+=( --keyring "$keyring" )
-else
-	initArgs+=( --no-check-gpg )
-fi
-initArgs+=(
+
+	--keyring "$keyring"
+
 	# disable merged-usr (for now?) due to the following compelling arguments:
 	#  - https://bugs.debian.org/src:usrmerge ("dpkg-query" breaks, etc)
 	#  - https://bugs.debian.org/914208 ("buildd" variant disables merged-usr still)
