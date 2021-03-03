@@ -8,20 +8,23 @@ thisDir="$(dirname "$thisDir")"
 
 source "$thisDir/scripts/.constants.sh" \
 	--flags 'image:' \
+	--flags 'no-bind' \
 	--flags 'no-build' \
 	-- \
-	'[--image=foo/bar:baz] [--no-build] [script/command]' \
+	'[--image=foo/bar:baz] [--no-build] [--no-bind] [script/command]' \
 	'./examples/debian.sh output stretch 2017-05-08T00:00:00Z
 --no-build --image=debuerreotype:ubuntu ./examples/ubuntu.sh output xenial'
 
 eval "$dgetopt"
-build=1
 image=
+build=1
+bindMount=1
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
 		--image) image="$1"; shift ;;
+		--no-bind) bindMount= ;;
 		--no-build) build= ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
@@ -56,9 +59,13 @@ args=(
 	--tmpfs /tmp:dev,exec,suid,noatime
 	--env TMPDIR=/tmp
 
-	--mount "type=bind,src=$PWD,dst=/workdir"
 	--workdir /workdir
 )
+if [ -n "$bindMount" ]; then
+	args+=( --mount "type=bind,src=$PWD,dst=/workdir" )
+else
+	args+=( --volume /workdir )
+fi
 
 if [ -t 0 ] && [ -t 1 ]; then
 	args+=( --tty )
