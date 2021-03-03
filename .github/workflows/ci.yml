@@ -32,9 +32,8 @@ jobs:
 
           # qemu-debootstrap testing
           - { ARCH: arm64,   SUITE: jessie,   CODENAME: "", TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 893efc1b9db1ba2df4f171d4422194a408f9810d3b55d9b0cd66fcc7722f7567 }
-          - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2019-01-01T00:00:00Z", SHA256: c6bbc35292a0f2d9e3db8a1db3a1925b7d02affbd61a46b8bbc798d6710419db }
-          - { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2019-09-18T00:00:00Z", SHA256: bed905d70debcd02879f67b647554951338e8a9bbc41e8067583ace9b3cc457e }
-          # (qemu-user-static in Ubuntu 18.04 / Bionic does not support riscv64, so we need to wait for 20.04 / Focal in GitHub Actions)
+          - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2021-03-01T00:00:00Z", SHA256: 42f9a378c622bf88d5eb49dbe72dc035615fe3b21b17ed0de07b993a540b742f }
+          - { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2021-03-01T00:00:00Z", SHA256: 6ea9c2136fe6cc1d6cbea23f0fde9eb4392a90c4d794ab953455ddd811918661 }
 
           # a few entries for "today" to try and catch issues like https://github.com/debuerreotype/debuerreotype/issues/41 sooner
           - { SUITE: unstable,  CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }

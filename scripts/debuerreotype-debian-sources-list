@@ -107,8 +107,12 @@ deb() {
 # https://github.com/tianon/go-aptsources/blob/e066ed9cd8cd9eef7198765bd00ec99679e6d0be/target.go#L16-L58
 {
 	case "$suite" in
-		sid|unstable|testing)
+		sid | unstable | testing)
 			deb "$suite" "$comp" standard
+			if [ -n "$ports" ]; then
+				# https://www.ports.debian.org/archive
+				deb unreleased "$comp" standard
+			fi
 			;;
 
 		*)
