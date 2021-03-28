@@ -89,6 +89,7 @@ if [ -z "$nonDebian" ]; then
 			mirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-ports')"
 		fi
 	else
+		# TODO fixme (see debuerreotype-debian-sources-list)
 		mirrorbase="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
 		mirror="$mirrorbase/debian"
 	fi

@@ -35,23 +35,23 @@ suite="${1:-}"; shift || eusage 'missing suite'
 epoch="$(< "$targetDir/debuerreotype-epoch")"
 
 if [ -z "$ports" ]; then
-	standardMirror='http://deb.debian.org/debian'
+	standardMirrors=( 'http://deb.debian.org/debian' )
 	snapshotStandardMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch")" )
 else
-	standardMirror='http://deb.debian.org/debian-ports'
+	standardMirrors=( 'http://deb.debian.org/debian-ports' )
 	snapshotStandardMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-ports')" )
 fi
 
-securityMirror='http://security.debian.org/debian-security'
+securityMirrors=( 'http://security.debian.org/debian-security' )
 snapshotSecurityMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')" )
 
 if [ -n "$eol" ]; then
 	archiveSnapshotMirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
 
-	standardMirror='http://archive.debian.org/debian'
+	standardMirrors=( 'http://archive.debian.org/debian' "${standardMirrors[@]}" )
 	snapshotStandardMirrors=( "$archiveSnapshotMirror/debian" "${snapshotStandardMirrors[@]}" )
 
-	securityMirror='http://archive.debian.org/debian-security'
+	securityMirrors=( 'http://archive.debian.org/debian-security' "${securityMirrors[@]}" )
 	snapshotSecurityMirrors=( "$archiveSnapshotMirror/debian-security" "${snapshotSecurityMirrors[@]}" )
 fi
 
@@ -63,21 +63,29 @@ deb() {
 	local comp="$1"; shift
 	local target="$1"; shift # "standard" or "security"
 
-	local nonSnapshotMirror= snapshotMirrors=()
+	local nonSnapshotMirrors=() snapshotMirrors=()
 	case "$target" in
-		standard) nonSnapshotMirror="$standardMirror"; snapshotMirrors=( "${snapshotStandardMirrors[@]}" ) ;;
-		security) nonSnapshotMirror="$securityMirror"; snapshotMirrors=( "${snapshotSecurityMirrors[@]}" ) ;;
+		standard)
+			nonSnapshotMirrors=( "${standardMirrors[@]}" )
+			snapshotMirrors=( "${snapshotStandardMirrors[@]}" )
+			;;
+		security)
+			nonSnapshotMirrors=( "${securityMirrors[@]}" )
+			snapshotMirrors=( "${snapshotSecurityMirrors[@]}" )
+			;;
 		*) echo >&2 "error: unknown 'deb' line target: '$target'"; exit 1 ;;
 	esac
 
-	local found= mirror
-	for mirror in "${snapshotMirrors[@]}"; do
+	local found= nonSnapshotMirror= i
+	for i in "${!snapshotMirrors[@]}"; do
+		local mirror="${nonSnapshotMirrors[$i]}" snapshotMirror="${snapshotMirrors[$i]}"
 		# http://snapshot.debian.org/archive/debian-archive/20160314T000000Z/debian/dists/squeeze-updates/main/binary-amd64/Packages.gz
 		if \
-			wget --quiet --spider -O /dev/null -o /dev/null "$mirror/dists/$suite/$comp/binary-$arch/Packages.xz" \
-			|| wget --quiet --spider -O /dev/null -o /dev/null "$mirror/dists/$suite/$comp/binary-$arch/Packages.gz" \
+			wget --quiet --spider -O /dev/null -o /dev/null "$snapshotMirror/dists/$suite/$comp/binary-$arch/Packages.xz" \
+			|| wget --quiet --spider -O /dev/null -o /dev/null "$snapshotMirror/dists/$suite/$comp/binary-$arch/Packages.gz" \
 		; then
-			found="$mirror"
+			found="$snapshotMirror"
+			nonSnapshotMirror="$mirror"
 			break
 		fi
 	done

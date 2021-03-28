@@ -58,6 +58,65 @@ if [ -n "$qemu" ]; then
 	debianArgs+=( --qemu )
 fi
 
+_eol-date() {
+	local codename="$1"; shift # "bullseye", "buster", etc.
+	if [ ! -s /usr/share/distro-info/debian.csv ]; then
+		echo >&2 "warning: looks like we are missing 'distro-info-data' (/usr/share/distro-info/debian.csv); cannot calculate EOL dates accurately!"
+		exit 1
+	fi
+	awk -F, -v codename="$codename" '
+		NR == 1 {
+			headers = NF
+			for (i = 1; i <= headers; i++) {
+				header[i] = $i
+			}
+			next
+		}
+		{
+			delete row
+			for (i = 1; i <= NF && i <= headers; i++) {
+				row[header[i]] = $i
+			}
+		}
+		row["series"] == codename {
+			if (row["eol-lts"] != "") {
+				eol = row["eol-lts"]
+				exit 0
+			}
+			if (row["eol"] != "") {
+				eol = row["eol"]
+				exit 0
+			}
+			exit 1
+		}
+		END {
+			if (eol != "") {
+				print eol
+				exit 0
+			}
+			exit 1
+		}
+	' /usr/share/distro-info/debian.csv
+}
+
+_codename() {
+	local dist="$1"; shift
+
+	local release
+	if release="$(wget --quiet --output-document=- "$mirror/dists/$dist/InRelease")"; then
+		:
+	elif release="$(wget --quiet --output-document=- "$mirror/dists/$dist/Release")"; then
+		:
+	else
+		return 1
+	fi
+
+	local codename
+	codename="$(awk '$1 == "Codename:" { print $2 }' <<<"$release")"
+	[ -n "$codename" ] || return 1
+	echo "$codename"
+}
+
 _check() {
 	local host="$1"; shift # "$mirror", "$secmirror"
 	local dist="$1"; shift # "$suite-security", "$suite/updates", "$suite"
@@ -86,6 +145,16 @@ for suite in "${suites[@]}"; do
 				&& ! _check "$secmirror" "$suite/updates" \
 			; then
 				doSkip=1
+			fi
+			if [ -z "$doSkip" ] && codename="$(_codename "$suite")" && eol="$(_eol-date "$codename")"; then
+				epoch="$(date --date "$timestamp" '+%s')"
+				eolEpoch="$(date --date "$eol" '+%s')"
+				if [ "$epoch" -ge "$eolEpoch" ]; then
+					echo >&2
+					echo >&2 "warning: '$suite' ('$codename') is EOL at '$timestamp' ('$eol'); skipping"
+					echo >&2
+					continue
+				fi
 			fi
 			;;
 	esac
