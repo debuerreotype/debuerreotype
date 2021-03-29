@@ -61,50 +61,30 @@ arch="$("$thisDir/.dpkg-arch.sh" "$targetDir")"
 deb() {
 	local suite="$1"; shift
 	local comp="$1"; shift
-	local target="$1"; shift # "standard" or "security"
 
-	local nonSnapshotMirrors=() snapshotMirrors=()
-	case "$target" in
-		standard)
-			nonSnapshotMirrors=( "${standardMirrors[@]}" )
-			snapshotMirrors=( "${snapshotStandardMirrors[@]}" )
-			;;
-		security)
-			nonSnapshotMirrors=( "${securityMirrors[@]}" )
-			snapshotMirrors=( "${snapshotSecurityMirrors[@]}" )
-			;;
-		*) echo >&2 "error: unknown 'deb' line target: '$target'"; exit 1 ;;
-	esac
-
-	local found= nonSnapshotMirror= i
-	for i in "${!snapshotMirrors[@]}"; do
-		local mirror="${nonSnapshotMirrors[$i]}" snapshotMirror="${snapshotMirrors[$i]}"
-		# http://snapshot.debian.org/archive/debian-archive/20160314T000000Z/debian/dists/squeeze-updates/main/binary-amd64/Packages.gz
-		if \
-			wget --quiet --spider -O /dev/null -o /dev/null "$snapshotMirror/dists/$suite/$comp/binary-$arch/Packages.xz" \
-			|| wget --quiet --spider -O /dev/null -o /dev/null "$snapshotMirror/dists/$suite/$comp/binary-$arch/Packages.gz" \
-		; then
-			found="$snapshotMirror"
-			nonSnapshotMirror="$mirror"
-			break
-		fi
-	done
-	if [ -z "$found" ]; then
-		if [ "$target" = 'security' ] && [[ "$suite" == *-security ]]; then
-			# https://lists.debian.org/debian-devel-announce/2019/07/msg00004.html
-			deb "${suite%-security}/updates" "$comp" "$target"
-			return
-		fi
-		echo >&2 "warning: no apparent '$suite/$comp' for '$arch' on any of the following; skipping"
-		for mirror in "${snapshotMirrors[@]}"; do echo >&2 "  - $mirror"; done
+	local mirrorArgs=()
+	if [ -n "$ports" ]; then
+		mirrorArgs+=( --ports )
+	fi
+	if [ -n "$eol" ]; then
+		mirrorArgs+=( --eol )
+	fi
+	mirrorArgs+=( "@$epoch" "$suite" "$arch" "$comp" )
+	local mirrors
+	if ! mirrors="$("$thisDir/.debian-mirror.sh" "${mirrorArgs[@]}")"; then
+		echo >&2 "skipping '$suite/$comp' ..."
 		return
 	fi
+	eval "$mirrors"
+	[ -n "$mirror" ]
+	[ -n "$snapshotMirror" ]
+	[ -n "$foundSuite" ]
+	suite="$foundSuite"
 
 	if [ -n "$snapshot" ]; then
-		mirror="$found"
+		mirror="$snapshotMirror"
 	else
-		echo "# deb $found $suite $comp"
-		mirror="$nonSnapshotMirror"
+		echo "# deb $snapshotMirror $suite $comp"
 	fi
 	echo "deb $mirror $suite $comp"
 	if [ -n "$debSrc" ]; then

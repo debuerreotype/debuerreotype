@@ -73,18 +73,27 @@ touch_epoch() {
 
 for archive in '' security; do
 	snapshotUrlFile="$archDir/snapshot-url${archive:+-${archive}}"
-	if [ -n "$ports" ] && [ -z "$archive" ]; then
-		archive="ports"
+	mirrorArgs=()
+	if [ -n "$ports" ]; then
+		mirrorArgs+=( --ports )
 	fi
-	if [ -z "$eol" ]; then
-		snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" "${archive:+debian-${archive}}")"
-	else
-		snapshotUrl="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "@$epoch" debian-archive)"
-		snapshotUrl="$snapshotUrl/debian${archive:+-${archive}}"
+	if [ -n "$eol" ]; then
+		mirrorArgs+=( --eol )
 	fi
+	mirrorArgs+=( "@$epoch" "$suite${archive:+-$archive}" "$dpkgArch" main )
+	if ! mirrors="$("$debuerreotypeScriptsDir/.debian-mirror.sh" "${mirrorArgs[@]}")"; then
+		if [ "$archive" = 'security' ]; then
+			# if we fail to find the security mirror, we're probably not security supported (which is ~fine)
+			continue
+		else
+			exit 1
+		fi
+	fi
+	eval "$mirrors"
+	[ -n "$snapshotMirror" ]
 	snapshotUrlDir="$(dirname "$snapshotUrlFile")"
 	mkdir -p "$snapshotUrlDir"
-	echo "$snapshotUrl" > "$snapshotUrlFile"
+	echo "$snapshotMirror" > "$snapshotUrlFile"
 	touch_epoch "$snapshotUrlFile"
 done
 

@@ -82,17 +82,19 @@ epoch="$(date --date "$timestamp" '+%s')"
 export SOURCE_DATE_EPOCH="$epoch"
 
 if [ -z "$nonDebian" ]; then
-	if [ -z "$debianEol" ]; then
-		if [ -z "$debianPorts" ]; then
-			mirror="$("$thisDir/.snapshot-url.sh" "@$epoch")"
-		else
-			mirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-ports')"
-		fi
-	else
-		# TODO fixme (see debuerreotype-debian-sources-list)
-		mirrorbase="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
-		mirror="$mirrorbase/debian"
+	dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- '{ print $NF }')}"
+	mirrorArgs=()
+	if [ -n "$debianPorts" ]; then
+		mirrorArgs+=( --ports )
 	fi
+	if [ -n "$debianEol" ]; then
+		mirrorArgs+=( --eol )
+	fi
+	mirrorArgs+=( "@$epoch" "$suite" "$dpkgArch" main )
+	mirrors="$("$thisDir/.debian-mirror.sh" "${mirrorArgs[@]}")"
+	eval "$mirrors"
+	[ -n "$snapshotMirror" ]
+	mirror="$snapshotMirror"
 fi
 
 debootstrapArgs=()
