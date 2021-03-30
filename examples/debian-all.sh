@@ -42,7 +42,7 @@ timestamp="${1:-}"; shift || eusage 'missing timestamp'
 mirror="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "$timestamp")"
 secmirror="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "$timestamp" 'debian-security')"
 
-dpkgArch="$(dpkg --print-architecture | awk -F- '{ print $NF }')"
+dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- '{ print $NF }')}"
 echo
 echo "-- BUILDING TARBALLS FOR '$dpkgArch' FROM '$mirror/' --"
 echo
