@@ -24,10 +24,10 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*
 
 # https://github.com/debuerreotype/debuerreotype/issues/100
-# https://snapshot.debian.org/package/distro-info-data/
-# https://snapshot.debian.org/package/distro-info-data/0.46/
+# http://snapshot.debian.org/package/distro-info-data/
+# http://snapshot.debian.org/package/distro-info-data/0.46/
 RUN set -eux; \
-	wget -O distro-info-data.deb 'https://snapshot.debian.org/archive/debian/20210130T024253Z/pool/main/d/distro-info-data/distro-info-data_0.46_all.deb'; \
+	wget -O distro-info-data.deb 'http://snapshot.debian.org/archive/debian/20210130T024253Z/pool/main/d/distro-info-data/distro-info-data_0.46_all.deb'; \
 	echo '9f06132ddd508802ee0272ecac8b1f301426ffea *distro-info-data.deb' | sha1sum --strict --check -; \
 	apt-get install -y ./distro-info-data.deb; \
 	rm distro-info-data.deb; \
