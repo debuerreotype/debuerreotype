@@ -170,10 +170,12 @@ create_artifacts() {
 	touch_epoch "$targetBase.tar.xz.sha256"
 
 	debuerreotype-chroot "$rootfs" dpkg-query -W > "$targetBase.manifest"
+	echo "$suite" > "$targetBase.apt-dist"
 	echo "$dpkgArch" > "$targetBase.dpkg-arch"
 	echo "$epoch" > "$targetBase.debuerreotype-epoch"
+	echo "$variant" > "$targetBase.debuerreotype-variant"
 	debuerreotype-version > "$targetBase.debuerreotype-version"
-	touch_epoch "$targetBase.manifest" "$targetBase.dpkg-arch" "$targetBase.debuerreotype-epoch" "$targetBase.debuerreotype-version"
+	touch_epoch "$targetBase".{manifest,apt-dist,dpkg-arch,debuerreotype-*}
 
 	for f in debian_version os-release apt/sources.list; do
 		targetFile="$targetBase.$(basename "$f" | sed -r "s/[^a-zA-Z0-9_-]+/-/g")"
