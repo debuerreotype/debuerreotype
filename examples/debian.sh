@@ -314,9 +314,10 @@ create_artifacts() {
 			dpkg -l
 		fi
 	' > "$targetBase.manifest"
+	echo "$dpkgArch" > "$targetBase.dpkg-arch"
 	echo "$epoch" > "$targetBase.debuerreotype-epoch"
 	debuerreotype-version > "$targetBase.debuerreotype-version"
-	touch_epoch "$targetBase.manifest" "$targetBase.debuerreotype-epoch" "$targetBase.debuerreotype-version"
+	touch_epoch "$targetBase.manifest" "$targetBase.dpkg-arch" "$targetBase.debuerreotype-epoch" "$targetBase.debuerreotype-version"
 
 	for f in debian_version os-release apt/sources.list; do
 		targetFile="$targetBase.$(basename "$f" | sed -r "s/[^a-zA-Z0-9_-]+/-/g")"
