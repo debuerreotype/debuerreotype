@@ -171,6 +171,8 @@ initArgs+=(
 
 if [ -n "$qemu" ]; then
 	initArgs+=( --debootstrap=qemu-debootstrap )
+	echo >&2 "warning: qemu-debootstrap is deprecated in favor of binfmt 'fix binary' mode: https://bugs.debian.org/901197"
+	sleep 1
 fi
 
 if [ -n "$include" ]; then
