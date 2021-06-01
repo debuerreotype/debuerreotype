@@ -24,6 +24,7 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*
 
 # https://github.com/debuerreotype/debuerreotype/issues/100
+# https://tracker.debian.org/pkg/distro-info-data
 # http://snapshot.debian.org/package/distro-info-data/
 # http://snapshot.debian.org/package/distro-info-data/0.46/
 RUN set -eux; \
