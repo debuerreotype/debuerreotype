@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+thisDir="$(dirname "$(readlink -vf "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
 	--flags 'debian,debian-eol,debian-ports,non-debian' \
 	--flags 'debootstrap:' \
@@ -108,10 +108,10 @@ fi
 minbaseSupported="$(
 	scriptFile="$(
 		if [ -n "$script" ]; then
-			readlink -f "$script"
+			readlink -vf "$script"
 		else
 			cd /usr/share/debootstrap/scripts
-			readlink -f "$suite"
+			readlink -vf "$suite"
 		fi
 	)"
 	if grep -q 'minbase' "$scriptFile"; then

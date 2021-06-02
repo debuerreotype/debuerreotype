@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 # usage: mkdir -p output && ./run-script.sh ./examples/debian.sh output ...
 
-thisDir="$(readlink -f "$BASH_SOURCE")"
+thisDir="$(readlink -vf "$BASH_SOURCE")"
 thisDir="$(dirname "$thisDir")"
 
 source "$thisDir/scripts/.constants.sh" \

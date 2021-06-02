@@ -7,7 +7,7 @@ set -Eeuo pipefail
 # 	&& rm valve.deb
 
 debuerreotypeScriptsDir="$(which debuerreotype-init)"
-debuerreotypeScriptsDir="$(readlink -f "$debuerreotypeScriptsDir")"
+debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
@@ -36,7 +36,7 @@ suite="${1:-brewmaster}" # http://repo.steampowered.com/steamos/dists/
 
 set -x
 
-outputDir="$(readlink -e "$outputDir")"
+outputDir="$(readlink -ve "$outputDir")"
 
 tmpDir="$(mktemp --directory --tmpdir "debuerreotype.$suite.XXXXXXXXXX")"
 trap "$(printf 'rm -rf %q' "$tmpDir")" EXIT

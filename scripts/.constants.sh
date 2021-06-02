@@ -3,7 +3,7 @@
 # constants of the universe
 export TZ='UTC' LC_ALL='C'
 umask 0002
-scriptsDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+scriptsDir="$(dirname "$(readlink -vf "$BASH_SOURCE")")"
 self="$(basename "$0")"
 
 options="$(getopt -n "$BASH_SOURCE" -o '+' --long 'flags:,flags-short:' -- "$@")"

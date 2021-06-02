@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-thisDir="$(readlink -f "$BASH_SOURCE")"
+thisDir="$(readlink -vf "$BASH_SOURCE")"
 thisDir="$(dirname "$thisDir")"
 
 ver="$("$thisDir/scripts/debuerreotype-version")"

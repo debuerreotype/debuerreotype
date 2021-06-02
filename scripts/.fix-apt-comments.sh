@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-thisDir="$(dirname "$(readlink -f "$BASH_SOURCE")")"
+thisDir="$(dirname "$(readlink -vf "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
 	'<apt-version> <file> [file ...]' \
 	'0.7.22 rootfs/etc/apt/apt.conf.d/example'
