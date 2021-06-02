@@ -7,7 +7,7 @@ set -Eeuo pipefail
 # 	&& rm raspbian.deb
 
 debuerreotypeScriptsDir="$(which debuerreotype-init)"
-debuerreotypeScriptsDir="$(readlink -f "$debuerreotypeScriptsDir")"
+debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
@@ -33,7 +33,7 @@ suite="${1:-}"; shift || eusage 'missing suite'
 
 set -x
 
-outputDir="$(readlink -e "$outputDir")"
+outputDir="$(readlink -ve "$outputDir")"
 
 tmpDir="$(mktemp --directory --tmpdir "debuerreotype.$suite.XXXXXXXXXX")"
 trap "$(printf 'rm -rf %q' "$tmpDir")" EXIT

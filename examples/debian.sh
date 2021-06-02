@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 debuerreotypeScriptsDir="$(which debuerreotype-init)"
-debuerreotypeScriptsDir="$(readlink -f "$debuerreotypeScriptsDir")"
+debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
@@ -49,7 +49,7 @@ timestamp="${1:-}"; shift || eusage 'missing timestamp'
 
 set -x
 
-outputDir="$(readlink -e "$outputDir")"
+outputDir="$(readlink -ve "$outputDir")"
 
 tmpDir="$(mktemp --directory --tmpdir "debuerreotype.$suite.XXXXXXXXXX")"
 trap "$(printf 'rm -rf %q' "$tmpDir")" EXIT

@@ -13,7 +13,7 @@ suites=(
 )
 
 debuerreotypeScriptsDir="$(which debuerreotype-init)"
-debuerreotypeScriptsDir="$(readlink -f "$debuerreotypeScriptsDir")"
+debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
@@ -47,7 +47,7 @@ echo
 echo "-- BUILDING TARBALLS FOR '$dpkgArch' FROM '$mirror/' --"
 echo
 
-thisDir="$(readlink -f "$BASH_SOURCE")"
+thisDir="$(readlink -vf "$BASH_SOURCE")"
 thisDir="$(dirname "$thisDir")"
 
 debianArgs=( --codename-copy )
