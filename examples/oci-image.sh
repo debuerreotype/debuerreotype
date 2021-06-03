@@ -129,6 +129,12 @@ rootfsSha256="$(_sha256 "$tempDir/rootfs.tar.gz")"
 export rootfsSize rootfsSha256
 mv "$tempDir/rootfs.tar.gz" "$tempDir/oci/blobs/sha256/$rootfsSha256"
 
+script='debian.sh'
+if [ -x "$thisDir/$osID.sh" ]; then
+	script="$osID.sh"
+fi
+export script
+
 echo >&2 "generating config ..."
 
 # https://github.com/opencontainers/image-spec/blob/v1.0.1/config.md
@@ -144,12 +150,13 @@ jq -ncS '
 			{
 				created: env.iso8601,
 				created_by: (
-					"# debian.sh --arch "
+					"# " + env.script + " --arch "
 					+ (env.dpkgArch | @sh)
 					+ " out/ "
 					+ (env.suite | @sh)
-					+ " "
-					+ ("@" + env.epoch | @sh)
+					+ if env.script == "debian.sh" then
+						" " + ("@" + env.epoch | @sh)
+					else "" end
 				),
 				comment: ( "debuerreotype " + env.version ),
 			}
