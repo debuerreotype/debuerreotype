@@ -17,20 +17,20 @@ debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
-	--flags 'arch:,qemu' \
+	--flags 'arch:,qemu,sbuild' \
 	-- \
-	'[--arch=<arch>] [--qemu] <output-dir> <timestamp>' \
+	'[--arch=<arch>] [--qemu] [--sbuild] <output-dir> <timestamp>' \
 	'output 2017-05-08T00:00:00Z'
 
 eval "$dgetopt"
+debianArgs=( --codename-copy )
 arch=
-qemu=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
-		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
-		--qemu) qemu=1 ;; # for using "qemu-debootstrap"
+		--arch) arch="$1"; shift ;;
+		--qemu | --sbuild) debianArgs+=( "$flag" ) ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -46,17 +46,10 @@ dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- '{ print $NF }')}"
 echo
 echo "-- BUILDING TARBALLS FOR '$dpkgArch' FROM '$mirror/' --"
 echo
+debianArgs+=( --arch="$dpkgArch" )
 
 thisDir="$(readlink -vf "$BASH_SOURCE")"
 thisDir="$(dirname "$thisDir")"
-
-debianArgs=( --codename-copy )
-if [ -n "$arch" ]; then
-	debianArgs+=( --arch="$arch" )
-fi
-if [ -n "$qemu" ]; then
-	debianArgs+=( --qemu )
-fi
 
 _eol-date() {
 	local codename="$1"; shift # "bullseye", "buster", etc.
