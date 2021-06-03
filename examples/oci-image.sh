@@ -106,6 +106,11 @@ case "$goArch" in
 esac
 export dpkgArch goArch goArm bashbrewArch
 
+osID="$(id="$(grep -E '^ID=' "$sourceDir/rootfs.os-release")" && eval "$id" && echo "${ID:-}")" || : # "debian", "raspbian", "ubuntu", etc
+: "${osID:=debian}" # if for some reason the above fails, fall back to "debian"
+
+echo >&2 "processing $osID '$suite'${variant:+", variant '$variant'"}, architecture '$dpkgArch' ('$bashbrewArch')"
+
 _sha256() {
 	sha256sum "$@" | cut -d' ' -f1
 }
@@ -193,7 +198,7 @@ manifestSha256="$(_sha256 "$tempDir/manifest.json")"
 export manifestSize manifestSha256
 mv "$tempDir/manifest.json" "$tempDir/oci/blobs/sha256/$manifestSha256"
 
-export repo="debian/$bashbrewArch" # TODO determine better image name/location
+export repo="$osID/$bashbrewArch"
 export tag="$suite"
 if [ -n "$variant" ]; then
 	tag+="-$variant"
