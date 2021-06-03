@@ -150,8 +150,10 @@ jq -ncS '
 			{
 				created: env.iso8601,
 				created_by: (
-					"# " + env.script + " --arch "
-					+ (env.dpkgArch | @sh)
+					"# " + env.script
+					+ if env.script != "raspbian.sh" then
+						" --arch " + (env.dpkgArch | @sh)
+					else "" end
 					+ " out/ "
 					+ (env.suite | @sh)
 					+ if env.script == "debian.sh" then
