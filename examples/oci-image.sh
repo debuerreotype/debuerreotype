@@ -155,8 +155,11 @@ jq -ncS '
 					+ " out/ "
 					+ (env.suite | @sh)
 					+ if env.script == "debian.sh" then
-						" " + ("@" + env.epoch | @sh)
-					else "" end
+						" "
+					else
+						" # "
+					end
+					+ ("@" + env.epoch | @sh)
 				),
 				comment: ( "debuerreotype " + env.version ),
 			}
