@@ -103,7 +103,7 @@ keyring="$tmpDir/debian-archive-$suite-keyring.gpg"
 if [ "$suite" = potato ]; then
 	# src:debian-archive-keyring was created in 2006, thus does not include a key for potato
 	gpg --batch --no-default-keyring --keyring "$keyring" \
-		--keyserver ha.pool.sks-keyservers.net \
+		--keyserver keyserver.ubuntu.com \
 		--recv-keys 8FD47FF1AA9372C37043DC28AA7DEB7B722F1AED
 else
 	# check against all releases (ie, combine both "debian-archive-keyring.gpg" and "debian-archive-removed-keys.gpg"), since we cannot really know whether the target release became EOL later than the snapshot date we are targeting
