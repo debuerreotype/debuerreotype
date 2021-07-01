@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+thisDir="$(dirname "$(readlink -vf "$BASH_SOURCE")")"
+source "$thisDir/.constants.sh" \
+	'<target-dir>' \
+	'rootfs'
+
+eval "$dgetopt"
+while true; do
+	flag="$1"; shift
+	dgetopt-case "$flag"
+	case "$flag" in
+		--) break ;;
+		*) eusage "unknown flag '$flag'" ;;
+	esac
+done
+
+targetDir="${1:-}"; shift || eusage 'missing target-dir'
+[ -n "$targetDir" ]
+
+# ideally this would use something like "apt-get indextargets" instead of hard-coding these particular "/var/lib/apt/lists" paths, but it doesn't include the Release files :(
+# also a caution from DonKult: "the Release file might really be an InRelease file which failed signature checks"
+
+shopt -s nullglob
+releaseFiles=( "$targetDir"/var/lib/apt/lists/*_{In,}Release )
+if [ "${#releaseFiles[@]}" -eq 0 ]; then
+	echo >&2 "error: no 'Release' files found at /var/lib/apt/lists in '$targetDir'"
+	echo >&2 "  did you forget to populate 'sources.list' or run 'apt-get update' first?"
+	exit 1
+fi
+
+epoch="$(
+	awk -F ': ' '$1 == "Date" { printf "%s%c", $2, 0 }' "${releaseFiles[@]}" \
+		| xargs -r0n1 date '+%s' --date \
+		| sort -un \
+		| tail -1
+)"
+echo "$epoch" > "$targetDir/debuerreotype-epoch"

@@ -95,6 +95,12 @@ initArgs+=(
 rootfsDir="$tmpDir/rootfs"
 debuerreotype-init "${initArgs[@]}" "$rootfsDir" "$suite" "$mirror"
 
+debuerreotype-minimizing-config "$rootfsDir"
+
+echo "deb $mirror $suite main contrib non-free" | tee "$rootfsDir/etc/apt/sources.list"
+debuerreotype-apt-get "$rootfsDir" update -qq
+
+debuerreotype-recalculate-epoch "$rootfsDir"
 epoch="$(< "$rootfsDir/debuerreotype-epoch")"
 touch_epoch() {
 	while [ "$#" -gt 0 ]; do
@@ -102,12 +108,8 @@ touch_epoch() {
 		touch --no-dereference --date="@$epoch" "$f"
 	done
 }
-
-echo "deb $mirror $suite main contrib non-free" | tee "$rootfsDir/etc/apt/sources.list"
 touch_epoch "$rootfsDir/etc/apt/sources.list"
 
-debuerreotype-minimizing-config "$rootfsDir"
-debuerreotype-apt-get "$rootfsDir" update -qq
 debuerreotype-apt-get "$rootfsDir" dist-upgrade -yqq
 
 # make a couple copies of rootfs so we can create other variants
@@ -120,7 +122,7 @@ fi
 
 # prefer iproute2 if it exists
 iproute=iproute2
-if ! debuerreotype-chroot rootfs apt-get install -qq -s iproute2 &> /dev/null; then
+if ! debuerreotype-apt-get "$rootfsDir" install -qq -s iproute2 &> /dev/null; then
 	# poor wheezy
 	iproute=iproute
 fi

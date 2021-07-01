@@ -94,6 +94,19 @@ initArgs=(
 rootfsDir="$tmpDir/rootfs"
 debuerreotype-init "${initArgs[@]}" "$rootfsDir" "$suite" "$mirror"
 
+debuerreotype-minimizing-config "$rootfsDir"
+
+# setup "proper" sources.list
+tee "$rootfsDir/etc/apt/sources.list" <<-EOS
+	deb $mirror $suite main restricted universe multiverse
+	deb $mirror $suite-updates main restricted universe multiverse
+	deb $mirror $suite-backports main restricted universe multiverse
+	deb $secmirror $suite-security main restricted universe multiverse
+EOS
+# TODO make components list a script flag?  backports?
+debuerreotype-apt-get "$rootfsDir" update -qq
+
+debuerreotype-recalculate-epoch "$rootfsDir"
 epoch="$(< "$rootfsDir/debuerreotype-epoch")"
 touch_epoch() {
 	while [ "$#" -gt 0 ]; do
@@ -101,15 +114,8 @@ touch_epoch() {
 		touch --no-dereference --date="@$epoch" "$f"
 	done
 }
+touch_epoch "$rootfsDir/etc/apt/sources.list"
 
-# TODO setup proper sources.list for Ubuntu
-# deb http://archive.ubuntu.com/ubuntu xenial main restricted universe multiverse
-# deb http://archive.ubuntu.com/ubuntu xenial-updates main restricted universe multiverse
-# deb http://archive.ubuntu.com/ubuntu xenial-backports main restricted universe multiverse
-# deb http://security.ubuntu.com/ubuntu xenial-security main restricted universe multiverse
-
-debuerreotype-minimizing-config "$rootfsDir"
-debuerreotype-apt-get "$rootfsDir" update -qq
 debuerreotype-apt-get "$rootfsDir" dist-upgrade -yqq
 
 # make a couple copies of rootfs so we can create other variants
