@@ -6,7 +6,7 @@ dockerImage+='-ubuntu'
 {
 	cat Dockerfile
 	echo 'RUN apt-get update && apt-get install -y --no-install-recommends ubuntu-keyring && rm -rf /var/lib/apt/lists/*'
-} | docker build --tag "$dockerImage" --file - .
+} | docker build --pull --tag "$dockerImage" --file - .
 
 mkdir -p validate
 

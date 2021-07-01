@@ -10,8 +10,9 @@ source "$thisDir/scripts/.constants.sh" \
 	--flags 'image:' \
 	--flags 'no-bind' \
 	--flags 'no-build' \
+	--flags 'pull' \
 	-- \
-	'[--image=foo/bar:baz] [--no-build] [--no-bind] [script/command]' \
+	'[--image=foo/bar:baz] [--no-build] [--no-bind] [--pull] [script/command]' \
 	'./examples/debian.sh output stretch 2017-05-08T00:00:00Z
 --no-build --image=debuerreotype:ubuntu ./examples/ubuntu.sh output xenial'
 
@@ -19,6 +20,7 @@ eval "$dgetopt"
 image=
 build=1
 bindMount=1
+pull=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
@@ -26,6 +28,7 @@ while true; do
 		--image) image="$1"; shift ;;
 		--no-bind) bindMount= ;;
 		--no-build) build= ;;
+		--pull) pull=1 ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -35,7 +38,12 @@ if [ -z "$image" ]; then
 	image="$("$thisDir/.docker-image.sh")"
 fi
 if [ -n "$build" ]; then
-	docker build --tag "$image" "$thisDir"
+	docker build ${pull:+--pull} --tag "$image" "$thisDir"
+elif [ -n "$pull" ]; then
+	docker pull "$image"
+else
+	# make sure "docker run" doesn't pull (we have `--no-build` and no explicit `--pull`)
+	docker image inspect "$image" > /dev/null
 fi
 
 args=(
