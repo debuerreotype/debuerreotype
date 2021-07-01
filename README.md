@@ -33,6 +33,7 @@ Available scripts:
 | `debuerreotype-minimizing-config` | apply configuration tweaks to make the rootfs minimal and keep it minimal (especially targeted at Docker images, with comments explicitly describing Docker use cases) |
 | `debuerreotype-slimify` | remove files such as documentation to create an even smaller rootfs (used for creating `slim` variants of the Docker images, for example) |
 | `debuerreotype-debian-sources-list` | generate an appropriate Debian `sources.list` in the rootfs given a suite (especially for updating `sources.list` to point at deb.debian.org before generating outputs) |
+| `debuerreotype-recalculate-epoch` | (esp. for non-Debian) recalculate `debuerreotype-epoch` from `/var/lib/apt/lists/*_{In,}Release` files' `Date:` fields (after updating `sources.list` / `apt-get update`) |
 | `debuerreotype-fixup` | invoked by `debuerreotype-tar` to fixup timestamps and remove known-bad log files for determinism |
 | `debuerreotype-tar` | deterministically create a tar file of the rootfs |
 | `debuerreotype-version` | print out the version of the current `debuerreotype` installation |

@@ -101,6 +101,12 @@ initArgs=(
 rootfsDir="$tmpDir/rootfs"
 debuerreotype-init "${initArgs[@]}" "$rootfsDir" "$suite" "$mirror"
 
+debuerreotype-minimizing-config "$rootfsDir"
+
+# TODO do we need to update sources.list here? (security?)
+debuerreotype-apt-get "$rootfsDir" update -qq
+
+debuerreotype-recalculate-epoch "$rootfsDir"
 epoch="$(< "$rootfsDir/debuerreotype-epoch")"
 touch_epoch() {
 	while [ "$#" -gt 0 ]; do
@@ -109,8 +115,6 @@ touch_epoch() {
 	done
 }
 
-debuerreotype-minimizing-config "$rootfsDir"
-debuerreotype-apt-get "$rootfsDir" update -qq
 debuerreotype-apt-get "$rootfsDir" dist-upgrade -yqq
 
 # make a couple copies of rootfs so we can create other variants

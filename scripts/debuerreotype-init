@@ -75,7 +75,8 @@ else
 		} | awk -F ': ' '$1 == "Date" { print $2; exit }'
 	)" || :
 	[ -n "$timestamp" ]
-	# TODO re-calculate "timestamp" during debuerreotype-tar/fixup (possibly scraping from /var/lib/apt/lists/*Release* instead?)
+
+	# see "debuerreotype-recalculate-epoch" for a simple way to update this value appropriately after "sources.list" is updated and "apt-get update" has been run (which will be more accurate)
 fi
 
 epoch="$(date --date "$timestamp" '+%s')"
