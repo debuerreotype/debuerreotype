@@ -210,11 +210,8 @@ manifestSha256="$(_sha256 "$tempDir/manifest.json")"
 export manifestSize manifestSha256
 mv "$tempDir/manifest.json" "$tempDir/oci/blobs/sha256/$manifestSha256"
 
-export repo="$osID/$bashbrewArch"
-export tag="$suite"
-if [ -n "$variant" ]; then
-	tag+="-$variant"
-fi
+export repo="$bashbrewArch/$osID" # "amd64/debian", "arm32v6/raspbian", etc.
+export tag="$suite${variant:+-$variant}" # "buster", "buster-slim", etc.
 export image="$repo:$tag"
 
 # https://github.com/opencontainers/image-spec/blob/v1.0.1/image-index.md
