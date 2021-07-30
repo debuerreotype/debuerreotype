@@ -42,8 +42,7 @@ jobs:
           - { SUITE: oldstable, CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
 
           - { DISTRO: ubuntu, SUITE: bionic }
-          #- { DISTRO: ubuntu, SUITE: focal }
-          # (Debian Buster, which is our build environment via Dockerfile, does not contain the "focal" script and this test is not worth getting explicit about the script)
+          - { DISTRO: ubuntu, SUITE: focal }
       fail-fast: false
     runs-on: ubuntu-20.04
     env: ${{ matrix }}
