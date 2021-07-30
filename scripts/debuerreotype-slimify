@@ -19,6 +19,11 @@ done
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
 
+# https://github.com/debuerreotype/debuerreotype/issues/10
+shopt -s nullglob
+extraSpecialDirectories=( "$targetDir"/usr/share/man/man[0-9]/ )
+shopt -u nullglob
+
 IFS=$'\n'; set -o noglob
 slimExcludes=( $(grep -vE '^#|^$' "$thisDir/.slimify-excludes" | sort -u) )
 slimIncludes=( $(grep -vE '^#|^$' "$thisDir/.slimify-includes" | sort -u) )
@@ -85,3 +90,8 @@ done
 	done
 } >> "$dpkgCfgFile"
 chmod 0644 "$dpkgCfgFile"
+
+# https://github.com/debuerreotype/debuerreotype/issues/10
+if [ "${#extraSpecialDirectories[@]}" -gt 0 ]; then
+	mkdir -p "${extraSpecialDirectories[@]}"
+fi
