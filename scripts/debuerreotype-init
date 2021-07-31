@@ -135,7 +135,12 @@ debootstrapArgs+=(
 )
 [ -z "$script" ] || debootstrapArgs+=( "$script" )
 
-: "${debootstrap:=debootstrap}"
+unshare-debootstrap() {
+	# avoid bugs in packages that might leave things mounted ("/run/shm" is a common one that sometimes ends up dangling)
+	unshare --mount debootstrap "$@"
+}
+
+: "${debootstrap:=unshare-debootstrap}"
 if ! "$debootstrap" "${debootstrapArgs[@]}"; then
 	if [ -f "$targetDir/debootstrap/debootstrap.log" ]; then
 		echo >&2
