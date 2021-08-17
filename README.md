@@ -2,7 +2,7 @@
 
 [![GitHub CI](https://github.com/debuerreotype/debuerreotype/workflows/GitHub%20CI/badge.svg?branch=master&event=push)](https://github.com/debuerreotype/debuerreotype/actions?query=workflow%3A%22GitHub+CI%22+branch%3Amaster)
 
-Reproducible, [snapshot](http://snapshot.debian.org)-based Debian rootfs builds (especially for Docker).
+Reproducible, [snapshot](https://snapshot.debian.org)-based Debian rootfs builds (especially for Docker).
 
 This is based on [lamby](https://github.com/lamby)'s work for reproducible `debootstrap`:
 
@@ -15,7 +15,7 @@ The name is an attempt at riffing off the photography basis of the word "snapsho
 
 ## Why?
 
-The goal is to create an auditable, reproducible process for creating rootfs tarballs (especially for use in Docker) of Debian releases, based on point-in-time snapshots from [snapshot.debian.org](http://snapshot.debian.org).
+The goal is to create an auditable, reproducible process for creating rootfs tarballs (especially for use in Docker) of Debian releases, based on point-in-time snapshots from [snapshot.debian.org](https://snapshot.debian.org).
 
 However, as noted below, the only strictly Docker-specific script is `debuerreotype-minimizing-config`, which applies many configuration tweaks which are useful for Docker users and may or may not be useful outside of that context.
 
@@ -50,7 +50,7 @@ I: Retrieving InRelease
 I: Checking Release signature
 I: Valid Release signature (key id 126C0D24BD8A2942CC7DF8AC7638D0442B90D010)
 ...
-I: Checking component main on http://snapshot.debian.org/archive/debian/20170101T000000Z...
+I: Checking component main on https://snapshot.debian.org/archive/debian/20170101T000000Z...
 ...
 I: Base system installed successfully.
 
