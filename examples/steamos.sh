@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# # http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/?C=M&O=D
-# RUN wget -O valve.deb 'http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/valve-archive-keyring_0.6+bsosc2_all.deb' \
+# # https://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/?C=M&O=D
+# RUN wget -O valve.deb 'https://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/valve-archive-keyring_0.6+bsosc2_all.deb' \
 # 	&& apt-get install -y ./valve.deb \
 # 	&& rm valve.deb
 
@@ -32,7 +32,7 @@ while true; do
 done
 
 outputDir="${1:-}"; shift || eusage 'missing output-dir'
-suite="${1:-brewmaster}" # http://repo.steampowered.com/steamos/dists/
+suite="${1:-brewmaster}" # https://repo.steampowered.com/steamos/dists/
 
 set -x
 
@@ -45,7 +45,7 @@ export TZ='UTC' LC_ALL='C'
 
 dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- '{ print $NF }')}"
 
-mirror='http://repo.steampowered.com/steamos'
+mirror='https://repo.steampowered.com/steamos'
 
 exportDir="$tmpDir/output"
 archDir="$exportDir/steamos/$dpkgArch"
