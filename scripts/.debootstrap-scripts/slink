@@ -6,7 +6,7 @@ force_md5
 work_out_debs () {
     required="base-files base-passwd bash bsdutils debianutils diff dpkg e2fsprogs fileutils findutils grep gzip hostname ldso libdb2 libgdbmg1 libncurses4 ncurses3.4 libpam0g libpam0g-util libpwdb0g libreadlineg2 libstdc++2.9 login makedev mawk modutils mount ncurses-base ncurses-bin newt0.25 passwd perl-base procps sed shellutils slang1 sysklogd sysvinit tar textutils update util-linux whiptail"
 
-    base="adduser ae apt elvis-tiny fbset fdutils console-tools console-tools-libs libdb2 locales modconf netbase ppp pppconfig textutils telnet"
+    base="adduser ae apt elvis-tiny fbset fdutils console-tools console-tools-libs libdb2 locales modconf netbase textutils telnet"
 
     case $ARCH in
         "i386")
