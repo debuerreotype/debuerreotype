@@ -1,0 +1,88 @@
+
+mirror_style main
+download_style apt var-state
+
+work_out_debs () {
+    required="base-files base-passwd bash bsdutils debianutils diff dpkg e2fsprogs fileutils findutils grep gzip hostname ldso libdb2 libgdbmg1 libncurses4 ncurses3.4 libpam0g libpam0g-util libpwdb0g libreadlineg2 libstdc++2.9 login makedev mawk modutils mount ncurses-base ncurses-bin newt0.25 passwd perl-base procps sed shellutils slang1 sysklogd sysvinit tar textutils update util-linux whiptail"
+
+    base="adduser ae apt elvis-tiny fbset fdutils console-tools console-tools-libs libdb2 locales modconf netbase ppp pppconfig textutils telnet"
+
+    case $ARCH in
+        "i386")
+            required="$required libc6"
+            base="$base fdflush isapnptools lilo mbr pciutils psmisc setserial syslinux"
+            ;;
+    esac
+
+    all_debs="$required $base"
+}
+
+install_debs () {
+    extract $required
+
+    :> "$TARGET/var/lib/dpkg/status"
+    :> "$TARGET/var/lib/dpkg/available"
+
+    setup_etc
+    echo '# UNCONFIGURED FSTAB FOR BASE SYSTEM' > "$TARGET/etc/fstab"
+    chown 0.0 $TARGET/etc/fstab; chmod 644 $TARGET/etc/fstab
+
+    mkdir -p "$TARGET/dev/pts"
+
+    setup_proc
+    setup_devices
+
+    mv "$TARGET/usr/bin/perl.dist" "$TARGET/usr/bin/perl"
+
+    ln "$TARGET/sbin/ldconfig.new" "$TARGET/sbin/ldconfig"
+    in_target /sbin/ldconfig
+
+    x_feign_install () {
+        local pkg=$1
+        local deb="$(debfor $pkg)"
+        local ver="$(
+            ar -p $TARGET/$deb control.tar.gz | zcat |
+                tar -O -xf - control ./control 2>/dev/null |
+                sed -ne 's/^Version: *//Ip' | head -n 1
+        )"
+
+        mkdir -p "$TARGET/var/lib/dpkg/info"
+    
+echo \
+"Package: $pkg
+Version: $ver
+Status: install ok installed" >> "$TARGET/var/lib/dpkg/status"
+
+        touch "$TARGET/var/lib/dpkg/info/${pkg}.list"
+    }
+
+    x_core_install () {
+        in_target dpkg --force-depends --install $(debfor "$@")
+    }
+
+    x_feign_install dpkg
+
+    x_core_install base-files base-passwd ldso
+    x_core_install dpkg
+
+    ln -sf /usr/share/zoneinfo/UTC "$TARGET/etc/localtime"
+    x_core_install libc6
+
+    x_core_install perl-base
+    x_core_install mawk
+
+    repeat 5 in_target dpkg --force-depends --unpack $(debfor $required)
+
+    mv "$TARGET/sbin/start-stop-daemon" "$TARGET/sbin/start-stop-daemon.REAL"
+    cp "$TARGET/bin/true" "$TARGET/sbin/start-stop-daemon"
+
+    setup_dselect_method apt
+    #on_exit "in_target umount /dev/pts"
+
+    in_target dpkg --configure --pending --force-configure-any --force-depends
+
+    smallyes '' | repeat 5 in_target dpkg --force-auto-select --force-overwrite \
+        --skip-same-version --install $(debfor $base)
+
+    mv "$TARGET/sbin/start-stop-daemon.REAL" "$TARGET/sbin/start-stop-daemon"
+}
