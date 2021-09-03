@@ -72,7 +72,7 @@ if [ -s "$sourceDir/rootfs.debuerreotype-variant" ]; then
 else
 	dirBase="$(basename "$sourceDir")"
 	case "$dirBase" in
-		slim | sbuild) variant="$dirBase" ;;
+		slim) variant="$dirBase" ;;
 		"$suite") variant='' ;;
 		*) echo >&2 "error: unknown variant: '$variant'"; exit 1 ;;
 	esac

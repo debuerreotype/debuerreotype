@@ -17,9 +17,9 @@ debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
-	--flags 'arch:,qemu,sbuild' \
+	--flags 'arch:,qemu' \
 	-- \
-	'[--arch=<arch>] [--qemu] [--sbuild] <output-dir> <timestamp>' \
+	'[--arch=<arch>] [--qemu] <output-dir> <timestamp>' \
 	'output 2017-05-08T00:00:00Z'
 
 eval "$dgetopt"
@@ -30,7 +30,7 @@ while true; do
 	dgetopt-case "$flag"
 	case "$flag" in
 		--arch) arch="$1"; shift ;;
-		--qemu | --sbuild) debianArgs+=( "$flag" ) ;;
+		--qemu) debianArgs+=( "$flag" ) ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
