@@ -6,12 +6,12 @@ debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
-	--flags 'codename-copy,sbuild' \
+	--flags 'codename-copy' \
 	--flags 'eol,ports' \
 	--flags 'arch:,qemu' \
 	--flags 'include:,exclude:' \
 	-- \
-	'[--codename-copy] [--sbuild] [--eol] [--ports] [--arch=<arch>] [--qemu] <output-dir> <suite> <timestamp>' \
+	'[--codename-copy] [--eol] [--ports] [--arch=<arch>] [--qemu] <output-dir> <suite> <timestamp>' \
 	'output stretch 2017-05-08T00:00:00Z
 --codename-copy output stable 2017-05-08T00:00:00Z
 --eol output squeeze 2016-03-14T00:00:00Z
@@ -21,7 +21,6 @@ eval "$dgetopt"
 codenameCopy=
 eol=
 ports=
-sbuild=
 include=
 exclude=
 arch=
@@ -31,7 +30,6 @@ while true; do
 	dgetopt-case "$flag"
 	case "$flag" in
 		--codename-copy) codenameCopy=1 ;; # for copying a "stable.tar.xz" to "stretch.tar.xz" with updated sources.list (saves a lot of extra building work)
-		--sbuild) sbuild=1 ;; # for building "sbuild" compatible tarballs as well
 		--eol) eol=1 ;; # for using "archive.debian.org"
 		--ports) ports=1 ;; # for using "debian-ports"
 		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
@@ -208,13 +206,9 @@ if [ -n "$eol" ] && dpkg --compare-versions "$aptVersion" '>=' '0.7.26~'; then
 	# TODO make this a real script so it can have a nice comment explaining why we do it for EOL releases?
 fi
 
-# make a couple copies of rootfs so we can create other variants
+# copy the rootfs to create other variants
 mkdir "$rootfsDir"-slim
 tar -cC "$rootfsDir" . | tar -xC "$rootfsDir"-slim
-if [ -n "$sbuild" ]; then
-	mkdir "$rootfsDir"-sbuild
-	tar -cC "$rootfsDir" . | tar -xC "$rootfsDir"-sbuild
-fi
 
 # for historical reasons (related to their usefulness in debugging non-working container networking in container early days before "--network container:xxx"), Debian 10 and older non-slim images included both "ping" and "ip" above "minbase", but in 11+ (Bullseye), that will no longer be the case and we will instead be a faithful minbase again :D
 epoch2021="$(date --date '2021-01-01 00:00:00' +%s)"
@@ -235,13 +229,6 @@ fi
 
 debuerreotype-slimify "$rootfsDir"-slim
 
-if [ -n "$sbuild" ]; then
-	# this should match the list added to the "buildd" variant in debootstrap and the list installed by sbuild
-	# https://salsa.debian.org/installer-team/debootstrap/blob/da5f17904de373cd7a9224ad7cd69c80b3e7e234/scripts/debian-common#L20
-	# https://salsa.debian.org/debian/sbuild/blob/fc306f4be0d2c57702c5e234273cd94b1dba094d/bin/sbuild-createchroot#L257-260
-	debuerreotype-apt-get "$rootfsDir"-sbuild install -y $noInstallRecommends build-essential fakeroot
-fi
-
 sourcesListArgs=()
 [ -z "$eol" ] || sourcesListArgs+=( --eol )
 [ -z "$ports" ] || sourcesListArgs+=( --ports )
@@ -261,24 +248,7 @@ create_artifacts() {
 		tarArgs+=( --exclude='./usr/bin/qemu-*-static' )
 	fi
 
-	if [ "$variant" != 'sbuild' ]; then
-		debuerreotype-debian-sources-list "${sourcesListArgs[@]}" "$rootfs" "$suite"
-	else
-		# sbuild needs "deb-src" entries
-		debuerreotype-debian-sources-list --deb-src "${sourcesListArgs[@]}" "$rootfs" "$suite"
-
-		# APT has odd issues with "Acquire::GzipIndexes=false" + "file://..." sources sometimes
-		# (which are used in sbuild for "--extra-package")
-		#   Could not open file /var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages - open (13: Permission denied)
-		#   ...
-		#   E: Failed to fetch store:/var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages  Could not open file /var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages - open (13: Permission denied)
-		rm -f "$rootfs/etc/apt/apt.conf.d/docker-gzip-indexes"
-		# TODO figure out the bug and fix it in APT instead /o\
-
-		# schroot is picky about "/dev" (which is excluded by default in "debuerreotype-tar")
-		# see https://github.com/debuerreotype/debuerreotype/pull/8#issuecomment-305855521
-		tarArgs+=( --include-dev )
-	fi
+	debuerreotype-debian-sources-list "${sourcesListArgs[@]}" "$rootfs" "$suite"
 
 	case "$suite" in
 		sarge)

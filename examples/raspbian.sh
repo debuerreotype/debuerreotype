@@ -11,18 +11,15 @@ debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
-	--flags 'sbuild' \
 	-- \
 	'<output-dir> <suite>' \
 	'output stretch'
 
 eval "$dgetopt"
-sbuild=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
-		--sbuild) sbuild=1 ;; # for building "sbuild" compatible tarballs as well
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -117,13 +114,9 @@ touch_epoch() {
 
 debuerreotype-apt-get "$rootfsDir" dist-upgrade -yqq
 
-# make a couple copies of rootfs so we can create other variants
+# copy the rootfs to create other variants
 mkdir "$rootfsDir"-slim
 tar -cC "$rootfsDir" . | tar -xC "$rootfsDir"-slim
-if [ -n "$sbuild" ]; then
-	mkdir "$rootfsDir"-sbuild
-	tar -cC "$rootfsDir" . | tar -xC "$rootfsDir"-sbuild
-fi
 
 # prefer iproute2 if it exists
 iproute=iproute2
@@ -135,13 +128,6 @@ debuerreotype-apt-get "$rootfsDir" install -y --no-install-recommends iputils-pi
 
 debuerreotype-slimify "$rootfsDir"-slim
 
-if [ -n "$sbuild" ]; then
-	# this should match the list added to the "buildd" variant in debootstrap and the list installed by sbuild
-	# https://salsa.debian.org/installer-team/debootstrap/blob/da5f17904de373cd7a9224ad7cd69c80b3e7e234/scripts/debian-common#L20
-	# https://salsa.debian.org/debian/sbuild/blob/fc306f4be0d2c57702c5e234273cd94b1dba094d/bin/sbuild-createchroot#L257-260
-	debuerreotype-apt-get "$rootfsDir"-sbuild install -y --no-install-recommends build-essential fakeroot
-fi
-
 create_artifacts() {
 	local targetBase="$1"; shift
 	local rootfs="$1"; shift
@@ -149,23 +135,6 @@ create_artifacts() {
 	local variant="$1"; shift
 
 	local tarArgs=()
-
-	if [ "$variant" = 'sbuild' ]; then
-		# sbuild needs "deb-src" entries
-		debuerreotype-chroot "$rootfs" sed -ri -e '/^deb / p; s//deb-src /' /etc/apt/sources.list
-
-		# APT has odd issues with "Acquire::GzipIndexes=false" + "file://..." sources sometimes
-		# (which are used in sbuild for "--extra-package")
-		#   Could not open file /var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages - open (13: Permission denied)
-		#   ...
-		#   E: Failed to fetch store:/var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages  Could not open file /var/lib/apt/lists/partial/_tmp_tmp.ODWljpQfkE_._Packages - open (13: Permission denied)
-		rm -f "$rootfs/etc/apt/apt.conf.d/docker-gzip-indexes"
-		# TODO figure out the bug and fix it in APT instead /o\
-
-		# schroot is picky about "/dev" (which is excluded by default in "debuerreotype-tar")
-		# see https://github.com/debuerreotype/debuerreotype/pull/8#issuecomment-305855521
-		tarArgs+=( --include-dev )
-	fi
 
 	debuerreotype-tar "${tarArgs[@]}" "$rootfs" "$targetBase.tar.xz"
 	du -hsx "$targetBase.tar.xz"
