@@ -12,6 +12,16 @@ defaults:
 
 jobs:
 
+  https:
+    name: Ensure no-TLS snapshot usage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Ensure http://snapshot.debian.org (https://github.com/debuerreotype/debuerreotype/pull/119#issuecomment-901457009)
+        run: |
+          rm .github/workflows/ci.yml # this file itself will always be a match, but it's the only valid one 👀
+          ! grep -rn 'https://snapshot.debian.org'
+
   test:
     strategy:
       matrix:
@@ -44,6 +54,7 @@ jobs:
           - { DISTRO: ubuntu, SUITE: bionic }
           - { DISTRO: ubuntu, SUITE: focal }
       fail-fast: false
+    name: Test ${{ matrix.DISTRO && format('{0} ', matrix.DISTRO) }}${{ matrix.SUITE }}${{ matrix.CODENAME && format(' ({0})', matrix.CODENAME) }}${{ matrix.ARCH && format(' [{0}]', matrix.ARCH) }}${{ matrix.TIMESTAMP && format(' at {0}', matrix.TIMESTAMP) }}
     runs-on: ubuntu-20.04
     env: ${{ matrix }}
     steps:
