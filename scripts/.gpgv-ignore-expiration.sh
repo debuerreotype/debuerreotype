@@ -28,7 +28,8 @@ _status_fd() {
 if fd="$(_status_fd "$@")" && [ -n "$fd" ]; then
 	# older bash (3.2, lenny) doesn't support variable file descriptors (hence "eval")
 	# (bash: syntax error near unexpected token `$fd')
-	eval 'exec gpgv "$@" '"$fd"'> >(sed "s/EXPKEYSIG/GOODSIG/" >&'"$fd"')'
+	sedExpression='s/^\[GNUPG:\] EXPKEYSIG /[GNUPG:] GOODSIG /'
+	eval 'exec gpgv "$@" '"$fd"'> >(sed "$sedExpression" >&'"$fd"')'
 fi
 
 # no "--status-fd"? no worries! ("gpgv" without "--status-fd" doesn't seem to care about expired keys, so we don't have to either)
