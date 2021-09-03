@@ -8,10 +8,10 @@ debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 source "$debuerreotypeScriptsDir/.constants.sh" \
 	--flags 'codename-copy' \
 	--flags 'eol,ports' \
-	--flags 'arch:,qemu' \
+	--flags 'arch:' \
 	--flags 'include:,exclude:' \
 	-- \
-	'[--codename-copy] [--eol] [--ports] [--arch=<arch>] [--qemu] <output-dir> <suite> <timestamp>' \
+	'[--codename-copy] [--eol] [--ports] [--arch=<arch>] <output-dir> <suite> <timestamp>' \
 	'output stretch 2017-05-08T00:00:00Z
 --codename-copy output stable 2017-05-08T00:00:00Z
 --eol output squeeze 2016-03-14T00:00:00Z
@@ -24,7 +24,6 @@ ports=
 include=
 exclude=
 arch=
-qemu=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
@@ -33,7 +32,6 @@ while true; do
 		--eol) eol=1 ;; # for using "archive.debian.org"
 		--ports) ports=1 ;; # for using "debian-ports"
 		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
-		--qemu) qemu=1 ;; # for using "qemu-debootstrap"
 		--include) include="${include:+$include,}$1"; shift ;;
 		--exclude) exclude="${exclude:+$exclude,}$1"; shift ;;
 		--) break ;;
@@ -167,12 +165,6 @@ initArgs+=(
 	--no-merged-usr
 )
 
-if [ -n "$qemu" ]; then
-	initArgs+=( --debootstrap=qemu-debootstrap )
-	echo >&2 "warning: qemu-debootstrap is deprecated in favor of binfmt 'fix binary' mode: https://bugs.debian.org/901197"
-	sleep 1
-fi
-
 if [ -n "$include" ]; then
 	initArgs+=( --include="$include" )
 fi
@@ -243,12 +235,9 @@ create_artifacts() {
 	cp "$rootfs/etc/apt/sources.list" "$targetBase.sources-list-snapshot"
 	touch_epoch "$targetBase.sources-list-snapshot"
 
-	local tarArgs=()
-	if [ -n "$qemu" ]; then
-		tarArgs+=( --exclude='./usr/bin/qemu-*-static' )
-	fi
-
 	debuerreotype-debian-sources-list "${sourcesListArgs[@]}" "$rootfs" "$suite"
+
+	local tarArgs=()
 
 	case "$suite" in
 		sarge)
