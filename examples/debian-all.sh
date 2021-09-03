@@ -17,20 +17,18 @@ debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
-	--flags 'arch:,qemu' \
+	--flags 'arch:' \
 	-- \
-	'[--arch=<arch>] [--qemu] <output-dir> <timestamp>' \
+	'[--arch=<arch>] <output-dir> <timestamp>' \
 	'output 2017-05-08T00:00:00Z'
 
 eval "$dgetopt"
-debianArgs=( --codename-copy )
 arch=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
 		--arch) arch="$1"; shift ;;
-		--qemu) debianArgs+=( "$flag" ) ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -38,6 +36,8 @@ done
 
 outputDir="${1:-}"; shift || eusage 'missing output-dir'
 timestamp="${1:-}"; shift || eusage 'missing timestamp'
+
+debianArgs=( --codename-copy )
 
 mirror="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "$timestamp")"
 secmirror="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "$timestamp" 'debian-security')"
