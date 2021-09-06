@@ -1,7 +1,6 @@
 mirror_style release
 download_style apt var-state
 default_mirror http://archive.debian.org/debian
-keyring /usr/share/keyrings/debian-archive-removed-keys.gpg
 force_md5
 
 LIBC=libc6
