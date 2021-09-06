@@ -82,7 +82,19 @@ second_stage_install () {
     x_core_install dpkg
 
     ln -sf /usr/share/zoneinfo/UTC "$TARGET/etc/localtime"
-    x_core_install $LIBC
+
+    # the libc6 and sysvinit postinst scripts want to run "init u" to re-exec sysvinit, but that sends SIGHUP to PID 1, which is undesirable (for hopefully obvious reasons), so we have to get a little bit clever while installing libc6 and later before configuring the rest of the system
+    x_hack_avoid_postinst_init() {
+        local postinst
+        for postinst in "$TARGET"/var/lib/dpkg/info/*.postinst; do
+            if grep -qE '^[[:space:]]*init[[:space:]]' "$postinst" 2>/dev/null; then
+                sed -ri -e 's/^([[:space:]]*)(init[[:space:]])/\1: # \2/' "$postinst"
+            fi
+        done
+    }
+    in_target dpkg --force-depends --unpack $(debfor $LIBC)
+    x_hack_avoid_postinst_init
+    in_target dpkg --force-depends --configure $LIBC
 
     smallyes '' | x_core_install perl-5.005-base
     x_core_install mawk
@@ -91,6 +103,9 @@ second_stage_install () {
     in_target dpkg-preconfigure $(debfor $required $base)
 
     repeatn 5 in_target dpkg --force-depends --unpack $(debfor $required)
+
+    # see above
+    x_hack_avoid_postinst_init
 
     mv "$TARGET/sbin/start-stop-daemon" "$TARGET/sbin/start-stop-daemon.REAL"
     cp "$TARGET/bin/true" "$TARGET/sbin/start-stop-daemon"
