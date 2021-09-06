@@ -1,3 +1,7 @@
+#
+# This script was taken from debootstrap version 0.2.45-0.2, adapted with several changes to match the corresponding changes to "potato" since it was removed, and then hacked to avoid invoking "init u" in postinst scripts (which tries to send SIGHUP to PID 1).
+#
+
 mirror_style main
 download_style apt var-state
 default_mirror http://archive.debian.org/debian
