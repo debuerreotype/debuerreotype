@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# # http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/?C=M&O=D
-# RUN wget -O valve.deb 'http://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/valve-archive-keyring_0.6+bsosc2_all.deb' \
+# # https://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/?C=M&O=D
+# RUN wget -O valve.deb 'https://repo.steampowered.com/steamos/pool/main/v/valve-archive-keyring/valve-archive-keyring_0.6+bsosc2_all.deb' \
 # 	&& apt-get install -y ./valve.deb \
 # 	&& rm valve.deb
 
@@ -42,51 +42,54 @@ export TZ='UTC' LC_ALL='C'
 
 dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- '{ print $NF }')}"
 
-mirror='http://repo.steampowered.com/steamos'
-
 exportDir="$tmpDir/output"
 archDir="$exportDir/steamos/$dpkgArch"
 tmpOutputDir="$archDir/$suite"
 
-keyring='/usr/share/keyrings/valve-archive-keyring.gpg'
-
-mkdir -p "$tmpOutputDir"
-if wget -O "$tmpOutputDir/InRelease" "$mirror/dists/$suite/InRelease" && [ -f "$keyring" ]; then
-	gpgv \
-		--keyring "$keyring" \
-		--output "$tmpOutputDir/Release" \
-		"$tmpOutputDir/InRelease"
-else
-	rm -f "$tmpOutputDir/InRelease" # remove wget leftovers
-	wget -O "$tmpOutputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg"
-	wget -O "$tmpOutputDir/Release" "$mirror/dists/$suite/Release"
-	if [ -f "$keyring" ]; then
-		gpgv \
-			--keyring "$keyring" \
-			"$tmpOutputDir/Release.gpg" \
-			"$tmpOutputDir/Release"
-	fi
-fi
+mirror='http://repo.steampowered.com/steamos'
 
 initArgs=(
 	--arch "$dpkgArch"
 	--non-debian
+
+	--debootstrap-script jessie
+	--include valve-archive-keyring
+	--exclude debian-archive-keyring
 )
+
+keyring='/usr/share/keyrings/valve-archive-keyring.gpg'
 if [ -f "$keyring" ]; then
 	initArgs+=( --keyring "$keyring" )
 else
 	initArgs+=( --no-check-gpg )
 fi
+
+mkdir -p "$tmpOutputDir"
+
+if [ -f "$keyring" ] && wget -O "$tmpOutputDir/InRelease" "$mirror/dists/$suite/InRelease"; then
+	gpgv \
+		--keyring "$keyring" \
+		--output "$tmpOutputDir/Release" \
+		"$tmpOutputDir/InRelease"
+	[ -s "$tmpOutputDir/Release" ]
+elif [ -f "$keyring" ] && wget -O "$tmpOutputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg" && wget -O "$tmpOutputDir/Release" "$mirror/dists/$suite/Release"; then
+	rm -f "$tmpOutputDir/InRelease" # remove wget leftovers
+	gpgv \
+		--keyring "$keyring" \
+		"$tmpOutputDir/Release.gpg" \
+		"$tmpOutputDir/Release"
+	[ -s "$tmpOutputDir/Release" ]
+else
+	rm -f "$tmpOutputDir/InRelease" "$tmpOutputDir/Release.gpg" "$tmpOutputDir/Release" # remove wget leftovers
+	echo >&2 "warning: failed to fetch either InRelease or Release.gpg+Release for '$suite' (from '$mirror')"
+fi
+
 initArgs+=(
 	# disable merged-usr (for now?) due to the following compelling arguments:
 	#  - https://bugs.debian.org/src:usrmerge ("dpkg-query" breaks, etc)
 	#  - https://bugs.debian.org/914208 ("buildd" variant disables merged-usr still)
 	#  - https://github.com/debuerreotype/docker-debian-artifacts/issues/60#issuecomment-461426406
 	--no-merged-usr
-
-	--debootstrap-script /usr/share/debootstrap/scripts/jessie
-	--include valve-archive-keyring
-	--exclude debian-archive-keyring
 )
 
 rootfsDir="$tmpDir/rootfs"
@@ -107,7 +110,12 @@ touch_epoch() {
 }
 touch_epoch "$rootfsDir/etc/apt/sources.list"
 
-debuerreotype-apt-get "$rootfsDir" dist-upgrade -yqq
+aptVersion="$("$debuerreotypeScriptsDir/.apt-version.sh" "$rootfsDir")"
+if dpkg --compare-versions "$aptVersion" '>=' '1.1~'; then
+	debuerreotype-apt-get "$rootfsDir" full-upgrade -yqq
+else
+	debuerreotype-apt-get "$rootfsDir" dist-upgrade -yqq
+fi
 
 # copy the rootfs to create other variants
 mkdir "$rootfsDir"-slim
@@ -147,8 +155,10 @@ create_artifacts() {
 
 	for f in debian_version os-release apt/sources.list; do
 		targetFile="$targetBase.$(basename "$f" | sed -r "s/[^a-zA-Z0-9_-]+/-/g")"
-		cp "$rootfs/etc/$f" "$targetFile"
-		touch_epoch "$targetFile"
+		if [ -e "$rootfs/etc/$f" ]; then
+			cp "$rootfs/etc/$f" "$targetFile"
+			touch_epoch "$targetFile"
+		fi
 	done
 }
 

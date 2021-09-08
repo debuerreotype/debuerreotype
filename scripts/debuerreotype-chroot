@@ -26,11 +26,13 @@ export targetDir epoch
 unshare --mount bash -Eeuo pipefail -c '
 	[ -n "$targetDir" ] # just to be safe
 	for dir in dev proc sys; do
-		if [ -e "$targetDir/$dir" ]; then
+		if [ -d "$targetDir/$dir" ]; then
 			# --debian-eol woody and below have no /sys
 			mount --rbind "/$dir" "$targetDir/$dir"
 		fi
 	done
-	mount --rbind --read-only /etc/resolv.conf "$targetDir/etc/resolv.conf"
+	if [ -f "$targetDir/etc/resolv.conf" ]; then
+		mount --rbind --read-only /etc/resolv.conf "$targetDir/etc/resolv.conf"
+	fi
 	exec chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$@"
 ' -- "$cmd" "$@"

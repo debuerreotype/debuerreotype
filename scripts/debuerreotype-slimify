@@ -19,6 +19,15 @@ done
 targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
 
+dpkgVersion="$("$thisDir/.apt-version.sh" "$targetDir" 'dpkg')"
+
+if ! { [ -d "$targetDir/etc/dpkg/dpkg.cfg.d" ] && dpkg --compare-versions "$dpkgVersion" '>=' '1.15.8.6~'; }; then
+	# --debian-eol lenny and older do not include /etc/dpkg/dpkg.cfg.d
+	# path-exclude/include was added in dpkg 1.15.8: https://salsa.debian.org/dpkg-team/dpkg/-/commit/4694cd64089bc72975d8ba6fbe51339023eb2e8c
+	echo >&2 "note: skipping $self: dpkg version ($dpkgVersion) too old to support path-exclude"
+	exit
+fi
+
 # https://github.com/debuerreotype/debuerreotype/issues/10
 shopt -s nullglob
 extraSpecialDirectories=( "$targetDir"/usr/share/man/man[0-9]/ )

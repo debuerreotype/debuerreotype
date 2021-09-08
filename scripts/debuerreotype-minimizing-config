@@ -20,6 +20,7 @@ targetDir="${1:-}"; shift || eusage 'missing target-dir'
 [ -n "$targetDir" ]
 
 aptVersion="$("$thisDir/.apt-version.sh" "$targetDir")"
+dpkgVersion="$("$thisDir/.apt-version.sh" "$targetDir" 'dpkg')"
 
 # https://github.com/docker/docker/blob/d6f4fe9e38b60f63e429fff7ffced9c26cbf8236/contrib/mkimage/debootstrap#L63-L177
 
@@ -43,8 +44,9 @@ if "$thisDir/debuerreotype-chroot" "$targetDir" apt-get install -qq -s upstart &
 fi
 
 # force dpkg not to call sync() after package extraction (speeding up installs)
-if [ -d "$targetDir/etc/dpkg/dpkg.cfg.d" ]; then
+if [ -d "$targetDir/etc/dpkg/dpkg.cfg.d" ] && dpkg --compare-versions "$dpkgVersion" '>=' '1.15.8.6~'; then
 	# --debian-eol lenny and older do not include /etc/dpkg/dpkg.cfg.d
+	# force-unsafe-io was added in dpkg 1.15.8.6: https://salsa.debian.org/dpkg-team/dpkg/-/commit/929a9c4808c79781469987585f78f07df7f1d484
 	cat > "$targetDir/etc/dpkg/dpkg.cfg.d/docker-apt-speedup" <<-'EOF'
 		# For most Docker users, package installs happen during "docker build", which
 		# doesn't survive power loss and gets restarted clean afterwards anyhow, so
@@ -122,7 +124,7 @@ if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
 	EOF
 	# https://github.com/debuerreotype/debuerreotype/issues/41
 	isDebianJessie="$([ -f "$targetDir/etc/os-release" ] && source "$targetDir/etc/os-release" && [ "${ID:-}" = 'debian' ] && [ "${VERSION_ID:-}" = '8' ] && echo '1')" || :
-	if [ -n "$isDebianJessie" ] || [[ "$aptVersion" == 0.* ]] || "$thisDir/debuerreotype-chroot" "$targetDir" dpkg --compare-versions "$aptVersion" '<<' '1.0.9.2~'; then
+	if [ -n "$isDebianJessie" ] || [[ "$aptVersion" == 0.* ]] || dpkg --compare-versions "$aptVersion" '<<' '1.0.9.2~'; then
 		cat >> "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
 
 			# https://salsa.debian.org/apt-team/apt/commit/b0f4b486e6850c5f98520ccf19da71d0ed748ae4; released in src:apt 1.0.9.2, 2014-10-02

@@ -38,6 +38,16 @@ RUN set -eux; \
 	rm distro-info-data.deb; \
 	[ -s /usr/share/distro-info/debian.csv ]
 
+# https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/63
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends patch; \
+	rm -rf /var/lib/apt/lists/*; \
+	wget -O debootstrap-download-main.patch 'https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/63.diff'; \
+	awk '$1 == "diff" { p = ($3 == "a/functions") } p { print }' debootstrap-download-main.patch > functions.patch; \
+	patch --input=functions.patch /usr/share/debootstrap/functions; \
+	rm debootstrap-download-main.patch functions.patch
+
 # see ".dockerignore"
 COPY . /opt/debuerreotype
 RUN set -eux; \
