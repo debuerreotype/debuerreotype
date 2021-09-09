@@ -42,6 +42,10 @@ export TZ='UTC' LC_ALL='C'
 
 dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- '{ print $NF }')}"
 
+exportDir="$tmpDir/output"
+archDir="$exportDir/ubuntu/$dpkgArch"
+tmpOutputDir="$archDir/$suite"
+
 case "$dpkgArch" in
 	amd64 | i386)
 		mirror='http://archive.ubuntu.com/ubuntu'
@@ -54,33 +58,36 @@ case "$dpkgArch" in
 		;;
 esac
 
-exportDir="$tmpDir/output"
-archDir="$exportDir/ubuntu/$dpkgArch"
-tmpOutputDir="$archDir/$suite"
+initArgs=(
+	--arch "$dpkgArch"
+	--non-debian
+)
 
 keyring='/usr/share/keyrings/ubuntu-archive-keyring.gpg'
+initArgs+=( --keyring "$keyring" )
 
 mkdir -p "$tmpOutputDir"
-if wget -O "$tmpOutputDir/InRelease" "$mirror/dists/$suite/InRelease"; then
+
+if [ -f "$keyring" ] && wget -O "$tmpOutputDir/InRelease" "$mirror/dists/$suite/InRelease"; then
 	gpgv \
 		--keyring "$keyring" \
 		--output "$tmpOutputDir/Release" \
 		"$tmpOutputDir/InRelease"
-else
+	[ -s "$tmpOutputDir/Release" ]
+elif [ -f "$keyring" ] && wget -O "$tmpOutputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg" && wget -O "$tmpOutputDir/Release" "$mirror/dists/$suite/Release"; then
 	rm -f "$tmpOutputDir/InRelease" # remove wget leftovers
-	wget -O "$tmpOutputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg"
-	wget -O "$tmpOutputDir/Release" "$mirror/dists/$suite/Release"
 	gpgv \
 		--keyring "$keyring" \
 		"$tmpOutputDir/Release.gpg" \
 		"$tmpOutputDir/Release"
+	[ -s "$tmpOutputDir/Release" ]
+else
+	rm -f "$tmpOutputDir/InRelease" "$tmpOutputDir/Release.gpg" "$tmpOutputDir/Release" # remove wget leftovers
+	echo >&2 "error: failed to fetch either InRelease or Release.gpg+Release for '$suite' (from '$mirror')"
+	exit 1
 fi
 
-initArgs=(
-	--arch "$dpkgArch"
-	--non-debian
-	--keyring "$keyring"
-
+initArgs+=(
 	# disable merged-usr (for now?) due to the following compelling arguments:
 	#  - https://bugs.debian.org/src:usrmerge ("dpkg-query" breaks, etc)
 	#  - https://bugs.debian.org/914208 ("buildd" variant disables merged-usr still)
@@ -113,13 +120,24 @@ touch_epoch() {
 }
 touch_epoch "$rootfsDir/etc/apt/sources.list"
 
-debuerreotype-apt-get "$rootfsDir" dist-upgrade -yqq
+aptVersion="$("$debuerreotypeScriptsDir/.apt-version.sh" "$rootfsDir")"
+if dpkg --compare-versions "$aptVersion" '>=' '1.1~'; then
+	debuerreotype-apt-get "$rootfsDir" full-upgrade -yqq
+else
+	debuerreotype-apt-get "$rootfsDir" dist-upgrade -yqq
+fi
 
 # copy the rootfs to create other variants
 mkdir "$rootfsDir"-slim
 tar -cC "$rootfsDir" . | tar -xC "$rootfsDir"-slim
 
-debuerreotype-apt-get "$rootfsDir" install -y --no-install-recommends iproute2 iputils-ping
+# prefer iproute2 if it exists
+iproute=iproute2
+if ! debuerreotype-apt-get "$rootfsDir" install -qq -s iproute2 &> /dev/null; then
+	# poor wheezy
+	iproute=iproute
+fi
+debuerreotype-apt-get "$rootfsDir" install -y --no-install-recommends iputils-ping $iproute
 
 debuerreotype-slimify "$rootfsDir"-slim
 
@@ -147,8 +165,10 @@ create_artifacts() {
 
 	for f in debian_version os-release apt/sources.list; do
 		targetFile="$targetBase.$(basename "$f" | sed -r "s/[^a-zA-Z0-9_-]+/-/g")"
-		cp "$rootfs/etc/$f" "$targetFile"
-		touch_epoch "$targetFile"
+		if [ -e "$rootfs/etc/$f" ]; then
+			cp "$rootfs/etc/$f" "$targetFile"
+			touch_epoch "$targetFile"
+		fi
 	done
 }
 

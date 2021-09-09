@@ -1,0 +1,101 @@
+#
+# This script was taken from debootstrap version 0.2.45-0.2, adapted with several changes to match the corresponding changes to "potato" since it was removed, and then hacked to avoid invoking "init u" in postinst scripts (which tries to send SIGHUP to PID 1).
+#
+
+mirror_style main
+download_style apt var-state
+default_mirror http://archive.debian.org/debian
+force_md5
+
+work_out_debs () {
+    required="base-files base-passwd bash bsdutils debianutils diff dpkg e2fsprogs fileutils findutils grep gzip hostname ldso libdb2 libgdbmg1 libncurses4 ncurses3.4 libpam0g libpam0g-util libpwdb0g libreadlineg2 libstdc++2.9 login makedev mawk modutils mount ncurses-base ncurses-bin newt0.25 passwd perl-base procps sed shellutils slang1 sysklogd sysvinit tar textutils update util-linux whiptail"
+
+    base="adduser ae apt elvis-tiny fbset fdutils console-tools console-tools-libs libdb2 locales modconf netbase textutils telnet"
+
+    case $ARCH in
+        "i386")
+            required="$required libc6"
+            base="$base fdflush isapnptools lilo mbr pciutils psmisc setserial syslinux"
+            ;;
+    esac
+}
+
+first_stage_install () {
+    extract $required
+
+    :> "$TARGET/var/lib/dpkg/status"
+    echo > "$TARGET/var/lib/dpkg/available"
+
+    setup_etc
+    echo '# UNCONFIGURED FSTAB FOR BASE SYSTEM' > "$TARGET/etc/fstab"
+    chown 0:0 "$TARGET/etc/fstab"; chmod 644 "$TARGET/etc/fstab"
+
+    x_feign_install () {
+        local pkg=$1
+        local deb="$(debfor $pkg)"
+        local ver="$(extract_deb_field "$TARGET/$deb" Version)"
+
+        mkdir -p "$TARGET/var/lib/dpkg/info"
+
+echo \
+"Package: $pkg
+Version: $ver
+Status: install ok installed" >> "$TARGET/var/lib/dpkg/status"
+
+        touch "$TARGET/var/lib/dpkg/info/${pkg}.list"
+    }
+
+    setup_devices
+
+    x_feign_install dpkg
+
+    mv "$TARGET/usr/bin/perl.dist" "$TARGET/usr/bin/perl"
+}
+
+second_stage_install () {
+    x_core_install () {
+        in_target dpkg --force-depends --install $(debfor "$@")
+    }
+
+    setup_proc
+    ln "$TARGET/sbin/ldconfig.new" "$TARGET/sbin/ldconfig"
+    in_target /sbin/ldconfig
+
+    x_core_install base-files base-passwd ldso
+    x_core_install dpkg
+
+    ln -sf /usr/share/zoneinfo/UTC "$TARGET/etc/localtime"
+
+    # the libc6 and sysvinit postinst scripts want to run "init u" to re-exec sysvinit, but that sends SIGHUP to PID 1, which is undesirable (for hopefully obvious reasons), so we have to get a little bit clever while installing libc6 and later before configuring the rest of the system
+    x_hack_avoid_postinst_init() {
+        local postinst
+        for postinst in "$TARGET"/var/lib/dpkg/info/*.postinst; do
+            if grep -qE '^[[:space:]]*init[[:space:]]' "$postinst" 2>/dev/null; then
+                sed -ri -e 's/^([[:space:]]*)(init[[:space:]])/\1: # \2/' "$postinst"
+            fi
+        done
+    }
+    in_target dpkg --force-depends --unpack $(debfor libc6)
+    x_hack_avoid_postinst_init
+    in_target dpkg --force-depends --configure libc6
+
+    x_core_install perl-base
+    x_core_install mawk
+
+    repeatn 5 in_target dpkg --force-depends --unpack $(debfor $required)
+
+    # see above
+    x_hack_avoid_postinst_init
+
+    mv "$TARGET/sbin/start-stop-daemon" "$TARGET/sbin/start-stop-daemon.REAL"
+    cp "$TARGET/bin/true" "$TARGET/sbin/start-stop-daemon"
+
+    setup_dselect_method apt
+
+    in_target dpkg --configure --pending --force-configure-any --force-depends
+
+    smallyes '' | repeatn 5 in_target dpkg --force-auto-select --force-overwrite \
+        --skip-same-version --install $(debfor $base)
+
+    mv "$TARGET/sbin/start-stop-daemon.REAL" "$TARGET/sbin/start-stop-daemon"
+}

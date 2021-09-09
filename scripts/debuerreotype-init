@@ -106,20 +106,17 @@ else
 	debootstrapArgs+=( --no-check-gpg )
 fi
 
-minbaseSupported="$(
-	scriptFile="$(
-		if [ -n "$script" ]; then
-			readlink -vf "$script"
-		else
-			cd /usr/share/debootstrap/scripts
-			readlink -vf "$suite"
-		fi
-	)"
-	if grep -q 'minbase' "$scriptFile"; then
-		echo 1
+: "${script:=$suite}"
+script="$(
+	if [ -s "$thisDir/.debootstrap-scripts/$script" ]; then
+		readlink -vf "$thisDir/.debootstrap-scripts/$script"
+	elif [ -s "/usr/share/debootstrap/scripts/$script" ]; then
+		readlink -vf "/usr/share/debootstrap/scripts/$script"
+	else
+		readlink -vf "$script"
 	fi
 )"
-if [ -n "$minbaseSupported" ]; then
+if grep -q 'minbase' "$script"; then
 	# --debian-eol sarge and older do not support minbase
 	debootstrapArgs+=( --variant=minbase )
 fi
@@ -131,9 +128,8 @@ fi
 [ -z "$exclude" ] || debootstrapArgs+=( --exclude="$exclude" )
 
 debootstrapArgs+=(
-	"$suite" "$targetDir" "$mirror"
+	"$suite" "$targetDir" "$mirror" "$script"
 )
-[ -z "$script" ] || debootstrapArgs+=( "$script" )
 
 unshare-debootstrap() {
 	# avoid bugs in packages that might leave things mounted ("/run/shm" is a common one that sometimes ends up dangling)
