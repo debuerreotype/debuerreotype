@@ -41,10 +41,15 @@ jobs:
           - { SUITE: eol, CODENAME: woody, ARCH: i386, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: f80833896e141fbfebf8c91e79da2ccca1bdeb8f8ecc4e05dd33531c32857e0f }
           - { SUITE: eol, CODENAME: jessie, TIMESTAMP: "2021-03-01T00:00:00Z", SHA256: 45c5553e989a8d42106029ec6f5e042bf48b29e08bf50e414f99f04c33b10fe9 }
 
+          # deb822 testing
+          - { SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-06-30T00:00:00Z", SHA256: 6e781f82630cf92e68ce206a5363983be6b05fff0270de5d1839bcd5e2c415fd }
+          - { SUITE: bookworm, CODENAME: "", TIMESTAMP: "2022-06-30T00:00:00Z", SHA256: 2c8382c35c735217e66f51fd4634bb2f4d89cd0119af2151d320ecb677cb6b20 }
+          - { SUITE: bullseye, CODENAME: "", TIMESTAMP: "2022-06-30T00:00:00Z", SHA256: 2e65c32660eb2035874444de9e11223f34429712a7b6255f13127a3506e2bcb1 }
+
           # qemu-debootstrap testing
           - { ARCH: arm64,   SUITE: jessie,   CODENAME: "", TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 45b3c398b472ff45399cc6cc633005f48d2359d0df8d905022d37a29434420cf }
-          - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 82949d1099c18dd13bd2d732238d94ae70d03abc50afc6950baee257cce37fd1 }
-          - { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 2a4accea7aef15d4979435ec16f898dcb784330b7b4991fc9ca38b11f87035f5 }
+          - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 8cf5ac04cd174465aff38484b0cd1b5ad83fe14585322f99a7db404b6dc02275 }
+          - { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 3f0d1dc0cb525aa47e6d9947fa7d6e207f7fd72a1d023872a874d6202e020232 }
 
           # a few entries for "today" to try and catch issues like https://github.com/debuerreotype/debuerreotype/issues/41 sooner
           - { SUITE: unstable,  CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }

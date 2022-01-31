@@ -188,6 +188,23 @@ fi
 rootfsDir="$tmpDir/rootfs"
 debuerreotype-init "${initArgs[@]}" "$rootfsDir" "$suite" "@$epoch"
 
+aptVersion="$("$debuerreotypeScriptsDir/.apt-version.sh" "$rootfsDir")"
+
+# regenerate sources.list to make the deb822/line-based opinion explicit
+# https://lists.debian.org/debian-devel/2021/11/msg00026.html
+sourcesListArgs=()
+[ -z "$eol" ] || sourcesListArgs+=( --eol )
+[ -z "$ports" ] || sourcesListArgs+=( --ports )
+if dpkg --compare-versions "$aptVersion" '>=' '2.3~' && { [ "$suite" = 'unstable' ] || [ "$suite" = 'sid' ]; }; then # just unstable for now (TODO after some time testing this, we should update this to bookworm+ which is aptVersion 2.3+)
+	sourcesListArgs+=( --deb822 )
+	sourcesListFile='/etc/apt/sources.list.d/debian.sources'
+else
+	sourcesListArgs+=( --no-deb822 )
+	sourcesListFile='/etc/apt/sources.list'
+fi
+debuerreotype-debian-sources-list "${sourcesListArgs[@]}" --snapshot "$rootfsDir" "$suite"
+[ -s "$rootfsDir$sourcesListFile" ] # trust, but verify
+
 if [ -n "$eol" ]; then
 	debuerreotype-gpgv-ignore-expiration-config "$rootfsDir"
 fi
@@ -196,7 +213,6 @@ debuerreotype-minimizing-config "$rootfsDir"
 
 debuerreotype-apt-get "$rootfsDir" update -qq
 
-aptVersion="$("$debuerreotypeScriptsDir/.apt-version.sh" "$rootfsDir")"
 if dpkg --compare-versions "$aptVersion" '>=' '1.1~'; then
 	debuerreotype-apt-get "$rootfsDir" full-upgrade -yqq
 else
@@ -240,9 +256,15 @@ fi
 
 debuerreotype-slimify "$rootfsDir"-slim
 
-sourcesListArgs=()
-[ -z "$eol" ] || sourcesListArgs+=( --eol )
-[ -z "$ports" ] || sourcesListArgs+=( --ports )
+_sanitize_basename() {
+	local f="$1"; shift
+
+	f="$(basename "$f")"
+	f="$(sed -r -e 's/[^a-zA-Z0-9_-]+/-/g' <<<"$f")"
+
+	echo "$f"
+}
+sourcesListBase="$(_sanitize_basename "$sourcesListFile")"
 
 create_artifacts() {
 	local targetBase="$1"; shift
@@ -251,8 +273,8 @@ create_artifacts() {
 	local variant="$1"; shift
 
 	# make a copy of the snapshot-facing sources.list file before we overwrite it
-	cp "$rootfs/etc/apt/sources.list" "$targetBase.sources-list-snapshot"
-	touch_epoch "$targetBase.sources-list-snapshot"
+	cp "$rootfs$sourcesListFile" "$targetBase.$sourcesListBase-snapshot"
+	touch_epoch "$targetBase.$sourcesListBase-snapshot"
 
 	debuerreotype-debian-sources-list "${sourcesListArgs[@]}" "$rootfs" "$suite"
 
@@ -309,11 +331,12 @@ create_artifacts() {
 	debuerreotype-version > "$targetBase.debuerreotype-version"
 	touch_epoch "$targetBase".{manifest,apt-dist,dpkg-arch,debuerreotype-*}
 
-	for f in debian_version os-release apt/sources.list; do
-		targetFile="$targetBase.$(basename "$f" | sed -r "s/[^a-zA-Z0-9_-]+/-/g")"
-		if [ -e "$rootfs/etc/$f" ]; then
+	for f in /etc/debian_version /etc/os-release "$sourcesListFile"; do
+		targetFile="$(_sanitize_basename "$f")"
+		targetFile="$targetBase.$targetFile"
+		if [ -e "$rootfs$f" ]; then
 			# /etc/os-release does not exist in --debian-eol squeeze, for example (hence the existence check)
-			cp "$rootfs/etc/$f" "$targetFile"
+			cp "$rootfs$f" "$targetFile"
 			touch_epoch "$targetFile"
 		fi
 	done
