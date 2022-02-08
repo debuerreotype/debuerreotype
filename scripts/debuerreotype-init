@@ -179,10 +179,6 @@ fi
 ' -- "$include"
 
 echo 'debuerreotype' > "$targetDir/etc/hostname"
-echo "$epoch" \
-	| md5sum \
-	| cut -f1 -d' ' \
-	> "$targetDir/etc/machine-id" # TODO should we only do this if "/etc/machine-id" already exists?
 {
 	echo '# https://1.1.1.1 (privacy-focused, highly-available DNS service)'
 	echo 'nameserver 1.1.1.1'
@@ -190,7 +186,6 @@ echo "$epoch" \
 } > "$targetDir/etc/resolv.conf"
 chmod 0644 \
 	"$targetDir/etc/hostname" \
-	"$targetDir/etc/machine-id" \
 	"$targetDir/etc/resolv.conf"
 
 # fix ownership/permissions on / (otherwise "debootstrap" leaves them as-is which causes reproducibility issues)

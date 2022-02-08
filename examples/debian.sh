@@ -256,7 +256,11 @@ create_artifacts() {
 
 	debuerreotype-debian-sources-list "${sourcesListArgs[@]}" "$rootfs" "$suite"
 
-	local tarArgs=()
+	local tarArgs=(
+		# https://www.freedesktop.org/software/systemd/man/machine-id.html
+		--exclude ./etc/machine-id
+		# "debuerreotype-fixup" will make this an empty file for reproducibility, but for our Docker images it seems more appropriate for it to not exist (since they've never actually been "booted" so having the "first boot" logic trigger if someone were to run systemd in them conceptually makes sense)
+	)
 
 	case "$suite" in
 		sarge) # 3.1
