@@ -66,11 +66,11 @@ WORKDIR /tmp
 # debuerreotype-init --keyring /usr/share/keyrings/debian-archive-removed-keys.gpg test-stretch stretch 2017-05-08T00:00:00Z
 # debuerreotype-tar test-stretch test-stretch.tar
 # md5sum test-stretch.tar
-#   14206d5b9b2991e98f5214c3d310e4fa
+#   694f02c53651673ebe094cae3bcbb06d
 # ./docker-run.sh sh -euxc 'debuerreotype-init --keyring /usr/share/keyrings/debian-archive-removed-keys.gpg /tmp/rootfs stretch 2017-05-08T00:00:00Z; debuerreotype-tar /tmp/rootfs - | md5sum'
 
 # debuerreotype-init --keyring /usr/share/keyrings/debian-archive-removed-keys.gpg test-jessie jessie 2017-05-08T00:00:00Z
 # debuerreotype-tar test-jessie test-jessie.tar
 # md5sum test-jessie.tar
-#   a5b38410ca3f519117966a33474f1267
+#   354cedd99c08d213d3493a7cf0aaaad6
 # ./docker-run.sh sh -euxc 'debuerreotype-init --keyring /usr/share/keyrings/debian-archive-removed-keys.gpg /tmp/rootfs jessie 2017-05-08T00:00:00Z; debuerreotype-tar /tmp/rootfs - | md5sum'

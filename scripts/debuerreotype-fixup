@@ -21,6 +21,13 @@ targetDir="${1:-}"; shift || eusage 'missing target-dir'
 epoch="$(< "$targetDir/debuerreotype-epoch")"
 [ -n "$epoch" ]
 
+if [ -s "$targetDir/etc/machine-id" ]; then
+	# https://www.freedesktop.org/software/systemd/man/machine-id.html
+	# > For operating system images which are created once and used on multiple machines, for example for containers or in the cloud, /etc/machine-id should be either missing or an empty file in the generic file system image ...
+	echo -n > "$targetDir/etc/machine-id"
+	chmod 0644 "$targetDir/etc/machine-id"
+fi
+
 # https://github.com/lamby/debootstrap/commit/66b15380814aa62ca4b5807270ac57a3c8a0558d#diff-de4eef4ab836e5c6c9c1f820a2f624baR709
 rm -f \
 	"$targetDir/var/log/dpkg.log" \
