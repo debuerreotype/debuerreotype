@@ -43,8 +43,8 @@ jobs:
 
           # qemu-debootstrap testing
           - { ARCH: arm64,   SUITE: jessie,   CODENAME: "", TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 893efc1b9db1ba2df4f171d4422194a408f9810d3b55d9b0cd66fcc7722f7567 }
-          - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2021-03-01T00:00:00Z", SHA256: 42f9a378c622bf88d5eb49dbe72dc035615fe3b21b17ed0de07b993a540b742f }
-          - { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2021-03-01T00:00:00Z", SHA256: 6ea9c2136fe6cc1d6cbea23f0fde9eb4392a90c4d794ab953455ddd811918661 }
+          - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 220c548084bb1f2d8d1517558b3999d2bc8814594a3be7817aeb29f20678bb44 }
+          - { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 4c1483539e8ff58b920f13ed2e3060e915633cbffb3b0bad661b9821c7b11b8d }
 
           # a few entries for "today" to try and catch issues like https://github.com/debuerreotype/debuerreotype/issues/41 sooner
           - { SUITE: unstable,  CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
