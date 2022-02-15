@@ -62,7 +62,7 @@ if [ ! -s "$keyring" ]; then
 		set +x
 		echo >&2
 		echo >&2 "WARNING: missing '$keyring' (from 'raspbian-archive-keyring' package)"
-		echo >&2 "  downloading '$keyUrl' (without verification)!"
+		echo >&2 "  downloading '$keyUrl' (without verification beyond TLS)!"
 		echo >&2
 	)
 	sleep 5
