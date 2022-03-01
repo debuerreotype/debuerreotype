@@ -38,15 +38,17 @@ RUN set -eux; \
 	rm distro-info-data.deb; \
 	[ -s /usr/share/distro-info/debian.csv ]
 
+# https://bugs.debian.org/973852
 # https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/63
+# https://people.debian.org/~tianon/debootstrap-mr-63--download_main.patch
 RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends patch; \
 	rm -rf /var/lib/apt/lists/*; \
-	wget -O debootstrap-download-main.patch 'https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/63.diff'; \
-	awk '$1 == "diff" { p = ($3 == "a/functions") } p { print }' debootstrap-download-main.patch > functions.patch; \
-	patch --input=functions.patch /usr/share/debootstrap/functions; \
-	rm debootstrap-download-main.patch functions.patch
+	wget -O debootstrap-download-main.patch 'https://people.debian.org/~tianon/debootstrap-mr-63--download_main.patch'; \
+	echo 'ceae8f508a9b49236fa4519a44a584e6c774aa0e4446eb1551f3b69874a4cde5 *debootstrap-download-main.patch' | sha256sum --strict --check -; \
+	patch --input=debootstrap-download-main.patch /usr/share/debootstrap/functions; \
+	rm debootstrap-download-main.patch
 
 # see ".dockerignore"
 COPY . /opt/debuerreotype
