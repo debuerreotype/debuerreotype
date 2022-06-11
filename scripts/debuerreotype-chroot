@@ -34,5 +34,11 @@ unshare --mount bash -Eeuo pipefail -c '
 	if [ -f "$targetDir/etc/resolv.conf" ]; then
 		mount --rbind --read-only /etc/resolv.conf "$targetDir/etc/resolv.conf"
 	fi
-	exec chroot "$targetDir" /usr/bin/env -i PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" TZ="$TZ" LC_ALL="$LC_ALL" SOURCE_DATE_EPOCH="$epoch" "$@"
+	exec chroot "$targetDir" /usr/bin/env -i \
+		PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
+		TZ="$TZ" \
+		LC_ALL="$LC_ALL" \
+		${http_proxy:+http_proxy="$http_proxy"} \
+		SOURCE_DATE_EPOCH="$epoch" \
+		"$@"
 ' -- "$cmd" "$@"
