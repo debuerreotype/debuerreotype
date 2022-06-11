@@ -39,6 +39,7 @@ unshare --mount bash -Eeuo pipefail -c '
 		TZ="$TZ" \
 		LC_ALL="$LC_ALL" \
 		${http_proxy:+http_proxy="$http_proxy"} \
+		${DEBIAN_FRONTEND:+DEBIAN_FRONTEND="$DEBIAN_FRONTEND"} \
 		SOURCE_DATE_EPOCH="$epoch" \
 		"$@"
 ' -- "$cmd" "$@"
