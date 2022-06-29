@@ -45,7 +45,7 @@ else
 	snapshotStandardMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-ports')" )
 fi
 
-securityMirrors=( 'http://security.debian.org/debian-security' )
+securityMirrors=( 'http://deb.debian.org/debian-security' )
 snapshotSecurityMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')" )
 
 if [ -n "$eol" ]; then
