@@ -5,8 +5,9 @@ thisDir="$(dirname "$(readlink -vf "$BASH_SOURCE")")"
 source "$thisDir/.constants.sh" \
 	--flags 'eol,ports,snapshot' \
 	--flags 'deb-src' \
+	--flags 'deb822,no-deb822' \
 	-- \
-	'[--deb-src] [--eol] [--ports] [--snapshot] <target-dir> <suite>' \
+	'[--deb-src] [--deb822/--no-deb822] [--eol] [--ports] [--snapshot] <target-dir> <suite>' \
 	'--snapshot rootfs stretch
 --eol rootfs wheezy'
 
@@ -15,6 +16,7 @@ eol=
 ports=
 snapshot=
 debSrc=
+deb822='auto'
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
@@ -23,6 +25,8 @@ while true; do
 		--ports) ports=1 ;;
 		--snapshot) snapshot=1 ;;
 		--deb-src) debSrc=1 ;;
+		--deb822) deb822=1 ;;
+		--no-deb822) deb822= ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -37,10 +41,29 @@ epoch="$(< "$targetDir/debuerreotype-epoch")"
 comp='main'
 arch="$("$thisDir/.dpkg-arch.sh" "$targetDir")"
 
-deb() {
-	local suite="$1"; shift
-	local comp="$1"; shift
+if [ "$deb822" = 'auto' ]; then
+	aptVersion="$("$thisDir/.apt-version.sh" "$targetDir")"
+	if dpkg --compare-versions "$aptVersion" '>=' '2.3~'; then # this is a minimally-supported version for the files we generate (could go lower, but this is a safe choice) - this exists to support "debuerreotype-init" needing to generate (after "debootstrap" but before the script finishes), and is then overridden by "examples/debian.sh" later with more specific opinions on which releases should be deb822
+		deb822=1
+	else
+		deb822=
+	fi
+fi
 
+if [ -n "$deb822" ]; then
+	if [ -n "$ports" ]; then
+		keyring='debian-ports-archive-keyring.gpg'
+	else
+		keyring='debian-archive-keyring.gpg'
+	fi
+	keyring="/usr/share/keyrings/$keyring"
+	if [ ! -s "$targetDir$keyring" ]; then
+		echo >&2 "warning: it appears that '$targetDir' is missing '$keyring' (the expected keyring for APT); skipping 'Signed-By:' in generated sources"
+		keyring=
+	fi
+fi
+
+deb() {
 	local mirrorArgs=()
 	if [ -n "$ports" ]; then
 		mirrorArgs+=( --ports )
@@ -48,57 +71,114 @@ deb() {
 	if [ -n "$eol" ]; then
 		mirrorArgs+=( --eol )
 	fi
-	mirrorArgs+=( "@$epoch" "$suite" "$arch" "$comp" )
-	local mirrors
-	if ! mirrors="$("$thisDir/.debian-mirror.sh" "${mirrorArgs[@]}")"; then
-		echo >&2 "skipping '$suite/$comp' ..."
-		return
-	fi
-	eval "$mirrors"
-	[ -n "$mirror" ]
-	[ -n "$snapshotMirror" ]
-	[ -n "$foundSuite" ]
-	suite="$foundSuite"
+	mirrorArgs+=( "@$epoch" )
 
-	if [ -n "$snapshot" ]; then
-		mirror="$snapshotMirror"
-	else
-		echo "# deb $snapshotMirror $suite $comp"
-	fi
-	echo "deb $mirror $suite $comp"
-	if [ -n "$debSrc" ]; then
-		echo "deb-src $mirror $suite $comp"
+	local suite deb822Mirrors=()
+	local -A deb822Suites=() deb822Snapshots=()
+	for suite; do
+		local mirrors
+		if ! mirrors="$("$thisDir/.debian-mirror.sh" "${mirrorArgs[@]}" "$suite" "$arch" "$comp")"; then
+			echo >&2 "skipping '$suite/$comp' ..."
+			return
+		fi
+		local mirror snapshotMirror foundSuite
+		eval "$mirrors"
+		[ -n "$mirror" ]
+		[ -n "$snapshotMirror" ]
+		[ -n "$foundSuite" ]
+		suite="$foundSuite"
+
+		if [ -n "$snapshot" ]; then
+			mirror="$snapshotMirror"
+		fi
+
+		if [ -n "$deb822" ]; then
+			if [ -z "${deb822Suites["$mirror"]:-}" ]; then
+				# haven't seen this mirror yet!
+				deb822Mirrors+=( "$mirror" )
+				deb822Snapshots["$mirror"]="$snapshotMirror"
+			fi
+			deb822Suites["$mirror"]+="${deb822Suites["$mirror"]:+ }$suite"
+		else
+			if [ -z "$snapshot" ]; then
+				echo "# deb $snapshotMirror $suite $comp"
+			fi
+			echo "deb $mirror $suite $comp"
+			if [ -n "$debSrc" ]; then
+				echo "deb-src $mirror $suite $comp"
+			fi
+		fi
+	done
+
+	if [ -n "$deb822" ]; then
+		local first=1
+		local mirror
+		for mirror in "${deb822Mirrors[@]}"; do
+			if [ -n "$first" ]; then
+				first=
+			else
+				echo
+			fi
+			if [ -n "$debSrc" ]; then
+				echo 'Types: deb deb-src'
+			else
+				echo 'Types: deb'
+			fi
+			if [ -z "$snapshot" ]; then
+				echo "# ${deb822Snapshots["$mirror"]}"
+			fi
+			echo "URIs: $mirror"
+			echo "Suites: ${deb822Suites["$mirror"]}"
+			echo "Components: $comp"
+			if [ -n "$keyring" ]; then
+				echo "Signed-By: $keyring"
+			fi
+		done
 	fi
 }
 
+targetFileLine='/etc/apt/sources.list'
+targetFile822='/etc/apt/sources.list.d/debian.sources'
+if [ -n "$deb822" ]; then
+	targetFile="$targetFile822"
+	rm -f "$targetDir$targetFileLine"
+else
+	targetFile="$targetFileLine"
+	rm -f "$targetDir$targetFile822"
+fi
+unset targetFileLine targetFile822
+
 # https://github.com/tianon/go-aptsources/blob/e066ed9cd8cd9eef7198765bd00ec99679e6d0be/target.go#L16-L58
 {
+	suites=( "$suite" )
 	case "$suite" in
-		sid | unstable | testing)
-			deb "$suite" "$comp" standard
+		sid | unstable)
 			if [ -n "$ports" ]; then
 				# https://www.ports.debian.org/archive
-				deb unreleased "$comp" standard
+				suites+=( 'unreleased' )
 			fi
 			;;
 
 		*)
+			# https://salsa.debian.org/apt-team/apt/-/blob/23fe896858dfc7857f2d59c5fd7627332f11c1ff/vendor/debian/apt-vendor.ent#L9-20
 			# https://salsa.debian.org/installer-team/apt-setup/tree/d7a642fb5fc76e4f0b684db53984bdb9123f8360/generators
-			deb "$suite"          "$comp" standard # "50mirror"
-			deb "$suite-security" "$comp" security # "91security"
-			deb "$suite-updates"  "$comp" standard # "92updates"
+			# https://github.com/debuerreotype/debuerreotype/pull/128#issuecomment-1164046315
 			# https://wiki.debian.org/SourcesList#Example_sources.list
-
+			suites+=(
+				"$suite-security"
+				"$suite-updates"
+			)
 			if [ "$suite" = 'squeeze' ]; then
 				# https://wiki.debian.org/DebianSqueeze#FAQ
-				deb "$suite-lts" "$comp" standard
+				suites+=( "$suite-lts" )
 			fi
 			;;
 	esac
-} > "$targetDir/etc/apt/sources.list"
-chmod 0644 "$targetDir/etc/apt/sources.list"
+	deb "${suites[@]}"
+} > "$targetDir$targetFile"
+chmod 0644 "$targetDir$targetFile"
 
-if [ ! -s "$targetDir/etc/apt/sources.list" ]; then
-	echo >&2 "error: sources.list ended up empty -- something is definitely wrong"
+if [ ! -s "$targetDir$targetFile" ]; then
+	echo >&2 "error: '$targetFile' ended up empty -- something is definitely wrong"
 	exit 1
 fi
