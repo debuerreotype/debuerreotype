@@ -170,13 +170,24 @@ if [ -n "$codenameCopy" ] && [ -z "$codename" ]; then
 	exit 1
 fi
 
-initArgs+=(
-	# disable merged-usr (for now?) due to the following compelling arguments:
-	#  - https://bugs.debian.org/src:usrmerge ("dpkg-query" breaks, etc)
-	#  - https://bugs.debian.org/914208 ("buildd" variant disables merged-usr still)
-	#  - https://github.com/debuerreotype/docker-debian-artifacts/issues/60#issuecomment-461426406
-	--no-merged-usr
-)
+# apply merged-/usr (for bookworm+)
+# https://lists.debian.org/debian-ctte/2022/07/msg00034.html
+# https://github.com/debuerreotype/docker-debian-artifacts/issues/131#issuecomment-1190233249
+case "${codename:-$suite}" in
+	# this has to be a full codename list because we don't have aptVersion available yet because there's no APT yet 🙈
+	slink | potato | woody | sarge | etch | lenny | squeeze | wheezy | jessie | stretch | buster | bullseye | bookworm) # TODO remove bookworm from this list 👀
+		initArgs+=( --no-merged-usr )
+		;;
+
+	*)
+		epochUsrIsMerged="$(date --date '2022-07-24 00:00:00' +%s)" # https://tracker.debian.org/news/1348264/usrmerge-29-migrated-to-testing/ ("usr-is-merged" binary package exists in bookworm+)
+		if [ "$epoch" -lt "$epochUsrIsMerged" ]; then
+			initArgs+=( --no-merged-usr )
+		else
+			initArgs+=( --merged-usr )
+		fi
+		;;
+esac
 
 if [ -n "$include" ]; then
 	initArgs+=( --include="$include" )
