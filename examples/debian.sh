@@ -346,7 +346,10 @@ create_artifacts() {
 	echo "$epoch" > "$targetBase.debuerreotype-epoch"
 	echo "$variant" > "$targetBase.debuerreotype-variant"
 	debuerreotype-version > "$targetBase.debuerreotype-version"
-	touch_epoch "$targetBase".{manifest,apt-dist,dpkg-arch,debuerreotype-*}
+	debootstrapVersion="$(debootstrap --version)"
+	debootstrapVersion="${debootstrapVersion#debootstrap }" # "debootstrap X.Y.Z" -> "X.Y.Z"
+	echo "$debootstrapVersion" > "$targetBase.debootstrap-version"
+	touch_epoch "$targetBase".{manifest,apt-dist,dpkg-arch,debuerreotype-*,debootstrap-version}
 
 	for f in /etc/debian_version /etc/os-release "$sourcesListFile"; do
 		targetFile="$(_sanitize_basename "$f")"
