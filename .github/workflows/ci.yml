@@ -46,6 +46,8 @@ jobs:
           - { SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-06-30T00:00:00Z", SHA256: 6e781f82630cf92e68ce206a5363983be6b05fff0270de5d1839bcd5e2c415fd }
           - { SUITE: bookworm, CODENAME: "", TIMESTAMP: "2022-06-30T00:00:00Z", SHA256: 2c8382c35c735217e66f51fd4634bb2f4d89cd0119af2151d320ecb677cb6b20 }
           - { SUITE: bullseye, CODENAME: "", TIMESTAMP: "2022-06-30T00:00:00Z", SHA256: 2e65c32660eb2035874444de9e11223f34429712a7b6255f13127a3506e2bcb1 }
+          # usr-is-merged testing
+          - { SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-08-31T00:00:00Z", SHA256: 2e0e5b6ffa588bc2a1f3e6a71f0b5a2ff92e33aaab9428741ab361f5ead784b1 }
 
           # qemu-debootstrap testing
           - { ARCH: arm64,   SUITE: jessie,   CODENAME: "", TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 45b3c398b472ff45399cc6cc633005f48d2359d0df8d905022d37a29434420cf }
