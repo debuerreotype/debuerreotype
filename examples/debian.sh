@@ -175,14 +175,15 @@ fi
 # https://github.com/debuerreotype/docker-debian-artifacts/issues/131#issuecomment-1190233249
 case "${codename:-$suite}" in
 	# this has to be a full codename list because we don't have aptVersion available yet because there's no APT yet 🙈
-	slink | potato | woody | sarge | etch | lenny | squeeze | wheezy | jessie | stretch | buster | bullseye | bookworm) # TODO remove bookworm from this list 👀
+	slink | potato | woody | sarge | etch | lenny | squeeze | wheezy | jessie | stretch | buster | bullseye)
 		initArgs+=( --no-merged-usr )
 		;;
 
 	*)
 		epochUsrIsMerged="$(date --date '2022-07-24 00:00:00' +%s)" # https://tracker.debian.org/news/1348264/usrmerge-29-migrated-to-testing/ ("usr-is-merged" binary package exists in bookworm+)
-		if [ "$epoch" -lt "$epochUsrIsMerged" ]; then
-			initArgs+=( --no-merged-usr )
+		if [ "$epoch" -lt "$epochUsrIsMerged" ] || [ "${codename:-$suite}" = 'bookworm' ]; then # TODO remove bookworm exception
+			initArgs+=( --no-merged-usr --exclude=usr-is-merged )
+			# explicit --exclude for https://github.com/debuerreotype/debuerreotype/issues/140
 		else
 			initArgs+=( --merged-usr )
 		fi
@@ -322,6 +323,11 @@ create_artifacts() {
 			)
 			;;
 	esac
+
+	if [ ! -e "$rootfs/usr/share/doc/usr-is-merged/copyright" ] && [ -e "$rootfs/etc/unsupported-skip-usrmerge-conversion" ]; then
+		# if we have the "/etc/unsupported-skip-usrmerge-conversion" file but not the "usr-is-merged" package, we should be safe to remove the "unsupported configuration" flag file (see "epochUsrIsMerged" section above, specifically the "--exclude=usr-is-merged" case)
+		tarArgs+=( --exclude './etc/unsupported-skip-usrmerge-conversion' )
+	fi
 
 	debuerreotype-tar "${tarArgs[@]}" "$rootfs" "$targetBase.tar.xz"
 	du -hsx "$targetBase.tar.xz"
