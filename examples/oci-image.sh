@@ -190,15 +190,15 @@ mv "$tempDir/config.json" "$tempDir/oci/blobs/sha256/$configSha256"
 jq -ncS '
 	{
 		schemaVersion: 2,
-		mediaType: "application/vnd.docker.distribution.manifest.v2+json",
+		mediaType: "application/vnd.oci.image.manifest.v1+json",
 		config: {
-			mediaType: "application/vnd.docker.container.image.v1+json",
+			mediaType: "application/vnd.oci.image.config.v1+json",
 			size: (env.configSize | tonumber),
 			digest: ( "sha256:" + env.configSha256 ),
 		},
 		layers: [
 			{
-				mediaType: "application/vnd.docker.image.rootfs.diff.tar.gzip",
+				mediaType: "application/vnd.oci.image.layer.v1.tar+gzip",
 				size: (env.rootfsSize | tonumber),
 				digest: ( "sha256:" + env.rootfsSha256 ),
 			}
@@ -215,14 +215,16 @@ export tag="$suite${variant:+-$variant}" # "buster", "buster-slim", etc.
 export image="$repo:$tag"
 
 # https://github.com/opencontainers/image-spec/blob/v1.0.1/image-index.md
-jq -ncS '
+platform="$(jq -c 'with_entries(select(.key == ([ "os", "architecture", "variant" ][])))' "$tempDir/oci/blobs/sha256/$configSha256")"
+jq -ncS --argjson platform "$platform" '
 	{
 		schemaVersion: 2,
 		manifests: [
 			{
-				mediaType: "application/vnd.docker.distribution.manifest.v2+json",
+				mediaType: "application/vnd.oci.image.manifest.v1+json",
 				size: (env.manifestSize | tonumber),
 				digest: ( "sha256:" + env.manifestSha256 ),
+				platform: $platform,
 				annotations: {
 					"io.containerd.image.name": env.image,
 					"org.opencontainers.image.ref.name": env.tag,
@@ -260,7 +262,6 @@ tar --create \
 	.
 touch --no-dereference --date="@$epoch" "$targetFile"
 
-platform="$(jq -c 'with_entries(select(.key == ([ "os", "architecture", "variant" ][])))' "$tempDir/oci/blobs/sha256/$configSha256")"
 jq -n --argjson platform "$platform" '
 	{
 		image: env.image,
