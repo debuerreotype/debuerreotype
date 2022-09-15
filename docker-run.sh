@@ -67,6 +67,9 @@ args=(
 	--tmpfs /tmp:dev,exec,suid,noatime
 	--env TMPDIR=/tmp
 
+	# if "http_proxy" is set, pass it through (especially for APT cache)
+	--env http_proxy
+
 	--workdir /workdir
 )
 if [ -n "$bindMount" ]; then
