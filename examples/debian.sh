@@ -181,7 +181,7 @@ case "${codename:-$suite}" in
 
 	*)
 		epochUsrIsMerged="$(date --date '2022-07-24 00:00:00' +%s)" # https://tracker.debian.org/news/1348264/usrmerge-29-migrated-to-testing/ ("usr-is-merged" binary package exists in bookworm+)
-		if [ "$epoch" -lt "$epochUsrIsMerged" ] || [ "${codename:-$suite}" = 'bookworm' ]; then # TODO remove bookworm exception
+		if [ "$epoch" -lt "$epochUsrIsMerged" ]; then
 			initArgs+=( --no-merged-usr --exclude=usr-is-merged )
 			# explicit --exclude for https://github.com/debuerreotype/debuerreotype/issues/140
 		else
