@@ -38,17 +38,44 @@ RUN set -eux; \
 	rm distro-info-data.deb; \
 	[ -s /usr/share/distro-info/debian.csv ]
 
-# https://bugs.debian.org/973852
-# https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/63
-# https://people.debian.org/~tianon/debootstrap-mr-63--download_main.patch
 RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends patch; \
 	rm -rf /var/lib/apt/lists/*; \
+	\
+# https://bugs.debian.org/973852
+# https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/63
+# https://people.debian.org/~tianon/debootstrap-mr-63--download_main.patch
 	wget -O debootstrap-download-main.patch 'https://people.debian.org/~tianon/debootstrap-mr-63--download_main.patch'; \
 	echo 'ceae8f508a9b49236fa4519a44a584e6c774aa0e4446eb1551f3b69874a4cde5 *debootstrap-download-main.patch' | sha256sum --strict --check -; \
 	patch --input=debootstrap-download-main.patch /usr/share/debootstrap/functions; \
-	rm debootstrap-download-main.patch
+	rm debootstrap-download-main.patch; \
+	\
+# https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/76
+	if ! grep EXCLUDE_DEPENDENCY /usr/sbin/debootstrap; then \
+		wget -O debootstrap-exclude-usrmerge.patch 'https://people.debian.org/~tianon/debootstrap-mr-76--exclude-usrmerge.patch'; \
+		echo '4aae49edcd562d8f38bcbc00b26ae485f4e65dd36bd4a250a16cdb912398df7e *debootstrap-exclude-usrmerge.patch' | sha256sum --strict --check -; \
+		sed -ri \
+			-e 's!([ab])/debootstrap!\1/usr/sbin/debootstrap!g' \
+			-e 's!([ab])/scripts/debian-common!\1/usr/share/debootstrap/scripts/debian-common!g' \
+			debootstrap-exclude-usrmerge.patch \
+		; \
+		patch -p1 --input="$PWD/debootstrap-exclude-usrmerge.patch" --directory=/; \
+		rm debootstrap-exclude-usrmerge.patch; \
+	fi; \
+	\
+# https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/81
+	if ! grep EXCLUDE_DEPENDENCY /usr/share/debootstrap/functions; then \
+		wget -O debootstrap-exclude-usrmerge-harder.patch 'https://people.debian.org/~tianon/debootstrap-mr-81--exclude-usrmerge-harder.patch'; \
+		echo 'ed65c633dd3128405193eef92355a27a3302dc0c558adf956f04af4500a004c9 *debootstrap-exclude-usrmerge-harder.patch' | sha256sum --strict --check -; \
+		sed -ri \
+			-e 's!([ab])/debootstrap!\1/usr/sbin/debootstrap!g' \
+			-e 's!([ab])/functions!\1/usr/share/debootstrap/functions!g' \
+			debootstrap-exclude-usrmerge-harder.patch \
+		; \
+		patch -p1 --input="$PWD/debootstrap-exclude-usrmerge-harder.patch" --directory=/; \
+		rm debootstrap-exclude-usrmerge-harder.patch; \
+	fi
 
 # see ".dockerignore"
 COPY . /opt/debuerreotype

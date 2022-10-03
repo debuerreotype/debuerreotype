@@ -186,6 +186,15 @@ case "${codename:-$suite}" in
 			# explicit --exclude for https://github.com/debuerreotype/debuerreotype/issues/140
 		else
 			initArgs+=( --merged-usr )
+			debootstrap="$(command -v debootstrap)"
+			if ! grep -q EXCLUDE_DEPENDENCY "$debootstrap" || ! grep -q EXCLUDE_DEPENDENCY "${DEBOOTSTRAP_DIR:-/usr/share/debootstrap}/functions"; then
+				cat >&2 <<-'EOERR'
+					error: debootstrap missing necessary patches; see:
+					  - https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/76
+					  - https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/81
+				EOERR
+				exit 1
+			fi
 		fi
 		;;
 esac
