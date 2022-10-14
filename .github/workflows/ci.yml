@@ -42,6 +42,10 @@ jobs:
           - { SUITE: oldstable, CODENAME: wheezy,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: ad4e0014b058af4d33476156190794dd3f13f07c3530fbc8eaab677cf10aaa50 }
           - { SUITE: wheezy,    CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: ad4e0014b058af4d33476156190794dd3f13f07c3530fbc8eaab677cf10aaa50 }
 
+          # unstable debootstrap testing
+          - { SUITE: sid, DISTRO: debian-unstable, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: b3fe1c7f347ad60739084ca9b8349f43eeffe6533291a81736174cc9d19d194d }
+          # TODO figure out what to do when this breaks / how to disambiguate it from the sid above cleanly
+
           # EOL suites testing
           - { SUITE: eol, CODENAME: jessie, TIMESTAMP: "2021-03-01T00:00:00Z", SHA256: 7e89b60c07dbab9b331ee9e6390deb3d88e98af673b89b0711066a6a1865defb }
 

@@ -24,10 +24,14 @@ buildArgs+=( validate "$SUITE" "@$epoch" )
 #checkFile="validate/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
 mkdir -p validate
 
+if [ "$#" -eq 0 ]; then
+	set -- '--pull'
+fi
+
 set -x
 
 ./scripts/debuerreotype-version
-./docker-run.sh --pull ./examples/debian.sh "${buildArgs[@]}"
+./docker-run.sh "$@" ./examples/debian.sh "${buildArgs[@]}"
 
 #real="$(sha256sum "$checkFile" | cut -d' ' -f1)"
 #[ -z "$SHA256" ] || [ "$SHA256" = "$real" ]
