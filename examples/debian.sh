@@ -139,6 +139,8 @@ mkdir -p "$tmpOutputDir"
 mirror="$(< "$archDir/snapshot-url")"
 if [ -f "$keyring" ] && wget -O "$tmpOutputDir/InRelease" "$mirror/dists/$suite/InRelease"; then
 	gpgv \
+		3>"$tmpDir/gpgv-status.txt" \
+		--status-fd 3 \
 		--keyring "$keyring" \
 		--output "$tmpOutputDir/Release" \
 		"$tmpOutputDir/InRelease"
@@ -146,6 +148,8 @@ if [ -f "$keyring" ] && wget -O "$tmpOutputDir/InRelease" "$mirror/dists/$suite/
 elif [ -f "$keyring" ] && wget -O "$tmpOutputDir/Release.gpg" "$mirror/dists/$suite/Release.gpg" && wget -O "$tmpOutputDir/Release" "$mirror/dists/$suite/Release"; then
 	rm -f "$tmpOutputDir/InRelease" # remove wget leftovers
 	gpgv \
+		3>"$tmpDir/gpgv-status.txt" \
+		--status-fd 3 \
 		--keyring "$keyring" \
 		"$tmpOutputDir/Release.gpg" \
 		"$tmpOutputDir/Release"
@@ -226,7 +230,18 @@ fi
 debuerreotype-debian-sources-list "${sourcesListArgs[@]}" --snapshot "$rootfsDir" "$suite"
 [ -s "$rootfsDir$sourcesListFile" ] # trust, but verify
 
+addGpgvIgnore= # whether to invoke "debuerreotype-gpgv-ignore-expiration-config"
+excludeGpgvIgnore= # whether to let the "gpgv-ignore-expiration" script/config stay in the final image
 if [ -n "$eol" ]; then
+	# if we're building this rootfs *expecting* it to be EOL, we should always include the gpgv hacks in the final output
+	addGpgvIgnore=1
+elif [ -s "$tmpDir/gpgv-status.txt" ] && grep -F '[GNUPG:] EXPKEYSIG ' "$tmpDir/gpgv-status.txt"; then
+	# if we are *not* expecting this rootfs to be EOL but the key is expired, we need to include the gpgv hacks to build it successfully, but then want to *not* include them in the final output
+	addGpgvIgnore=1
+	excludeGpgvIgnore=1
+fi
+
+if [ -n "$addGpgvIgnore" ]; then
 	debuerreotype-gpgv-ignore-expiration-config "$rootfsDir"
 fi
 
@@ -336,6 +351,14 @@ create_artifacts() {
 	if [ ! -e "$rootfs/usr/share/doc/usr-is-merged/copyright" ] && [ -e "$rootfs/etc/unsupported-skip-usrmerge-conversion" ]; then
 		# if we have the "/etc/unsupported-skip-usrmerge-conversion" file but not the "usr-is-merged" package, we should be safe to remove the "unsupported configuration" flag file (see "epochUsrIsMerged" section above, specifically the "--exclude=usr-is-merged" case)
 		tarArgs+=( --exclude './etc/unsupported-skip-usrmerge-conversion' )
+	fi
+
+	if [ -n "$excludeGpgvIgnore" ]; then
+		# this list needs to stay in sync with "scripts/debuerreotype-gpgv-ignore-expiration-config"
+		tarArgs+=(
+			--exclude './usr/local/bin/.debuerreotype-gpgv-ignore-expiration'
+			--exclude './etc/apt/apt.conf.d/debuerreotype-gpgv-ignore-expiration'
+		)
 	fi
 
 	debuerreotype-tar "${tarArgs[@]}" "$rootfs" "$targetBase.tar.xz"
