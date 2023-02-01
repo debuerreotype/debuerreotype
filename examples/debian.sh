@@ -220,7 +220,7 @@ aptVersion="$("$debuerreotypeScriptsDir/.apt-version.sh" "$rootfsDir")"
 sourcesListArgs=()
 [ -z "$eol" ] || sourcesListArgs+=( --eol )
 [ -z "$ports" ] || sourcesListArgs+=( --ports )
-if dpkg --compare-versions "$aptVersion" '>=' '2.3~' && { [ "$suite" = 'unstable' ] || [ "$suite" = 'sid' ]; }; then # just unstable for now (TODO after some time testing this, we should update this to bookworm+ which is aptVersion 2.3+)
+if dpkg --compare-versions "$aptVersion" '>=' '2.3~'; then
 	sourcesListArgs+=( --deb822 )
 	sourcesListFile='/etc/apt/sources.list.d/debian.sources'
 else
