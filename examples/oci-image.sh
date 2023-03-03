@@ -162,7 +162,8 @@ jq -ncS '
 ' > "$tempDir/config.json"
 configSize="$(stat --format='%s' "$tempDir/config.json")"
 configSha256="$(_sha256 "$tempDir/config.json")"
-export configSize configSha256
+configData="$(base64 -w0 "$tempDir/config.json")" # so we can embed it in the descriptor 👀
+export configSize configSha256 configData
 mv "$tempDir/config.json" "$tempDir/oci/blobs/image-config.json"
 ln -sfT ../image-config.json "$tempDir/oci/blobs/sha256/$configSha256"
 
@@ -175,6 +176,7 @@ jq -ncS '
 			mediaType: "application/vnd.oci.image.config.v1+json",
 			size: (env.configSize | tonumber),
 			digest: ( "sha256:" + env.configSha256 ),
+			data: env.configData,
 		},
 		layers: [
 			{
@@ -187,7 +189,8 @@ jq -ncS '
 ' > "$tempDir/manifest.json"
 manifestSize="$(stat --format='%s' "$tempDir/manifest.json")"
 manifestSha256="$(_sha256 "$tempDir/manifest.json")"
-export manifestSize manifestSha256
+manifestData="$(base64 -w0 "$tempDir/manifest.json")" # so we can embed it in the descriptor 👀
+export manifestSize manifestSha256 manifestData
 mv "$tempDir/manifest.json" "$tempDir/oci/blobs/image-manifest.json"
 ln -sfT ../image-manifest.json "$tempDir/oci/blobs/sha256/$manifestSha256"
 
@@ -210,6 +213,7 @@ jq -ncS --argjson platform "$platform" '
 					"io.containerd.image.name": env.image,
 					"org.opencontainers.image.ref.name": env.tag,
 				},
+				data: env.manifestData,
 			}
 		],
 	}
