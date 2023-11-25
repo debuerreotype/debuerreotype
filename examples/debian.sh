@@ -210,6 +210,20 @@ if [ -n "$exclude" ]; then
 	initArgs+=( --exclude="$exclude" )
 fi
 
+addGpgvIgnore= # whether to invoke "debuerreotype-gpgv-ignore-expiration-config"
+excludeGpgvIgnore= # whether to let the "gpgv-ignore-expiration" script/config stay in the final image
+if [ -n "$eol" ]; then
+	# if we're building this rootfs *expecting* it to be EOL, we should always include the gpgv hacks in the final output
+	addGpgvIgnore=1
+elif [ -s "$tmpDir/gpgv-status.txt" ] && grep -F '[GNUPG:] EXPKEYSIG ' "$tmpDir/gpgv-status.txt"; then
+	# if we are *not* expecting this rootfs to be EOL but the key is expired, we need to include the gpgv hacks to build it successfully, but then want to *not* include them in the final output
+	addGpgvIgnore=1
+	excludeGpgvIgnore=1
+fi
+if [ -n "$addGpgvIgnore" ]; then
+	initArgs+=(--add-gpgv-ignore)
+fi
+
 rootfsDir="$tmpDir/rootfs"
 debuerreotype-init "${initArgs[@]}" "$rootfsDir" "$suite" "@$epoch"
 
@@ -229,21 +243,6 @@ else
 fi
 debuerreotype-debian-sources-list "${sourcesListArgs[@]}" --snapshot "$rootfsDir" "$suite"
 [ -s "$rootfsDir$sourcesListFile" ] # trust, but verify
-
-addGpgvIgnore= # whether to invoke "debuerreotype-gpgv-ignore-expiration-config"
-excludeGpgvIgnore= # whether to let the "gpgv-ignore-expiration" script/config stay in the final image
-if [ -n "$eol" ]; then
-	# if we're building this rootfs *expecting* it to be EOL, we should always include the gpgv hacks in the final output
-	addGpgvIgnore=1
-elif [ -s "$tmpDir/gpgv-status.txt" ] && grep -F '[GNUPG:] EXPKEYSIG ' "$tmpDir/gpgv-status.txt"; then
-	# if we are *not* expecting this rootfs to be EOL but the key is expired, we need to include the gpgv hacks to build it successfully, but then want to *not* include them in the final output
-	addGpgvIgnore=1
-	excludeGpgvIgnore=1
-fi
-
-if [ -n "$addGpgvIgnore" ]; then
-	debuerreotype-gpgv-ignore-expiration-config "$rootfsDir"
-fi
 
 debuerreotype-minimizing-config "$rootfsDir"
 
