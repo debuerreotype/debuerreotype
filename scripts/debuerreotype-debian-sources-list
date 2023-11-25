@@ -36,6 +36,11 @@ targetDir="${1:-}"; shift || eusage 'missing target-dir'
 suite="${1:-}"; shift || eusage 'missing suite'
 [ -n "$targetDir" ]
 
+portsSnapshot=
+if [ -n "$ports" ] && [ -n "$snapshot" ]; then
+	portsSnapshot=1
+fi
+
 epoch="$(< "$targetDir/debuerreotype-epoch")"
 
 comp='main'
@@ -101,11 +106,11 @@ deb() {
 			deb822Suites["$mirror"]+="${deb822Suites["$mirror"]:+ }$suite"
 		else
 			if [ -z "$snapshot" ]; then
-				echo "# deb $snapshotMirror $suite $comp"
+				echo "# deb${portsSnapshot:+ [trusted=yes]} $snapshotMirror $suite $comp"
 			fi
-			echo "deb $mirror $suite $comp"
+			echo "deb${portsSnapshot:+ [trusted=yes]} $mirror $suite $comp"
 			if [ -n "$debSrc" ]; then
-				echo "deb-src $mirror $suite $comp"
+				echo "deb-src${portsSnapshot:+ [trusted=yes]} $mirror $suite $comp"
 			fi
 		fi
 	done
@@ -132,6 +137,9 @@ deb() {
 			echo "Components: $comp"
 			if [ -n "$keyring" ]; then
 				echo "Signed-By: $keyring"
+			fi
+			if [ -n "$portsSnapshot" ]; then
+				echo "Trusted: yes"
 			fi
 		done
 	fi
