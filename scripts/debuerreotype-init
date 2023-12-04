@@ -6,7 +6,7 @@ source "$thisDir/.constants.sh" \
 	--flags 'debian,debian-eol,debian-ports,non-debian' \
 	--flags 'debootstrap:' \
 	--flags 'debootstrap-script:' \
-	--flags 'keyring:,arch:,include:,exclude:' \
+	--flags 'keyring:,arch:,include:,exclude:,extra-suites:' \
 	--flags 'merged-usr,no-merged-usr' \
 	--flags 'check-gpg,no-check-gpg' \
 	-- \
@@ -27,6 +27,7 @@ keyring=
 arch=
 include=
 exclude=
+extraSuites=
 noMergedUsr=
 noCheckGpg=
 while true; do
@@ -43,6 +44,7 @@ while true; do
 		--arch) arch="$1"; shift ;;
 		--include) include="${include:+$include,}$1"; shift ;;
 		--exclude) exclude="${exclude:+$exclude,}$1"; shift ;;
+		--extra-suites) extraSuites="$1"; shift ;;
 		--merged-usr)    noMergedUsr=  ;;
 		--no-merged-usr) noMergedUsr=1 ;;
 		--check-gpg)    noCheckGpg=  ;;
@@ -126,6 +128,7 @@ fi
 [ -z "$arch" ] || debootstrapArgs+=( --arch="$arch" )
 [ -z "$include" ] || debootstrapArgs+=( --include="$include" )
 [ -z "$exclude" ] || debootstrapArgs+=( --exclude="$exclude" )
+[ -z "$extraSuites" ] || debootstrapArgs+=( --extra-suites="$extraSuites" )
 
 debootstrapArgs+=(
 	"$suite" "$targetDir" "$mirror" "$script"

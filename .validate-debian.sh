@@ -19,6 +19,9 @@ if [ -n "${ARCH:-}" ]; then
 		fi
 	fi
 fi
+if [ -n "${EXTRASUITES:-}" ]; then
+	buildArgs+=( "--extra-suites=${EXTRASUITES}" )
+fi
 buildArgs+=( validate "$SUITE" "@$epoch" )
 
 checkFile="validate/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"

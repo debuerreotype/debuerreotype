@@ -9,7 +9,7 @@ source "$debuerreotypeScriptsDir/.constants.sh" \
 	--flags 'codename-copy' \
 	--flags 'eol,ports' \
 	--flags 'arch:' \
-	--flags 'include:,exclude:' \
+	--flags 'include:,exclude:,extra-suites:' \
 	-- \
 	'[--codename-copy] [--eol] [--ports] [--arch=<arch>] <output-dir> <suite> <timestamp>' \
 	'output stretch 2017-05-08T00:00:00Z
@@ -24,6 +24,7 @@ ports=
 include=
 exclude=
 arch=
+extraSuites=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
@@ -34,6 +35,7 @@ while true; do
 		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
 		--include) include="${include:+$include,}$1"; shift ;;
 		--exclude) exclude="${exclude:+$exclude,}$1"; shift ;;
+		--extra-suites) extraSuites="$1"; shift ;; # for adding "--extra-suites" to debuerreotype-init
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -107,6 +109,9 @@ if [ -n "$ports" ]; then
 		--debian-ports
 		--include=debian-ports-archive-keyring
 	)
+fi
+if [ -n "$extraSuites" ]; then
+	initArgs+=( --extra-suites "$extraSuites" )
 fi
 
 export GNUPGHOME="$tmpDir/gnupg"
