@@ -93,13 +93,30 @@ else
 	exit 1
 fi
 
-initArgs+=(
-	# disable merged-usr (for now?) due to the following compelling arguments:
-	#  - https://bugs.debian.org/src:usrmerge ("dpkg-query" breaks, etc)
-	#  - https://bugs.debian.org/914208 ("buildd" variant disables merged-usr still)
-	#  - https://github.com/debuerreotype/docker-debian-artifacts/issues/60#issuecomment-461426406
-	--no-merged-usr
-)
+# apply merged-/usr (for bookworm+)
+# https://lists.debian.org/debian-ctte/2022/07/msg00034.html
+# https://github.com/debuerreotype/docker-debian-artifacts/issues/131#issuecomment-1190233249
+case "${codename:-$suite}" in
+	# this has to be a full codename list because we don't have aptVersion available yet because there's no APT yet 🙈
+	slink | potato | woody | sarge | etch | lenny | squeeze | wheezy | jessie | stretch | buster | bullseye)
+		initArgs+=( --no-merged-usr )
+		;;
+
+	*)
+		if true; then # make indentation match "examples/debian.sh" for easier diffing (we don't have epoch here so we just enable unilaterally in bookworm+ for raspbian builds)
+			initArgs+=( --merged-usr )
+			debootstrap="$(command -v debootstrap)"
+			if ! grep -q EXCLUDE_DEPENDENCY "$debootstrap" || ! grep -q EXCLUDE_DEPENDENCY "${DEBOOTSTRAP_DIR:-/usr/share/debootstrap}/functions"; then
+				cat >&2 <<-'EOERR'
+					error: debootstrap missing necessary patches; see:
+					  - https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/76
+					  - https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/81
+				EOERR
+				exit 1
+			fi
+		fi
+		;;
+esac
 
 rootfsDir="$tmpDir/rootfs"
 debuerreotype-init "${initArgs[@]}" "$rootfsDir" "$suite" "$mirror"
