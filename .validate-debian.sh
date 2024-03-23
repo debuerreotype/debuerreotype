@@ -6,20 +6,20 @@ serial="$(TZ=UTC date --date "@$epoch" +%Y%m%d)"
 
 buildArgs=()
 if [ "$SUITE" = 'eol' ]; then
-	buildArgs+=( '--eol' )
+	buildArgs+=('--eol')
 	SUITE="$CODENAME"
 elif [ -n "${CODENAME:-}" ]; then
-	buildArgs+=( '--codename-copy' )
+	buildArgs+=('--codename-copy')
 fi
 if [ -n "${ARCH:-}" ]; then
-	buildArgs+=( "--arch=${ARCH}" )
+	buildArgs+=("--arch=${ARCH}")
 	if [ "$ARCH" != 'i386' ]; then
 		if [ "$ARCH" != 'arm64' ]; then
-			buildArgs+=( '--ports' )
+			buildArgs+=('--ports')
 		fi
 	fi
 fi
-buildArgs+=( validate "$SUITE" "@$epoch" )
+buildArgs+=(validate "$SUITE" "@$epoch")
 
 checkFile="validate/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
 mkdir -p validate
