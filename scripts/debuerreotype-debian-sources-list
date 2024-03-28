@@ -100,7 +100,7 @@ deb() {
 			fi
 			deb822Suites["$mirror"]+="${deb822Suites["$mirror"]:+ }$suite"
 		else
-			if [ -z "$snapshot" ]; then
+			if [ "$mirror" != "$snapshotMirror" ]; then
 				echo "# deb $snapshotMirror $suite $comp"
 			fi
 			echo "deb $mirror $suite $comp"
@@ -124,7 +124,7 @@ deb() {
 			else
 				echo 'Types: deb'
 			fi
-			if [ -z "$snapshot" ]; then
+			if [ "$mirror" != "${deb822Snapshots["$mirror"]}" ]; then
 				echo "# ${deb822Snapshots["$mirror"]}"
 			fi
 			echo "URIs: $mirror"

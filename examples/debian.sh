@@ -53,7 +53,7 @@ trap "$(printf 'rm -rf %q' "$tmpDir")" EXIT
 export TZ='UTC' LC_ALL='C'
 
 epoch="$(date --date "$timestamp" +%s)"
-serial="$(date --date "@$epoch" +%Y%m%d)"
+serial="$(if [ -z "$eol" ]; then date --date "@$epoch" +%Y%m%d; else echo 'eol'; fi)"
 dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- '{ print $NF }')}"
 
 exportDir="$tmpDir/output"
@@ -248,6 +248,55 @@ fi
 debuerreotype-minimizing-config "$rootfsDir"
 
 debuerreotype-apt-get "$rootfsDir" update -qq
+
+if [ -n "$eol" ]; then
+	# see scripts/.debian-mirror.sh, especially https://bugs.debian.org/986207
+	# TODO if we updated our "{In,}Release" downloading code to *also* download from secmirror (when it is different/available), we could change this to fall back to that and then special case only slink 👀
+	case "$suite" in
+		sarge) # 3.1
+			# has Release files (with Dates!), but APT does not keep them on disk yet
+			# https://wiki.debian.org/DebianSarge ("30 Mar 2008 : End of security updates (i.e End of life.)" + "26 Oct 2008 : The distribution is moved to archive")
+			# https://archive.debian.org/debian/dists/sarge/Release ("Sat, 12 Apr 2008 19:04:58 UTC")
+			# https://archive.debian.org/debian-security/dists/sarge/updates/Release ("Wed, 29 Oct 2008 18:01:28 UTC")
+			epoch="$(date --date 'Wed, 29 Oct 2008 18:01:28 UTC' +%s)"
+			echo "$epoch" > "$rootfsDir/debuerreotype-epoch"
+			;;
+
+		woody) # 3.0
+			# has Release files (with Dates!), but APT does not keep them on disk yet
+			# https://wiki.debian.org/DebianWoody ("30 Jun 2006 : End of security updates (i.e End of life.)." + "31 Dec 2006 : The distribution is moved to archive.")
+			# http://archive.debian.org/debian/dists/woody/Release ("Tue, 31 May 2005 20:55:05 UTC")
+			# http://archive.debian.org/debian-security/dists/woody/updates/Release ("Fri, 06 Apr 2007 15:53:25 UTC")
+			epoch="$(date --date 'Fri, 06 Apr 2007 15:53:25 UTC' +%s)"
+			echo "$epoch" > "$rootfsDir/debuerreotype-epoch"
+			;;
+
+		potato) # 2.2
+			# has Release files (with Dates!), but APT does not keep them on disk yet
+			# https://wiki.debian.org/DebianPotato ("30 Jun 2003 : End of security updates (i.e End of life.). The distribution is moved to archive.")
+			# http://archive.debian.org/debian/dists/potato/Release ("Fri, 12 Jul 2002 16:16:28 UTC")
+			# no "debian-security" Release file though 😭
+			# potato's security suite does not appear to have enough metadata files to actually be usable though, so Jul 12 it is!
+			epoch="$(date --date 'Fri, 12 Jul 2002 16:16:28 UTC' +%s)"
+			echo "$epoch" > "$rootfsDir/debuerreotype-epoch"
+			;;
+
+		slink) # 2.1
+			# again, slink has no Release files (at least, not as we know them today, with a Date), so we get to just synthesize an appropriate epoch
+			# https://wiki.debian.org/DebianSlink ("30 Oct 2000 : End of security updates (i.e End of life.). The distribution is moved to archive.")
+			# http://archive.debian.org/debian/dists/slink/main/binary-i386/ ("2000-08-18 03:05")
+			# http://archive.debian.org/debian-security/dists/slink/updates/binary-i386/ ("2000-12-19 23:00")
+			# (we'll go with the date on the "Packages" files for slink-security, which is very shortly after the wiki's stated EOL date)
+			epoch="$(date --date '2000-12-19 23:00' +%s)"
+			echo "$epoch" > "$rootfsDir/debuerreotype-epoch"
+			;;
+
+		*)
+			debuerreotype-recalculate-epoch "$rootfsDir"
+			epoch="$(< "$rootfsDir/debuerreotype-epoch")"
+			;;
+	esac
+fi
 
 if dpkg --compare-versions "$aptVersion" '>=' '1.1~'; then
 	debuerreotype-apt-get "$rootfsDir" full-upgrade -yqq

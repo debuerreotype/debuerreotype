@@ -112,6 +112,10 @@ script='debian.sh'
 if [ -x "$thisDir/$osID.sh" ]; then
 	script="$osID.sh"
 fi
+if [ "$script" = 'debian.sh' ] && grep -qE '/archive[.]debian[.]org/|/debian-archive/' "$sourceDir/rootfs".*sources*; then
+	# likely an EOL build, let's annotate it as such
+	script+=' --eol'
+fi
 export script
 
 echo >&2 "generating config ..."
