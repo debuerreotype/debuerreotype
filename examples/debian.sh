@@ -212,7 +212,7 @@ fi
 
 addGpgvIgnore= # whether to invoke "debuerreotype-gpgv-ignore-expiration-config"
 excludeGpgvIgnore= # whether to let the "gpgv-ignore-expiration" script/config stay in the final image
-if [ -n "$eol" ]; then
+if [ -n "$eol" ] || [ -n "$ports" ]; then
 	# if we're building this rootfs *expecting* it to be EOL, we should always include the gpgv hacks in the final output
 	addGpgvIgnore=1
 elif [ -s "$tmpDir/gpgv-status.txt" ] && grep -F '[GNUPG:] EXPKEYSIG ' "$tmpDir/gpgv-status.txt"; then
