@@ -63,28 +63,28 @@ jobs:
     strategy:
       matrix:
         include:
-          - { SUITE: stable,    CODENAME: jessie,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 2dfa65652d6666e1f496886a2a9b3852bd43c1df55babe7009e8dbfe4a66ba69 }
-          - { SUITE: jessie,    CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 2dfa65652d6666e1f496886a2a9b3852bd43c1df55babe7009e8dbfe4a66ba69 }
-          - { SUITE: testing,   CODENAME: stretch, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: f6a94df0a2eccdec7cabf576e009b639f6d011c7db62744cbc9f11b4067b5568 }
-          - { SUITE: stretch,   CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: f6a94df0a2eccdec7cabf576e009b639f6d011c7db62744cbc9f11b4067b5568 }
-          - { SUITE: unstable,  CODENAME: sid,     TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 87f46eeb98d44ff5742d87112d9cc45e51dbb1204d60cb4136b51f0edfce061f }
-          - { SUITE: sid,       CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 87f46eeb98d44ff5742d87112d9cc45e51dbb1204d60cb4136b51f0edfce061f }
-          - { SUITE: oldstable, CODENAME: wheezy,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: d19b91beb77aa6d32dbf45681a8510916d70ec74d2f499ee5559fc96ada025a1 }
-          - { SUITE: wheezy,    CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: d19b91beb77aa6d32dbf45681a8510916d70ec74d2f499ee5559fc96ada025a1 }
+          - { SUITE: stable,    CODENAME: jessie,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 6bec1ad527391127159338d2e82e7bcd5d29dc95d766d6aa374f3b3e850b9d76 }
+          - { SUITE: jessie,    CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 6bec1ad527391127159338d2e82e7bcd5d29dc95d766d6aa374f3b3e850b9d76 }
+          - { SUITE: testing,   CODENAME: stretch, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 6dac0c6f25953747754421d258351e19ba06b2a9cf5076fa9b0bad470cba2992 }
+          - { SUITE: stretch,   CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 6dac0c6f25953747754421d258351e19ba06b2a9cf5076fa9b0bad470cba2992 }
+          - { SUITE: unstable,  CODENAME: sid,     TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 8d0e577a6bf851507bb9621c638c12b3e8ee0408519d33a51af41771fd30a8bc }
+          - { SUITE: sid,       CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 8d0e577a6bf851507bb9621c638c12b3e8ee0408519d33a51af41771fd30a8bc }
+          - { SUITE: oldstable, CODENAME: wheezy,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 03f69a953780cf00e4d948e510316a8c921c3cab3b29ca8875a66ba167ce8685 }
+          - { SUITE: wheezy,    CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 03f69a953780cf00e4d948e510316a8c921c3cab3b29ca8875a66ba167ce8685 }
 
           # EOL suites testing
-          - { SUITE: eol, CODENAME: etch,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 893d436a060f2536f70efbdfd2e2952cf311eada558f858e6190c80b323b783e }
-          - { SUITE: eol, CODENAME: lenny, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: c263084bc482b1538512eb091095dd30cf55a6873b989aeee9d4e148f2f3fafa }
+          - { SUITE: eol, CODENAME: etch,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 5d423f735b56944fe114a4d7e09defe68cc2f038c03e1a317fa2b22094cf4add }
+          - { SUITE: eol, CODENAME: lenny, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 7ed0cc3787708dc4e18eb2b0c145942e153dd0b5fd7dbc6a5a0bc0f797424d00 }
           - { SUITE: eol, CODENAME: woody, ARCH: i386, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: f80833896e141fbfebf8c91e79da2ccca1bdeb8f8ecc4e05dd33531c32857e0f }
-          - { SUITE: eol, CODENAME: jessie, TIMESTAMP: "2021-03-01T00:00:00Z", SHA256: 45c5553e989a8d42106029ec6f5e042bf48b29e08bf50e414f99f04c33b10fe9 }
+          - { SUITE: eol, CODENAME: jessie, TIMESTAMP: "2021-03-01T00:00:00Z", SHA256: 0fbf1bcba51788e82abeee22c722937fcdccb7691acbe9a006b5e2e1e9269ced }
 
           # deb822 / usr-is-merged testing
-          - { SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-09-30T00:00:00Z", SHA256: 03a0c528782513e6d00a4f0e4d6137d5eb308e1b7544e2230d86626861086f1a }
-          - { SUITE: bookworm, CODENAME: "", TIMESTAMP: "2022-09-30T00:00:00Z", SHA256: 8b350357e65dc02f04774c56d4b39b232ba53746a132496a211d3152287f7db2 }
-          - { SUITE: bullseye, CODENAME: "", TIMESTAMP: "2022-09-30T00:00:00Z", SHA256: cd39823e09ebc57cc3e6d4d57faa24ea6ddfab60f0519165a26f101ea94f13a0 }
+          - { SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-09-30T00:00:00Z", SHA256: 356fcc802434e62f0fc119564ed1e8928e8dd214ba5d60ebe6c21ad90114e030 }
+          - { SUITE: bookworm, CODENAME: "", TIMESTAMP: "2022-09-30T00:00:00Z", SHA256: 3d987ea3627beb48477a938869b6533afa85b7a3523a1dc85adab47ce2b7ebc3 }
+          - { SUITE: bullseye, CODENAME: "", TIMESTAMP: "2022-09-30T00:00:00Z", SHA256: 34b966f822739d7e60084ab2510be0c517630e664331a6778d63f102830e0b92 }
 
           # qemu-debootstrap testing
-          - { ARCH: arm64,   SUITE: jessie,   CODENAME: "", TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 45b3c398b472ff45399cc6cc633005f48d2359d0df8d905022d37a29434420cf }
+          - { ARCH: arm64,   SUITE: jessie,   CODENAME: "", TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: e46787693f59f29613ebea25d89e52c51f5744a4917ff65d98791d0fe7ffb8a3 }
           - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 8cf5ac04cd174465aff38484b0cd1b5ad83fe14585322f99a7db404b6dc02275 }
           - { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 3f0d1dc0cb525aa47e6d9947fa7d6e207f7fd72a1d023872a874d6202e020232 }
 
@@ -96,6 +96,7 @@ jobs:
           - { DISTRO: ubuntu, SUITE: bionic }
           - { DISTRO: ubuntu, SUITE: focal }
           - { DISTRO: ubuntu, SUITE: focal, ARCH: i386 }
+          - { DISTRO: ubuntu, SUITE: jammy }
       fail-fast: false
     name: Test ${{ matrix.DISTRO && format('{0} ', matrix.DISTRO) }}${{ matrix.SUITE }}${{ matrix.CODENAME && format(' ({0})', matrix.CODENAME) }}${{ matrix.ARCH && format(' [{0}]', matrix.ARCH) }}${{ matrix.TIMESTAMP && format(' at {0}', matrix.TIMESTAMP) }}
     runs-on: ubuntu-20.04
