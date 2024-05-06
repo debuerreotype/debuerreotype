@@ -94,6 +94,7 @@ jobs:
           - { SUITE: oldstable, CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
 
           - { DISTRO: ubuntu, SUITE: bionic }
+          - { DISTRO: ubuntu, SUITE: eol, CODENAME: cosmic, ARCH: armhf }
           - { DISTRO: ubuntu, SUITE: focal }
           - { DISTRO: ubuntu, SUITE: focal, ARCH: i386 }
           - { DISTRO: ubuntu, SUITE: jammy }

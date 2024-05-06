@@ -2,6 +2,10 @@
 set -Eeuo pipefail
 
 buildArgs=()
+if [ "$SUITE" = 'eol' ]; then
+	buildArgs+=( '--eol' )
+	SUITE="$CODENAME"
+fi
 if [ -n "${ARCH:-}" ]; then
 	buildArgs+=( "--arch=${ARCH}" )
 fi

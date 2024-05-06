@@ -10,18 +10,22 @@ debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
 debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
+	--flags 'eol' \
 	--flags 'arch:' \
 	-- \
-	'[--arch=<arch>] <output-dir> <suite>' \
+	'[--eol] [--arch=<arch>] <output-dir> <suite>' \
 	'output xenial
+--eol --arch armhf output cosmic
 --arch arm64 output bionic'
 
 eval "$dgetopt"
+eol=
 arch=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
+		--eol) eol=1 ;; # for using "old-releases.ubuntu.com"
 		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
@@ -46,24 +50,35 @@ exportDir="$tmpDir/output"
 archDir="$exportDir/ubuntu/$dpkgArch"
 tmpOutputDir="$archDir/$suite"
 
-case "$dpkgArch" in
-	amd64 | i386)
-		mirror='http://archive.ubuntu.com/ubuntu'
-		secmirror='http://security.ubuntu.com/ubuntu'
-		;;
+if [ -z "$eol" ]; then
+	case "$dpkgArch" in
+		amd64 | i386)
+			mirror='http://archive.ubuntu.com/ubuntu'
+			secmirror='http://security.ubuntu.com/ubuntu'
+			;;
 
-	*)
-		mirror='http://ports.ubuntu.com/ubuntu-ports'
-		secmirror="$mirror" # no separate security mirror for ports
-		;;
-esac
+		*)
+			mirror='http://ports.ubuntu.com/ubuntu-ports'
+			secmirror="$mirror" # no separate security mirror for ports
+			;;
+	esac
+else
+	mirror='http://old-releases.ubuntu.com/ubuntu'
+	secmirror="$mirror" # no separate security mirror for old releases
+fi
 
 initArgs=(
 	--arch "$dpkgArch"
 	--non-debian
 )
 
-keyring='/usr/share/keyrings/ubuntu-archive-keyring.gpg'
+export GNUPGHOME="$tmpDir/gnupg"
+mkdir -p "$GNUPGHOME"
+keyring="$tmpDir/ubuntu-archive-$suite-keyring.gpg"
+# check against all releases (ie, combine both "ubuntu-archive-keyring.gpg" and "ubuntu-archive-removed-keys.gpg"), since we cannot really know whether the target release became EOL later than the snapshot date we are targeting
+gpg --batch --no-default-keyring --keyring "$keyring" --import \
+	/usr/share/keyrings/ubuntu-archive-keyring.gpg \
+	/usr/share/keyrings/ubuntu-archive-removed-keys.gpg
 initArgs+=( --keyring "$keyring" )
 
 mkdir -p "$tmpOutputDir"
