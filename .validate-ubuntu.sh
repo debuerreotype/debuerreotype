@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+buildArgs=()
+if [ -n "${ARCH:-}" ]; then
+	buildArgs+=( "--arch=${ARCH}" )
+fi
+buildArgs+=( validate "$SUITE" )
+
 dockerImage="$(./.docker-image.sh)"
 dockerImage+='-ubuntu'
 {
@@ -21,4 +27,4 @@ mkdir -p validate
 set -x
 
 ./scripts/debuerreotype-version
-./docker-run.sh --image="$dockerImage" --no-build ./examples/ubuntu.sh validate "$SUITE"
+./docker-run.sh --image="$dockerImage" --no-build ./examples/ubuntu.sh "${buildArgs[@]}"

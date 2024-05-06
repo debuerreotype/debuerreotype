@@ -137,7 +137,12 @@ if ! debuerreotype-apt-get "$rootfsDir" install -qq -s iproute2 &> /dev/null; th
 	# poor wheezy
 	iproute=iproute
 fi
-debuerreotype-apt-get "$rootfsDir" install -y --no-install-recommends iputils-ping $iproute
+ping=iputils-ping
+if ! (debuerreotype-chroot "$rootfsDir" apt-cache policy iputils-ping 2>/dev/null | grep -E '^ [ *]{3} [0-9].*'); then
+	# iputils-ping:i386 became unavailable since Focal.
+	ping=
+fi
+debuerreotype-apt-get "$rootfsDir" install -y --no-install-recommends $ping $iproute
 
 debuerreotype-slimify "$rootfsDir"-slim
 
