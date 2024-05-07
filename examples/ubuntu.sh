@@ -80,11 +80,19 @@ initArgs=(
 export GNUPGHOME="$tmpDir/gnupg"
 mkdir -p "$GNUPGHOME"
 keyring="$tmpDir/ubuntu-archive-$suite-keyring.gpg"
-# check against all releases (ie, combine both "ubuntu-archive-keyring.gpg" and "ubuntu-archive-removed-keys.gpg"), since we cannot really know whether the target release became EOL later than the snapshot date we are targeting
-gpg --batch --no-default-keyring --keyring "$keyring" --import \
-	/usr/share/keyrings/ubuntu-archive-keyring.gpg \
-	/usr/share/keyrings/ubuntu-archive-removed-keys.gpg
-initArgs+=( --keyring "$keyring" )
+case "$suite/$dpkgArch" in
+warty/*|hoary/*|breezy/*|dapper/*|edgy/*|feisty/hppa)
+	initArgs+=( --no-check-gpg )
+	;;
+*)
+	# check against all releases (ie, combine both "ubuntu-archive-keyring.gpg" and "ubuntu-archive-removed-keys.gpg"), since we cannot really know whether the target release became EOL later than the snapshot date we are targeting
+	gpg --batch --no-default-keyring --keyring "$keyring" --import \
+		/usr/share/keyrings/ubuntu-archive-keyring.gpg \
+		/usr/share/keyrings/ubuntu-archive-removed-keys.gpg
+	initArgs+=( --keyring "$keyring" )
+	include="${include:+$include,}gpgv"
+	;;
+esac
 
 mkdir -p "$tmpOutputDir"
 
@@ -101,7 +109,7 @@ elif [ -f "$keyring" ] && wget -O "$tmpOutputDir/Release.gpg" "$mirror/dists/$su
 		"$tmpOutputDir/Release.gpg" \
 		"$tmpOutputDir/Release"
 	[ -s "$tmpOutputDir/Release" ]
-else
+elif [ -f "$keyring" ]; then
 	rm -f "$tmpOutputDir/InRelease" "$tmpOutputDir/Release.gpg" "$tmpOutputDir/Release" # remove wget leftovers
 	echo >&2 "error: failed to fetch either InRelease or Release.gpg+Release for '$suite' (from '$mirror')"
 	exit 1
