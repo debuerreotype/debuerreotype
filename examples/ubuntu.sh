@@ -12,6 +12,7 @@ debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 source "$debuerreotypeScriptsDir/.constants.sh" \
 	--flags 'eol' \
 	--flags 'arch:' \
+	--flags 'include:,exclude:' \
 	-- \
 	'[--eol] [--arch=<arch>] <output-dir> <suite>' \
 	'output xenial
@@ -20,6 +21,8 @@ source "$debuerreotypeScriptsDir/.constants.sh" \
 
 eval "$dgetopt"
 eol=
+include=
+exclude=
 arch=
 while true; do
 	flag="$1"; shift
@@ -27,6 +30,8 @@ while true; do
 	case "$flag" in
 		--eol) eol=1 ;; # for using "old-releases.ubuntu.com"
 		--arch) arch="$1"; shift ;; # for adding "--arch" to debuerreotype-init
+		--include) include="${include:+$include,}$1"; shift ;;
+		--exclude) exclude="${exclude:+$exclude,}$1"; shift ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -114,6 +119,13 @@ initArgs+=(
 script="${DEBOOTSTRAP_DIR:-/usr/share/debootstrap}/scripts/$suite"
 if [ ! -e "$script" ]; then
 	initArgs+=(--debootstrap-script "${script%/*}/gutsy")
+fi
+
+if [ -n "$include" ]; then
+	initArgs+=( --include="$include" )
+fi
+if [ -n "$exclude" ]; then
+	initArgs+=( --exclude="$exclude" )
 fi
 
 rootfsDir="$tmpDir/rootfs"
