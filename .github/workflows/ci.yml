@@ -97,6 +97,7 @@ jobs:
           - { DISTRO: ubuntu, SUITE: focal }
           - { DISTRO: ubuntu, SUITE: focal, ARCH: i386 }
           - { DISTRO: ubuntu, SUITE: jammy }
+          - { DISTRO: ubuntu, SUITE: noble }
       fail-fast: false
     name: Test ${{ matrix.DISTRO && format('{0} ', matrix.DISTRO) }}${{ matrix.SUITE }}${{ matrix.CODENAME && format(' ({0})', matrix.CODENAME) }}${{ matrix.ARCH && format(' [{0}]', matrix.ARCH) }}${{ matrix.TIMESTAMP && format(' at {0}', matrix.TIMESTAMP) }}
     runs-on: ubuntu-20.04

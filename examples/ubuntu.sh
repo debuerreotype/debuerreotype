@@ -95,6 +95,12 @@ initArgs+=(
 	--no-merged-usr
 )
 
+# Debian may not support the latest Ubuntu release yet.
+script="${DEBOOTSTRAP_DIR:-/usr/share/debootstrap}/scripts/$suite"
+if [ ! -e "$script" ]; then
+	initArgs+=(--debootstrap-script "${script%/*}/gutsy")
+fi
+
 rootfsDir="$tmpDir/rootfs"
 debuerreotype-init "${initArgs[@]}" "$rootfsDir" "$suite" "$mirror"
 
