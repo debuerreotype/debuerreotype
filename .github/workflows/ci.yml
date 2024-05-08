@@ -93,6 +93,7 @@ jobs:
           - { SUITE: stable,    CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
           - { SUITE: oldstable, CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
 
+          - { DISTRO: ubuntu, SUITE: eol, CODENAME: breezy }
           - { DISTRO: ubuntu, SUITE: eol, CODENAME: gutsy }
           - { DISTRO: ubuntu, SUITE: bionic }
           - { DISTRO: ubuntu, SUITE: eol, CODENAME: cosmic, ARCH: armhf }

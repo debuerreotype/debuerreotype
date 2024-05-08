@@ -183,7 +183,11 @@ if ! (debuerreotype-chroot "$rootfsDir" apt-cache policy iputils-ping 2>/dev/nul
 	# iputils-ping:i386 became unavailable since Focal.
 	ping=
 fi
-debuerreotype-apt-get "$rootfsDir" install -y --no-install-recommends $ping $iproute
+aptArgs=()
+if dpkg --compare-versions "$aptVersion" '>=' '0.6.45'; then
+	aptArgs+=(--no-install-recommends)
+fi
+debuerreotype-apt-get "$rootfsDir" install -y "${aptArgs[@]}" $ping $iproute
 
 debuerreotype-slimify "$rootfsDir"-slim
 
