@@ -21,13 +21,20 @@ if [ -n "${ARCH:-}" ]; then
 fi
 buildArgs+=( validate "$SUITE" "@$epoch" )
 
+dockerRunArgs=()
+if [ -z "${IMAGE}" ]; then
+	dockerRunArgs+=(--pull)
+else
+	dockerRunArgs+=(--no-build --image "${IMAGE}")
+fi
+
 checkFile="validate/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
 mkdir -p validate
 
 set -x
 
 ./scripts/debuerreotype-version
-./docker-run.sh --pull ./examples/debian.sh "${buildArgs[@]}"
+./docker-run.sh "${dockerRunArgs[@]}" ./examples/debian.sh "${buildArgs[@]}"
 
 real="$(sha256sum "$checkFile" | cut -d' ' -f1)"
 [ -z "$SHA256" ] || [ "$SHA256" = "$real" ]

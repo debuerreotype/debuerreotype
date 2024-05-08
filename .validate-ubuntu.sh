@@ -7,9 +7,16 @@ if [ -n "${ARCH:-}" ]; then
 fi
 buildArgs+=( validate "$SUITE" )
 
+dockerRunArgs=()
+if [ -z "${IMAGE}" ]; then
+	dockerRunArgs+=(--pull)
+else
+	dockerRunArgs+=(--no-build --image "${IMAGE}")
+fi
+
 mkdir -p validate
 
 set -x
 
 ./scripts/debuerreotype-version
-./docker-run.sh --pull ./examples/ubuntu.sh "${buildArgs[@]}"
+./docker-run.sh "${dockerRunArgs[@]}" ./examples/ubuntu.sh "${buildArgs[@]}"

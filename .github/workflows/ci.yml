@@ -29,7 +29,37 @@ jobs:
             exit 1
           fi
 
+  image:
+    runs-on: ubuntu-latest
+    outputs:
+      metadata: ${{ steps.build.outputs.metadata }}
+    steps:
+      - name: Checkout Debuerreotype
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.12.0
+      - name: Build and push
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: '.'
+          outputs: type=docker,dest=/tmp/debuerreotype.tar
+          tags: local/debuerreotype:latest
+
+      - name: Upload debuerreotype image tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: debuerreotype
+          path: /tmp/debuerreotype.tar
+
   test:
+    needs:
+      - image
     strategy:
       matrix:
         include:
@@ -72,6 +102,19 @@ jobs:
     env: ${{ matrix }}
     steps:
       - uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.12.0
+      - name: Download debuerreotype image tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: debuerreotype
+          path: /tmp
+      - name: Load debuerreotype image
+        run: docker load --input /tmp/debuerreotype.tar
+
       - name: Prepare Environment
         run: |
           sudo apt-get update -qq
@@ -81,5 +124,7 @@ jobs:
           ~/phe/hack-my-builds.sh
           rm -rf ~/phe
       - name: Build
+        env:
+          IMAGE: ${{ fromJSON(needs.image.outputs.metadata)['image.name'] }}
         run: |
           "./.validate-${DISTRO:-debian}.sh"
