@@ -79,7 +79,7 @@ deb() {
 		local mirrors
 		if ! mirrors="$("$thisDir/.debian-mirror.sh" "${mirrorArgs[@]}" "$suite" "$arch" "$comp")"; then
 			echo >&2 "skipping '$suite/$comp' ..."
-			return
+			continue
 		fi
 		local mirror snapshotMirror foundSuite
 		eval "$mirrors"
