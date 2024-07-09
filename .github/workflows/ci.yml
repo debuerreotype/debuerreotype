@@ -57,6 +57,7 @@ jobs:
           - { ARCH: arm64,   SUITE: jessie,   CODENAME: "", TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 45b3c398b472ff45399cc6cc633005f48d2359d0df8d905022d37a29434420cf }
           - { ARCH: sh4,     SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 8cf5ac04cd174465aff38484b0cd1b5ad83fe14585322f99a7db404b6dc02275 }
           - { ARCH: riscv64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2022-02-01T00:00:00Z", SHA256: 3f0d1dc0cb525aa47e6d9947fa7d6e207f7fd72a1d023872a874d6202e020232 }
+          - { ARCH: loong64, SUITE: unstable, CODENAME: "", TIMESTAMP: "2024-07-01T00:00:00Z", SHA256: d39012912902222f54459be2e60c298602b9456a9787555874a6e26045122818 }
 
           # a few entries for "today" to try and catch issues like https://github.com/debuerreotype/debuerreotype/issues/41 sooner
           - { SUITE: unstable,  CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
