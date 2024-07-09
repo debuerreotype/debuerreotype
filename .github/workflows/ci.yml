@@ -21,7 +21,7 @@ jobs:
     name: Ensure no-TLS snapshot usage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Ensure http://snapshot.debian.org (https://github.com/debuerreotype/debuerreotype/pull/119#issuecomment-901457009)
         run: |
           rm .github/workflows/ci.yml # this file itself will always be a match, but it's the only valid one 👀
@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-20.04
     env: ${{ matrix }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Prepare Environment
         run: |
           sudo apt-get update -qq
