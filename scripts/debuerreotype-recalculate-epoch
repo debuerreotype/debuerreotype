@@ -36,4 +36,5 @@ epoch="$(
 		| sort -un \
 		| tail -1
 )"
+[ -n "$epoch" ]
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
