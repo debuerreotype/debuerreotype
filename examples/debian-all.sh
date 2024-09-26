@@ -18,17 +18,20 @@ debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
 
 source "$debuerreotypeScriptsDir/.constants.sh" \
 	--flags 'arch:' \
+	--flags 'dry-run' \
 	-- \
-	'[--arch=<arch>] <output-dir> <timestamp>' \
+	'[--arch=<arch>] [--dry-run] <output-dir> <timestamp>' \
 	'output 2017-05-08T00:00:00Z'
 
 eval "$dgetopt"
 arch=
+dryRun=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
 	case "$flag" in
 		--arch) arch="$1"; shift ;;
+		--dry-run) dryRun=1 ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -160,5 +163,12 @@ for suite in "${suites[@]}"; do
 		echo >&2
 		continue
 	fi
-	"$thisDir/debian.sh" "${debianArgs[@]}" "$outputDir" "$suite" "$timestamp"
+	cmd=( "$thisDir/debian.sh" "${debianArgs[@]}" "$outputDir" "$suite" "$timestamp" )
+	if [ -n "$dryRun" ]; then
+		printf 'DRY-RUN: $'
+		printf ' %q' "${cmd[@]}"
+		printf '\n'
+	else
+		"${cmd[@]}"
+	fi
 done
