@@ -9,6 +9,7 @@ source "$thisDir/.constants.sh" \
 	--flags 'keyring:,arch:,include:,exclude:' \
 	--flags 'merged-usr,no-merged-usr' \
 	--flags 'check-gpg,no-check-gpg' \
+	--flags 'add-gpgv-ignore' \
 	-- \
 	'<target-dir> <suite> <timestamp>' \
 	'rootfs stretch 2017-05-08T00:00:00Z
@@ -29,6 +30,7 @@ include=
 exclude=
 noMergedUsr=
 noCheckGpg=
+addGpgvIgnore=
 while true; do
 	flag="$1"; shift
 	dgetopt-case "$flag"
@@ -47,6 +49,7 @@ while true; do
 		--no-merged-usr) noMergedUsr=1 ;;
 		--check-gpg)    noCheckGpg=  ;;
 		--no-check-gpg) noCheckGpg=1 ;;
+		--add-gpgv-ignore) addGpgvIgnore=1 ;;
 		--) break ;;
 		*) eusage "unknown flag '$flag'" ;;
 	esac
@@ -154,6 +157,10 @@ if ! "$debootstrap" "${debootstrapArgs[@]}"; then
 	exit 1
 fi
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
+
+if [ -n "$addGpgvIgnore" ]; then
+	debuerreotype-gpgv-ignore-expiration-config "$targetDir"
+fi
 
 if [ -z "$nonDebian" ]; then
 	"$thisDir/debuerreotype-debian-sources-list" --snapshot \
