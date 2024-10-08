@@ -20,4 +20,4 @@ timestamp="${1:-}"; shift || eusage 'missing timestamp'
 archive="${1:-debian}"
 
 t="$(date --date "$timestamp" '+%Y%m%dT%H%M%SZ')"
-echo "http://snapshot.debian.org/archive/$archive/$t"
+echo "https://snapshot.debian.org/archive/$archive/$t"
