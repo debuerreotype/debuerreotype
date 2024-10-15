@@ -101,11 +101,11 @@ deb() {
 			deb822Suites["$mirror"]+="${deb822Suites["$mirror"]:+ }$suite"
 		else
 			if [ -z "$snapshot" ]; then
-				echo "# deb $snapshotMirror $suite $comp"
+				echo "deb [trusted=yes check-valid-until=no] $snapshotMirror $suite $comp"
 			fi
-			echo "deb $mirror $suite $comp"
+			echo "# deb [trusted=yes check-valid-until=no] $mirror $suite $comp"
 			if [ -n "$debSrc" ]; then
-				echo "deb-src $mirror $suite $comp"
+				echo "deb-src [trusted=yes check-valid-until=no] $mirror $suite $comp"
 			fi
 		fi
 	done
@@ -125,9 +125,12 @@ deb() {
 				echo 'Types: deb'
 			fi
 			if [ -z "$snapshot" ]; then
-				echo "# ${deb822Snapshots["$mirror"]}"
+				echo "URIs: ${deb822Snapshots["$mirror"]}"
+				echo "trusted: yes"
+				echo "check-valid-until: no"
+			else
+				echo "URIs: $mirror"
 			fi
-			echo "URIs: $mirror"
 			echo "Suites: ${deb822Suites["$mirror"]}"
 			echo "Components: $comp"
 			if [ -n "$keyring" ]; then
