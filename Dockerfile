@@ -75,6 +75,14 @@ RUN set -eux; \
 		; \
 		patch -p1 --input="$PWD/debootstrap-exclude-usrmerge-harder.patch" --directory=/; \
 		rm debootstrap-exclude-usrmerge-harder.patch; \
+	fi; \
+	\
+# https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/70
+	if grep 'mkdir.*/proc' /usr/share/debootstrap/functions; then \
+		wget -O debootstrap-no-proc-symlink.patch 'https://people.debian.org/~tianon/debootstrap-mr-70--no-proc-symlink.patch'; \
+		echo 'd8e19c05ca4a7471f00a50801c3cffd87cc810f9ad1173c82fc0d24596bf63bf *debootstrap-no-proc-symlink.patch' | sha256sum --strict --check -; \
+		patch -p1 --input="$PWD/debootstrap-no-proc-symlink.patch" --directory=/usr/share/debootstrap; \
+		rm debootstrap-no-proc-symlink.patch; \
 	fi
 
 # see ".dockerignore"
