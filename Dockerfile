@@ -30,10 +30,10 @@ RUN echo 'hsts=0' >> "$WGETRC"
 # https://github.com/debuerreotype/debuerreotype/issues/100
 # https://tracker.debian.org/pkg/distro-info-data
 # http://snapshot.debian.org/package/distro-info-data/
-# http://snapshot.debian.org/package/distro-info-data/0.62/
+# http://snapshot.debian.org/package/distro-info-data/0.63/
 RUN set -eux; \
-	wget -O distro-info-data.deb 'http://snapshot.debian.org/archive/debian/20240430T144507Z/pool/main/d/distro-info-data/distro-info-data_0.62_all.deb'; \
-	echo 'e7abd93aaaa3cb04be00386b9e4c48cac11a5bfd *distro-info-data.deb' | sha1sum --strict --check -; \
+	wget -O distro-info-data.deb 'http://snapshot.debian.org/archive/debian/20241017T144246Z/pool/main/d/distro-info-data/distro-info-data_0.63_all.deb'; \
+	echo 'b82dbfc1539ee1cef96c4d10e93c6e8661b6e638 *distro-info-data.deb' | sha1sum --strict --check -; \
 	apt-get install -y ./distro-info-data.deb; \
 	rm distro-info-data.deb; \
 	[ -s /usr/share/distro-info/debian.csv ]
