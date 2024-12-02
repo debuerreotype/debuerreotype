@@ -204,6 +204,7 @@ platform="$(jq -c 'with_entries(select(.key == ([ "os", "architecture", "variant
 jq -ncS --argjson platform "$platform" '
 	{
 		schemaVersion: 2,
+		mediaType: "application/vnd.oci.image.index.v1+json",
 		manifests: [
 			{
 				mediaType: "application/vnd.oci.image.manifest.v1+json",
