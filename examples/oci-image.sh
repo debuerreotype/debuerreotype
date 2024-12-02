@@ -185,6 +185,7 @@ jq -ncS '
 				digest: ( "sha256:" + env.rootfsSha256 ),
 			}
 		],
+		# TODO add some interesting annotations here
 	}
 ' > "$tempDir/manifest.json"
 manifestSize="$(stat --format='%s' "$tempDir/manifest.json")"
@@ -211,7 +212,7 @@ jq -ncS --argjson platform "$platform" '
 				platform: $platform,
 				annotations: {
 					"io.containerd.image.name": env.image,
-					"org.opencontainers.image.ref.name": env.tag,
+					"org.opencontainers.image.ref.name": env.image,
 				},
 				data: env.manifestData,
 			}
