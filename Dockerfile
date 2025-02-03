@@ -20,6 +20,8 @@ RUN set -eux; \
 		xz-utils \
 		\
 		gnupg dirmngr \
+# add "gpgv" explicitly (for now) since it's transitively-essential in bookworm and gone in trixie+
+		gpgv \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
