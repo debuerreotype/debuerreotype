@@ -85,7 +85,7 @@ if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
 	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests"
 
 	# keep us lean by effectively running "apt-get clean" after every install
-	aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
+	aptGetClean='"test -z $APT_KEEP_ARCHIVES && rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
 	cat > "$targetDir/etc/apt/apt.conf.d/docker-clean" <<-EOF
 		# Since for most Docker users, package installs happen in "docker build" steps,
 		# they essentially become individual layers due to the way Docker handles
