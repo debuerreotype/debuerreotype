@@ -78,7 +78,7 @@ if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
 		# "false" ensures that APT is appropriately aggressive about removing the
 		# packages it added.
 
-		# https://aptitude.alioth.debian.org/doc/en/ch02s05s05.html#configApt-AutoRemove-SuggestsImportant
+		# https://www.debian.org/doc/manuals/aptitude/ch02s05s05.en.html#configApt-AutoRemove-SuggestsImportant
 		Apt::AutoRemove::SuggestsImportant "false";
 	EOF
 	chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests"
