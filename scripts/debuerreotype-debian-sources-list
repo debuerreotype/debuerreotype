@@ -52,11 +52,17 @@ fi
 
 if [ -n "$deb822" ]; then
 	if [ -n "$ports" ]; then
-		keyring='debian-ports-archive-keyring.gpg'
+		keyring='debian-ports-archive-keyring'
 	else
-		keyring='debian-archive-keyring.gpg'
+		keyring='debian-archive-keyring'
 	fi
 	keyring="/usr/share/keyrings/$keyring"
+	# https://salsa.debian.org/release-team/debian-archive-keyring/-/commit/17c653ad964a3e81519f83e1d3a0704be737e4f6
+	if [ -s "$targetDir$keyring.pgp" ]; then
+		keyring+='.pgp'
+	else
+		keyring+='.gpg'
+	fi
 	if [ ! -s "$targetDir$keyring" ]; then
 		echo >&2 "warning: it appears that '$targetDir' is missing '$keyring' (the expected keyring for APT); skipping 'Signed-By:' in generated sources"
 		keyring=
