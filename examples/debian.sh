@@ -253,9 +253,10 @@ debuerreotype-minimizing-config "$rootfsDir"
 debuerreotype-apt-get "$rootfsDir" update -qq
 
 if dpkg --compare-versions "$aptVersion" '>=' '1.1~'; then
-	debuerreotype-apt-get "$rootfsDir" full-upgrade -yqq
+	debuerreotype-apt-get "$rootfsDir" full-upgrade -y ||
+		debuerreotype-apt-get "$rootfsDir" install --fix-broken -y
 else
-	debuerreotype-apt-get "$rootfsDir" dist-upgrade -yqq
+	debuerreotype-apt-get "$rootfsDir" dist-upgrade -y
 fi
 
 if dpkg --compare-versions "$aptVersion" '>=' '0.7.14~'; then
