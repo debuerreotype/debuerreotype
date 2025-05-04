@@ -54,7 +54,13 @@ initArgs=(
 
 export GNUPGHOME="$tmpDir/gnupg"
 mkdir -p "$GNUPGHOME"
-keyring='/usr/share/keyrings/raspbian-archive-keyring.gpg'
+if [ -s /usr/share/keyrings/raspbian-archive-keyring.pgp ]; then
+	# https://salsa.debian.org/release-team/debian-archive-keyring/-/commit/17c653ad964a3e81519f83e1d3a0704be737e4f6
+	# (which will hopefully happen for raspbian-archive-keyring eventually too)
+	keyring='/usr/share/keyrings/raspbian-archive-keyring.pgp'
+else
+	keyring='/usr/share/keyrings/raspbian-archive-keyring.gpg'
+fi
 if [ ! -s "$keyring" ]; then
 	# since we're using mirrors, we ought to be more explicit about download verification
 	keyUrl='https://archive.raspbian.org/raspbian.public.key'
@@ -66,7 +72,7 @@ if [ ! -s "$keyring" ]; then
 		echo >&2
 	)
 	sleep 5
-	keyring="$tmpDir/raspbian-archive-keyring.gpg"
+	keyring="$tmpDir/raspbian-archive-keyring.pgp"
 	wget -O "$keyring.asc" "$keyUrl"
 	gpg --batch --no-default-keyring --keyring "$keyring" --import "$keyring.asc"
 	rm -f "$keyring.asc"

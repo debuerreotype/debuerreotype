@@ -112,7 +112,7 @@ fi
 # TODO decouple this from GnuPG 🙈 (does "sop" have everything we need?)
 export GNUPGHOME="$tmpDir/gnupg"
 mkdir -p "$GNUPGHOME"
-keyring="$tmpDir/debian-archive-$suite-keyring.gpg"
+keyring="$tmpDir/debian-archive-$suite-keyring.pgp"
 if [ "$suite" = 'slink' ]; then
 	# slink (2.1) introduced apt, but without PGP 😅
 	initArgs+=( --no-check-gpg )
@@ -123,14 +123,20 @@ elif [ "$suite" = 'potato' ]; then
 		--recv-keys 8FD47FF1AA9372C37043DC28AA7DEB7B722F1AED
 	initArgs+=( --keyring "$keyring" )
 else
-	# check against all releases (ie, combine both "debian-archive-keyring.gpg" and "debian-archive-removed-keys.gpg"), since we cannot really know whether the target release became EOL later than the snapshot date we are targeting
+	# https://salsa.debian.org/release-team/debian-archive-keyring/-/commit/17c653ad964a3e81519f83e1d3a0704be737e4f6
+	if [ -s /usr/share/keyrings/debian-archive-keyring.pgp ]; then
+		ext='pgp'
+	else
+		ext='gpg'
+	fi
+	# check against all releases (ie, combine both "debian-archive-keyring.pgp" and "debian-archive-removed-keys.pgp"), since we cannot really know whether the target release became EOL later than the snapshot date we are targeting
 	gpg --batch --no-default-keyring --keyring "$keyring" --import \
-		/usr/share/keyrings/debian-archive-keyring.gpg \
-		/usr/share/keyrings/debian-archive-removed-keys.gpg
+		"/usr/share/keyrings/debian-archive-keyring.$ext" \
+		"/usr/share/keyrings/debian-archive-removed-keys.$ext"
 	if [ -n "$ports" ]; then
 		gpg --batch --no-default-keyring --keyring "$keyring" --import \
-			/usr/share/keyrings/debian-ports-archive-keyring.gpg \
-			/usr/share/keyrings/debian-ports-archive-keyring-removed.gpg
+			"/usr/share/keyrings/debian-ports-archive-keyring.$ext" \
+			"/usr/share/keyrings/debian-ports-archive-keyring-removed.$ext"
 	fi
 	initArgs+=( --keyring "$keyring" )
 fi
