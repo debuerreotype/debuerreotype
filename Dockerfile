@@ -26,7 +26,7 @@ RUN set -eux; \
 	rm -rf /var/lib/apt/lists/*
 
 # fight the tyrrany of HSTS (which destroys our ability to transparently cache snapshot.debian.org responses)
-ENV WGETRC /.wgetrc
+ENV WGETRC=/.wgetrc
 RUN echo 'hsts=0' >> "$WGETRC"
 
 # https://github.com/debuerreotype/debuerreotype/issues/100
