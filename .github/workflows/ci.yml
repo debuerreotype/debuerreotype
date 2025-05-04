@@ -42,6 +42,9 @@ jobs:
           - { SUITE: oldstable, CODENAME: wheezy,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: d19b91beb77aa6d32dbf45681a8510916d70ec74d2f499ee5559fc96ada025a1 }
           - { SUITE: wheezy,    CODENAME: "",      TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: d19b91beb77aa6d32dbf45681a8510916d70ec74d2f499ee5559fc96ada025a1 }
 
+          # unstable debootstrap testing
+          - { SUITE: sid, DISTRO: debian-unstable, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 87f46eeb98d44ff5742d87112d9cc45e51dbb1204d60cb4136b51f0edfce061f }
+
           # EOL suites testing
           - { SUITE: eol, CODENAME: etch,  TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: 893d436a060f2536f70efbdfd2e2952cf311eada558f858e6190c80b323b783e }
           - { SUITE: eol, CODENAME: lenny, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: c263084bc482b1538512eb091095dd30cf55a6873b989aeee9d4e148f2f3fafa }
