@@ -5,6 +5,7 @@ cd "$(dirname "$(readlink -f "$BASH_SOURCE")")"
 
 _defaults() {
 	export ARCH= TIMESTAMP='2017-01-01T00:00:00Z' SHA256=
+	unset DISTRO
 }
 
 combos=(
@@ -16,6 +17,10 @@ combos=(
 	'SUITE=sid       CODENAME=""      '
 	'SUITE=oldstable CODENAME=wheezy  '
 	'SUITE=wheezy    CODENAME=""      '
+	''
+	'# unstable debootstrap testing'
+	'SUITE=sid DISTRO=debian-unstable '
+	'# TODO figure out what to do when this breaks / how to disambiguate it from the sid above cleanly'
 	''
 	'# EOL suites testing'
 	# these are broken thanks to snapshot doing redirects now (and old APT not following those)
@@ -52,7 +57,7 @@ for combo in "${combos[@]}"; do
 	_defaults
 	githubEnv+=$'\n'"$combo"
 	case "$combo" in
-		'' | '#'* | *' SHA256='* | 'DISTRO='*)
+		'' | '#'* | *' SHA256='* | 'DISTRO=ubuntu'*)
 			# leave blank lines, comment lines, lines with SHA256=, and lines starting with VALIDATE= unchanged
 			continue
 			;;
@@ -62,13 +67,14 @@ for combo in "${combos[@]}"; do
 		grep -oE1 'SUITE=[^ ]+' <<<"$combo" || :
 		grep -oE1 'CODENAME=[^ ]*' <<<"$combo" || :
 		grep -oE1 'TIMESTAMP=[^ ]*' <<<"$combo" || :
+		grep -oE1 'DISTRO=[^ ]*' <<<"$combo" || :
 	)"
 	eval "$vars"
 	[ -n "$SUITE" ]
 	serial="$(TZ=UTC date --date="$TIMESTAMP" '+%Y%m%d')"
 	rootfs="validate/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
 	if [ ! -e "$rootfs" ]; then
-		( set -x; eval "$combo ./.validate-debian.sh" )
+		( set -x; eval "$combo ./.validate-${DISTRO:-debian}.sh" )
 	fi
 	sha256="$(< "$rootfs.sha256")"
 	if ! grep -qF 'TIMESTAMP=' <<<"$combo"; then

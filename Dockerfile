@@ -51,7 +51,15 @@ RUN set -eux; \
 	wget -O debootstrap-download-main.patch 'https://people.debian.org/~tianon/debootstrap-mr-63--download_main.patch'; \
 	echo 'ceae8f508a9b49236fa4519a44a584e6c774aa0e4446eb1551f3b69874a4cde5 *debootstrap-download-main.patch' | sha256sum --strict --check -; \
 	patch --input=debootstrap-download-main.patch /usr/share/debootstrap/functions; \
-	rm debootstrap-download-main.patch
+	rm debootstrap-download-main.patch; \
+	\
+# https://salsa.debian.org/installer-team/debootstrap/-/merge_requests/70
+	if grep 'mkdir.*/proc' /usr/share/debootstrap/functions; then \
+		wget -O debootstrap-no-proc-symlink.patch 'https://people.debian.org/~tianon/debootstrap-mr-70--no-proc-symlink.patch'; \
+		echo 'd8e19c05ca4a7471f00a50801c3cffd87cc810f9ad1173c82fc0d24596bf63bf *debootstrap-no-proc-symlink.patch' | sha256sum --strict --check -; \
+		patch -p1 --input="$PWD/debootstrap-no-proc-symlink.patch" --directory=/usr/share/debootstrap; \
+		rm debootstrap-no-proc-symlink.patch; \
+	fi
 
 # this env is a defined interface used by other scripts
 ENV DEBUERREOTYPE_DIRECTORY /opt/debuerreotype
