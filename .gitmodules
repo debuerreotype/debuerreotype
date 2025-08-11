@@ -1,0 +1,4 @@
+[submodule "validate"]
+	path = validate
+	url = https://github.com/debuerreotype/validation-artifacts.git
+	branch = 2025-08-11
