@@ -63,7 +63,13 @@ initArgs=(
 	--non-debian
 )
 
-keyring='/usr/share/keyrings/ubuntu-archive-keyring.gpg'
+if [ -s /usr/share/keyrings/ubuntu-archive-keyring.pgp ]; then
+	# https://salsa.debian.org/release-team/debian-archive-keyring/-/commit/17c653ad964a3e81519f83e1d3a0704be737e4f6
+	# (which will hopefully happen for ubuntu-archive-keyring eventually too)
+	keyring='/usr/share/keyrings/ubuntu-archive-keyring.pgp'
+else
+	keyring='/usr/share/keyrings/ubuntu-archive-keyring.gpg'
+fi
 initArgs+=( --keyring "$keyring" )
 
 mkdir -p "$tmpOutputDir"
