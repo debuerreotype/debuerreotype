@@ -42,18 +42,24 @@ combos=(
 	'SUITE=stable    CODENAME="" TIMESTAMP="today 00:00:00" SHA256=""'
 	'SUITE=oldstable CODENAME="" TIMESTAMP="today 00:00:00" SHA256=""'
 	''
+	'# Dockerfile checksums'
+	'DISTRO=dockerfile SUITE=stretch TIMESTAMP="2017-05-08T00:00:00Z" '
+	'DISTRO=dockerfile SUITE=jessie  TIMESTAMP="2017-05-08T00:00:00Z" '
+	'# README.md checksum'
+	'DISTRO=readme     SUITE=stretch TIMESTAMP="2017-01-01T00:00:00Z" '
+	''
 	'# smoke test Ubuntu 24.04 and 22.04'
-	'DISTRO=ubuntu SUITE=noble'
-	'DISTRO=ubuntu SUITE=jammy'
+	'DISTRO=ubuntu SUITE=noble SHA256=""'
+	'DISTRO=ubuntu SUITE=jammy SHA256=""'
 )
 
 githubEnv=
 for combo in "${combos[@]}"; do
+	unset ARCH SUITE CODENAME TIMESTAMP DISTRO
 	_defaults
 	githubEnv+=$'\n'"$combo"
 	case "$combo" in
-		'' | '#'* | *' SHA256='* | 'DISTRO='*)
-			# leave blank lines, comment lines, lines with SHA256=, and lines starting with VALIDATE= unchanged
+		'' | '#'* | *' SHA256='*)
 			continue
 			;;
 	esac
@@ -62,15 +68,28 @@ for combo in "${combos[@]}"; do
 		grep -oE1 'SUITE=[^ ]+' <<<"$combo" || :
 		grep -oE1 'CODENAME=[^ ]*' <<<"$combo" || :
 		grep -oE1 'TIMESTAMP=[^ ]*' <<<"$combo" || :
+		grep -oE1 'DISTRO=[^ ]+' <<<"$combo" || :
 	)"
 	eval "$vars"
 	[ -n "$SUITE" ]
 	serial="$(TZ=UTC date --date="$TIMESTAMP" '+%Y%m%d')"
-	rootfs="validate/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
-	if [ ! -e "$rootfs" ]; then
-		( set -x; eval "$combo ./.validate-debian.sh" )
+	: "${DISTRO:=debian}"
+	case "$DISTRO" in
+		debian)
+			rootfs="validate/$serial/${ARCH:-amd64}/${CODENAME:-$SUITE}/rootfs.tar.xz"
+			sha256="$rootfs.sha256"
+			;;
+		dockerfile | readme)
+			tar="validate/$DISTRO/$SUITE.tar"
+			rootfs="$tar.xz"
+			sha256="$tar.sha256"
+			;;
+		*) echo >&2 "programming error: no validate script for '$DISTRO' ($combo)"; exit 1 ;;
+	esac
+	if [ ! -s "$rootfs" ] || [ ! -s "$sha256" ]; then
+		( set -x; eval "$combo ./.validate-$DISTRO.sh" )
 	fi
-	sha256="$(< "$rootfs.sha256")"
+	sha256="$(< "$sha256")"
 	if ! grep -qF 'TIMESTAMP=' <<<"$combo"; then
 		githubEnv+="TIMESTAMP=\"$TIMESTAMP\" "
 	fi

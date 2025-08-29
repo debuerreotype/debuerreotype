@@ -57,9 +57,15 @@ jobs:
           - { SUITE: stable,    CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
           - { SUITE: oldstable, CODENAME: "", TIMESTAMP: "today 00:00:00", SHA256: "" }
 
+          # Dockerfile checksums
+          - { DISTRO: dockerfile, SUITE: stretch, TIMESTAMP: "2017-05-08T00:00:00Z", SHA256: 7b295f07692e13e3aaec0709e38f5fbfe3b7153d024c556430be70fd845fc174 }
+          - { DISTRO: dockerfile, SUITE: jessie,  TIMESTAMP: "2017-05-08T00:00:00Z", SHA256: 5d1daeb8e817a56d28b65b4fa5eb09ebb1963299a0ccfd2a37c07560779653cd }
+          # README.md checksum
+          - { DISTRO: readme,     SUITE: stretch, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: ac026b83d085e1e516e21865a92c443529119264a302bcefc60f0a8613e922ad }
+
           # smoke test Ubuntu 24.04 and 22.04
-          - { DISTRO: ubuntu, SUITE: noble }
-          - { DISTRO: ubuntu, SUITE: jammy }
+          - { DISTRO: ubuntu, SUITE: noble, SHA256: "" }
+          - { DISTRO: ubuntu, SUITE: jammy, SHA256: "" }
       fail-fast: false
     name: Test ${{ matrix.DISTRO && format('{0} ', matrix.DISTRO) }}${{ matrix.SUITE }}${{ matrix.CODENAME && format(' ({0})', matrix.CODENAME) }}${{ matrix.ARCH && format(' [{0}]', matrix.ARCH) }}${{ matrix.TIMESTAMP && format(' at {0}', matrix.TIMESTAMP) }}
     runs-on: ubuntu-24.04
