@@ -91,10 +91,8 @@ jobs:
 
           git status
 
-          # remove/reset "debuerreotype-version" files before diffing (since that's not a meaningful diff for our purposes, and certainly not worth rev-bumping the validation-artifacts repository by itself)
-          git checkout -- '**/*debuerreotype-version'
-
-          if ! git diff --exit-code --color; then
+          # ignore "debuerreotype-version" (and "debootstrap-version") files when looking for changes since that's not worth rev-bumping the validation-artifacts repository by itself (but excluding them this way makes them show up in the diffoscope below if there are *other* changes because they might be relevant to those other changes)
+          if ! git diff --exit-code --color ':!*-version'; then
             # if there's a delta, let's setup "diffoscope" as a difftool so we can generate a much "meatier" diff
             # https://lists.reproducible-builds.org/pipermail/diffoscope/2016-April/000193.html
             docker pull tianon/diffoscope
