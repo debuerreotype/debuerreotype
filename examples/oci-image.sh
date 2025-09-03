@@ -48,25 +48,45 @@ export suite
 variant="$(< "$sourceDir/rootfs.debuerreotype-variant")"
 
 dpkgArch="$(< "$sourceDir/rootfs.dpkg-arch")"
+
 unset goArch
-goArm=
 case "$dpkgArch" in
-	amd64 | arm64 | s390x | riscv64) goArch="$dpkgArch" ;;
-	armel | arm) goArch='arm'; goArm='5' ;;
-	armhf) goArch='arm'; if grep -qi raspbian "$sourceDir/rootfs.os-release"; then goArm='6'; else goArm='7'; fi ;;
+	amd64 | arm64 | riscv64 | s390x) goArch="$dpkgArch" ;;
+	armhf | armel | arm) goArch='arm' ;;
 	i386) goArch='386' ;;
 	mips64el | ppc64el) goArch="${dpkgArch%el}le" ;;
 	*) echo >&2 "error: unknown dpkg architecture: '$dpkgArch'"; exit 1 ;;
 esac
+
+# https://wiki.debian.org/ArchitectureSpecificsMemo#Architecture_baselines
+# https://github.com/opencontainers/image-spec/pull/1172
+ociVariant=
+case "$goArch" in
+	arm64) ociVariant='v8' ;; # https://wiki.debian.org/ArchitectureSpecificsMemo#arm64
+	arm)
+		case "$dpkgArch" in
+			armel) ociVariant='v5' ;; # https://wiki.debian.org/ArchitectureSpecificsMemo#armel
+			armhf)
+				if grep -qi raspbian "$sourceDir/rootfs.os-release"; then
+					ociVariant='v6' # this is why Raspbian exists in the first place 😅
+				else
+					ociVariant='v7' # https://wiki.debian.org/ArchitectureSpecificsMemo#armhf
+				fi
+				;;
+		esac
+		;;
+esac
+
 unset bashbrewArch
 case "$goArch" in
 	386) bashbrewArch='i386' ;;
 	amd64 | mips64le | ppc64le | riscv64 | s390x) bashbrewArch="$goArch" ;;
-	arm) bashbrewArch="${goArch}32v${goArm}" ;;
+	arm) bashbrewArch="${goArch}32${ociVariant}" ;;
 	arm64) bashbrewArch="${goArch}v8" ;;
 	*) echo >&2 "error: unknown Go architecture: '$goArch'"; exit 1 ;;
 esac
-export dpkgArch goArch goArm bashbrewArch
+
+export dpkgArch goArch ociVariant bashbrewArch
 
 osID="$(id="$(grep -E '^ID=' "$sourceDir/rootfs.os-release")" && eval "$id" && echo "${ID:-}")" || : # "debian", "raspbian", "ubuntu", etc
 : "${osID:=debian}" # if for some reason the above fails, fall back to "debian"
@@ -136,13 +156,9 @@ jq --null-input --compact-output '
 		os: "linux",
 		architecture: env.goArch,
 	}
-	+ if env.goArch == "arm64" then
-		{ variant: "v8" }
-	elif env.goArch == "arm" then
-		{ variant: ( "v" + env.goArm ) }
-	else
-		{}
-	end
+	| if env.ociVariant != "" then
+		.variant = env.ociVariant
+	else . end
 ' > "$tempDir/config.json"
 configSize="$(stat --format='%s' "$tempDir/config.json")"
 configSha256="$(_sha256 "$tempDir/config.json")"
