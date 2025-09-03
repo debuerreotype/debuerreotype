@@ -22,6 +22,9 @@ RUN set -eux; \
 		gnupg dirmngr \
 # add "gpgv" explicitly (for now) since it's transitively-essential in bookworm and gone in trixie+
 		gpgv \
+		\
+# used in oci-image.sh
+		jq pigz \
 	; \
 	rm -rf /var/lib/apt/lists/*
 
