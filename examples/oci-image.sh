@@ -4,11 +4,6 @@ set -Eeuo pipefail
 # create https://github.com/opencontainers/image-spec/blob/v1.0.1/image-layout.md (+ Docker's "manifest.json") from the output of "debian.sh"
 # the resulting file is suitable for "ctr image import" or "docker load"
 
-# (this can *technically* run via "docker-run.sh", but IMO it's much easier to run unprivileged on the host)
-# RUN apt-get update \
-# 	&& apt-get install -y jq pigz \
-# 	&& rm -rf /var/lib/apt/lists/*
-
 source "$DEBUERREOTYPE_DIRECTORY/scripts/.constants.sh" \
 	--flags 'meta:' \
 	-- \
