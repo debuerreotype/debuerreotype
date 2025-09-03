@@ -6,11 +6,7 @@ set -Eeuo pipefail
 # 	&& apt-get install -y ./raspbian.deb \
 # 	&& rm raspbian.deb
 
-debuerreotypeScriptsDir="$(which debuerreotype-init)"
-debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
-debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
-
-source "$debuerreotypeScriptsDir/.constants.sh" \
+source "$DEBUERREOTYPE_DIRECTORY/scripts/.constants.sh" \
 	-- \
 	'<output-dir> <suite>' \
 	'output stretch'
@@ -141,7 +137,7 @@ touch_epoch() {
 	done
 }
 
-aptVersion="$("$debuerreotypeScriptsDir/.apt-version.sh" "$rootfsDir")"
+aptVersion="$("$DEBUERREOTYPE_DIRECTORY/scripts/.apt-version.sh" "$rootfsDir")"
 if dpkg --compare-versions "$aptVersion" '>=' '1.1~'; then
 	debuerreotype-apt-get "$rootfsDir" full-upgrade -yqq
 else

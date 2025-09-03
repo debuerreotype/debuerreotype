@@ -12,11 +12,7 @@ suites=(
 	oldoldoldstable
 )
 
-debuerreotypeScriptsDir="$(which debuerreotype-init)"
-debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
-debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
-
-source "$debuerreotypeScriptsDir/.constants.sh" \
+source "$DEBUERREOTYPE_DIRECTORY/scripts/.constants.sh" \
 	--flags 'arch:' \
 	--flags 'dry-run' \
 	-- \
@@ -42,17 +38,14 @@ timestamp="${1:-}"; shift || eusage 'missing timestamp'
 
 debianArgs=( --codename-copy )
 
-mirror="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "$timestamp")"
-secmirror="$("$debuerreotypeScriptsDir/.snapshot-url.sh" "$timestamp" 'debian-security')"
+mirror="$("$DEBUERREOTYPE_DIRECTORY/scripts/.snapshot-url.sh" "$timestamp")"
+secmirror="$("$DEBUERREOTYPE_DIRECTORY/scripts/.snapshot-url.sh" "$timestamp" 'debian-security')"
 
 dpkgArch="${arch:-$(dpkg --print-architecture | awk -F- '{ print $NF }')}"
 echo
 echo "-- BUILDING TARBALLS FOR '$dpkgArch' FROM '$mirror/' --"
 echo
 debianArgs+=( --arch="$dpkgArch" )
-
-thisDir="$(readlink -vf "$BASH_SOURCE")"
-thisDir="$(dirname "$thisDir")"
 
 _eol-date() {
 	local codename="$1"; shift # "bullseye", "buster", etc.
@@ -163,7 +156,7 @@ for suite in "${suites[@]}"; do
 		echo >&2
 		continue
 	fi
-	cmd=( "$thisDir/debian.sh" "${debianArgs[@]}" "$outputDir" "$suite" "$timestamp" )
+	cmd=( "$DEBUERREOTYPE_DIRECTORY/examples/debian.sh" "${debianArgs[@]}" "$outputDir" "$suite" "$timestamp" )
 	if [ -n "$dryRun" ]; then
 		printf 'DRY-RUN: $'
 		printf ' %q' "${cmd[@]}"
