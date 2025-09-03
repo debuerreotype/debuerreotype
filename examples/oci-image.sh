@@ -35,7 +35,7 @@ tempDir="$(mktemp -d)"
 trap "$(printf 'rm -rf %q' "$tempDir")" EXIT
 
 mkdir -p "$tempDir/oci/blobs/sha256"
-jq -ncS '{ imageLayoutVersion: "1.0.0" }' > "$tempDir/oci/oci-layout"
+jq --null-input --compact-output '{ imageLayoutVersion: "1.0.0" }' > "$tempDir/oci/oci-layout"
 
 version="$(< "$sourceDir/rootfs.debuerreotype-version")"
 epoch="$(< "$sourceDir/rootfs.debuerreotype-epoch")"
@@ -101,7 +101,7 @@ export script
 echo >&2 "generating config ..."
 
 # https://github.com/opencontainers/image-spec/blob/v1.0.1/config.md
-jq -ncS '
+jq --null-input --compact-output '
 	{
 		config: {
 			Env: [ "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" ],
@@ -152,21 +152,21 @@ mv "$tempDir/config.json" "$tempDir/oci/blobs/image-config.json"
 ln -sfT ../image-config.json "$tempDir/oci/blobs/sha256/$configSha256"
 
 # https://github.com/opencontainers/image-spec/blob/v1.0.1/manifest.md
-jq -ncS '
+jq --null-input --compact-output '
 	{
 		schemaVersion: 2,
 		mediaType: "application/vnd.oci.image.manifest.v1+json",
 		config: {
 			mediaType: "application/vnd.oci.image.config.v1+json",
-			size: (env.configSize | tonumber),
 			digest: ( "sha256:" + env.configSha256 ),
+			size: (env.configSize | tonumber),
 			data: env.configData,
 		},
 		layers: [
 			{
 				mediaType: "application/vnd.oci.image.layer.v1.tar+gzip",
-				size: (env.rootfsSize | tonumber),
 				digest: ( "sha256:" + env.rootfsSha256 ),
+				size: (env.rootfsSize | tonumber),
 			}
 		],
 		# TODO add some interesting annotations here
@@ -184,16 +184,16 @@ export tag="$suite${variant:+-$variant}" # "buster", "buster-slim", etc.
 export image="$repo:$tag"
 
 # https://github.com/opencontainers/image-spec/blob/v1.0.1/image-index.md
-platform="$(jq -c 'with_entries(select(.key == ([ "os", "architecture", "variant" ][])))' "$tempDir/oci/blobs/sha256/$configSha256")"
-jq -ncS --argjson platform "$platform" '
+platform="$(jq --compact-output 'with_entries(select(.key == ([ "os", "architecture", "variant" ][])))' "$tempDir/oci/blobs/sha256/$configSha256")"
+jq --null-input --compact-output --argjson platform "$platform" '
 	{
 		schemaVersion: 2,
 		mediaType: "application/vnd.oci.image.index.v1+json",
 		manifests: [
 			{
 				mediaType: "application/vnd.oci.image.manifest.v1+json",
-				size: (env.manifestSize | tonumber),
 				digest: ( "sha256:" + env.manifestSha256 ),
+				size: (env.manifestSize | tonumber),
 				platform: $platform,
 				annotations: {
 					"io.containerd.image.name": env.image,
@@ -206,7 +206,7 @@ jq -ncS --argjson platform "$platform" '
 ' > "$tempDir/oci/index.json"
 
 # Docker's "manifest.json" so that we can "docker load" the result of this script too
-jq -ncS '
+jq --null-input --compact-output '
 	[
 		{
 			Config: ( "blobs/sha256/" + env.configSha256 ),
@@ -239,7 +239,7 @@ else
 	touch --no-dereference --date="@$epoch" "$target"
 fi
 
-jq -n --argjson platform "$platform" '
+jq --null-input --tab --argjson platform "$platform" '
 	{
 		image: env.image,
 		repo: env.repo,
