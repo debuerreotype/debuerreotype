@@ -9,6 +9,13 @@ mkdir -p validate/dockerfile
 	user="$(stat --format "%u" "$dir")"
 	group="$(stat --format "%g" "$dir")"
 
+	if [ "$SUITE" = jessie ]; then
+		# https://bugs.debian.org/764204 "apt-cache calls fcntl() on 65536 FDs"
+		# https://bugs.launchpad.net/bugs/1332440 "apt-get update very slow when ulimit -n is big"
+		ulimit -n 1024
+		# (see also "examples/debian.sh")
+	fi
+
 	debuerreotype-init --keyring /usr/share/keyrings/debian-archive-removed-keys.pgp --no-merged-usr /tmp/rootfs "$SUITE" "$TIMESTAMP"
 
 	debuerreotype-tar /tmp/rootfs "$dir/$SUITE.tar.xz"

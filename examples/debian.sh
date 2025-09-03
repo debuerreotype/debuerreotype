@@ -182,6 +182,13 @@ if [ -n "$codenameCopy" ] && [ -z "$codename" ]; then
 	exit 1
 fi
 
+if [ "${codename:-$suite}" = 'jessie' ]; then
+	# https://bugs.debian.org/764204 "apt-cache calls fcntl() on 65536 FDs"
+	# https://bugs.launchpad.net/bugs/1332440 "apt-get update very slow when ulimit -n is big"
+	ulimit -n 1024
+	# I contemplated/played with adding this to "debuerreotype-apt-get" instead with a test on aptVersion >= 1.0.9.2 and < 1.1~exp9 (for safety), but it's really needed during debootstrap too ("Configuring apt" / "Setting up apt" hangs), and jessie is the only Debian release affected, so this is a simpler/cleaner test anyhow
+fi
+
 # apply merged-/usr (for bookworm+)
 # https://lists.debian.org/debian-ctte/2022/07/msg00034.html
 # https://github.com/debuerreotype/docker-debian-artifacts/issues/131#issuecomment-1190233249
