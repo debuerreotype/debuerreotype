@@ -9,18 +9,7 @@ set -Eeuo pipefail
 # 	&& apt-get install -y jq pigz \
 # 	&& rm -rf /var/lib/apt/lists/*
 
-thisDir="$(readlink -vf "$BASH_SOURCE")"
-thisDir="$(dirname "$thisDir")"
-
-if [ -x "$thisDir/../scripts/debuerreotype-init" ]; then
-	debuerreotypeScriptsDir="$(dirname "$thisDir")/scripts"
-else
-	debuerreotypeScriptsDir="$(which debuerreotype-init)"
-	debuerreotypeScriptsDir="$(readlink -vf "$debuerreotypeScriptsDir")"
-	debuerreotypeScriptsDir="$(dirname "$debuerreotypeScriptsDir")"
-fi
-
-source "$debuerreotypeScriptsDir/.constants.sh" \
+source "$DEBUERREOTYPE_DIRECTORY/scripts/.constants.sh" \
 	--flags 'meta:' \
 	-- \
 	'<target-file.tar> <source-directory>' \
@@ -109,7 +98,7 @@ mv "$tempDir/rootfs.tar.gz" "$tempDir/oci/blobs/rootfs.tar.gz"
 ln -sfT ../rootfs.tar.gz "$tempDir/oci/blobs/sha256/$rootfsSha256"
 
 script='debian.sh'
-if [ -x "$thisDir/$osID.sh" ]; then
+if [ -x "$DEBUERREOTYPE_DIRECTORY/examples/$osID.sh" ]; then
 	script="$osID.sh"
 fi
 export script
