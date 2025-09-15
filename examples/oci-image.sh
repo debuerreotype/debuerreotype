@@ -103,6 +103,19 @@ xz --decompress --threads=0 --stdout "$sourceDir/rootfs.tar.xz" > "$tempDir/root
 diffId="$(_sha256 "$tempDir/rootfs.tar")"
 export diffId="sha256:$diffId"
 
+# detect an appropriate interactive command based on what exists
+# (https://salsa.debian.org/debian/grow-your-ideas/-/issues/20)
+cmd=
+for cmdPotential in bash sh; do
+	for cmdPotentialFile in "bin/$cmdPotential" "usr/bin/$cmdPotential" "usr/local/bin/$cmdPotential"; do
+		if tar -tf "$tempDir/rootfs.tar" "$cmdPotentialFile" &> /dev/null; then
+			cmd="$cmdPotential"
+			break 2
+		fi
+	done
+done
+export cmd
+
 echo >&2 "recompressing rootfs (gzip) ..."
 
 pigz --best --no-time "$tempDir/rootfs.tar"
@@ -126,7 +139,7 @@ jq --null-input --compact-output '
 		config: {
 			Env: [ "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" ],
 			Entrypoint: [],
-			Cmd: [ "bash" ],
+			Cmd: [ if env.cmd != "" then env.cmd else empty end ],
 		},
 		created: env.iso8601,
 		history: [
