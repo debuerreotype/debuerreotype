@@ -40,7 +40,7 @@ RUN set -eux; \
 	wget -O distro-info-data.deb 'http://snapshot.debian.org/archive/debian/20251018T202603Z/pool/main/d/distro-info-data/distro-info-data_0.68_all.deb'; \
 	echo 'e9ae181a26235a46ff852cb3445752686b96ea83 *distro-info-data.deb' | sha1sum --strict --check -; \
 	\
-	versionEx="$(dpkg-query --show --showformat '${Version}\n' distro-info-data)"; \
+	versionEx="$(dpkg-query --show --showformat '${Version}\n' distro-info-data || :)"; \
 	versionDl="$(dpkg-deb --field distro-info-data.deb Version)"; \
 	if dpkg --compare-versions "$versionDl" '>>' "$versionEx"; then \
 # only install the version we just downloaded if it's actually newer than the version already installed (it gets frequent backports/stable updates and is installed as a dependency)
