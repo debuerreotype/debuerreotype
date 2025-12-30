@@ -17,7 +17,7 @@ RUN set -eux; \
 		debian-ports-archive-keyring \
 		debootstrap \
 		wget ca-certificates \
-		xz-utils \
+		xz-utils zstd \
 		\
 		gnupg dirmngr \
 # add "gpgv" explicitly (for now) since it's transitively-essential in bookworm and gone in trixie+
