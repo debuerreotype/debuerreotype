@@ -82,10 +82,6 @@ jobs:
             sudo apt-get update -qq
             sudo apt-get install -yqq binfmt-support qemu-user-static
           fi
-          docker run -d --name squignix --restart always tianon/squignix
-          git clone --depth 1 https://github.com/tianon/pgp-happy-eyeballs.git ~/phe
-          ~/phe/hack-my-builds.sh
-          rm -rf ~/phe
 
       - name: Build
         run: |
