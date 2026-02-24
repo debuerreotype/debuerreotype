@@ -29,6 +29,13 @@ jobs:
             exit 1
           fi
 
+  shfmt:
+    name: Verify shfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: ./.validate-shfmt.sh
+
   test:
     strategy:
       matrix:
