@@ -156,7 +156,14 @@ fi
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
 if [ -z "$nonDebian" ]; then
-	"$thisDir/debuerreotype-debian-sources-list" --snapshot \
+	sourcesListSnapshotArg=
+	aptVersion="$("$thisDir/.apt-version.sh" "$targetDir")"
+	if dpkg --compare-versions "$aptVersion" '>=' '0.7.21~'; then
+		# http://snapshot.debian.org began to use http Location header
+		# that is only supported by apt >= 0.7.21.
+		sourcesListSnapshotArg=--snapshot
+	fi
+	"$thisDir/debuerreotype-debian-sources-list" $sourcesListSnapshotArg \
 		$([ -z "$debianEol" ] || echo '--eol') \
 		$([ -z "$debianPorts" ] || echo '--ports') \
 		"$targetDir" "$suite"
