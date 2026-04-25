@@ -1,6 +1,6 @@
 # Debuerreotype
 
-[![GitHub CI](https://github.com/debuerreotype/debuerreotype/workflows/GitHub%20CI/badge.svg?branch=master&event=push)](https://github.com/debuerreotype/debuerreotype/actions?query=workflow%3A%22GitHub+CI%22+branch%3Amaster)
+[![GitHub CI](https://github.com/debuerreotype/debuerreotype/actions/workflows/ci.yml/badge.svg)](https://github.com/debuerreotype/debuerreotype/actions/workflows/ci.yml)
 
 Reproducible, [snapshot](http://snapshot.debian.org)-based Debian rootfs builds (especially for Docker).
 
