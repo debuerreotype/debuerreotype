@@ -32,7 +32,7 @@ unshare --mount bash -Eeuo pipefail -c '
 		fi
 	done
 	if [ -f "$targetDir/etc/resolv.conf" ]; then
-		mount --rbind --read-only /etc/resolv.conf "$targetDir/etc/resolv.conf"
+		mount --bind -o ro,nosuid,noexec,nodev /etc/resolv.conf "$targetDir/etc/resolv.conf"
 	fi
 	exec chroot "$targetDir" /usr/bin/env -i \
 		PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" \
