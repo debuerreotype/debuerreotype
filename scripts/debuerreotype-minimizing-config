@@ -151,3 +151,8 @@ if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
 	chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-no-languages"
 	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-no-languages"
 fi
+
+# Check that /root/.bashrc has no non-comment lines and replace it to fix bash-completion. See https://bugs.debian.org/275623#63 . Hopefully this will also fix other bugs caused by user vs root mismatch
+if [ -f "$targetDir/root/.bashrc" ] && [ -f "$targetDir/etc/skel/.bashrc" ] && ! grep -qvE '^ *(#.*)?$' "$targetDir/root/.bashrc"; then
+	cp "$targetDir/etc/skel/.bashrc" "$targetDir/root/.bashrc"
+fi
