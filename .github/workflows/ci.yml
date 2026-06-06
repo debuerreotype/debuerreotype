@@ -21,7 +21,7 @@ jobs:
     name: Ensure no-TLS snapshot usage
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: tianon/actions/checkout/composite@581498642ee39d41dc3a801d22b3f7f42a95acc7 # HEAD
       - name: Ensure http://snapshot.debian.org (https://github.com/debuerreotype/debuerreotype/pull/119#issuecomment-901457009)
         run: |
           rm .github/workflows/ci.yml # this file itself will always be a match, but it's the only valid one 👀
@@ -72,7 +72,7 @@ jobs:
     env: ${{ matrix }}
     steps:
 
-      - uses: actions/checkout@v4
+      - uses: tianon/actions/checkout/composite@581498642ee39d41dc3a801d22b3f7f42a95acc7 # HEAD
       - name: checkout validate submodule
         run: git submodule update --init --depth 1 validate
 
