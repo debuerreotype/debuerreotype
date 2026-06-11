@@ -85,7 +85,7 @@ if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
 	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests"
 
 	# keep us lean by effectively running "apt-get clean" after every install
-	aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
+	aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb || true";'
 	cat > "$targetDir/etc/apt/apt.conf.d/docker-clean" <<-EOF
 		# Since for most Docker users, package installs happen in "docker build" steps,
 		# they essentially become individual layers due to the way Docker handles
@@ -98,11 +98,10 @@ if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
 		# Ideally, these would just be invoking "apt-get clean", but in our testing,
 		# that ended up being cyclic and we got stuck on APT's lock, so we get this fun
 		# creation that's essentially just "apt-get clean".
+
+		# Note: we don't remove /var/cache/apt/*.bin here, because this breaks bash-completion for apt ("apt-get install ap<Tab>")
 		DPkg::Post-Invoke { $aptGetClean };
 		APT::Update::Post-Invoke { $aptGetClean };
-
-		Dir::Cache::pkgcache "";
-		Dir::Cache::srcpkgcache "";
 
 		# Note that we do realize this isn't the ideal way to do this, and are always
 		# open to better suggestions (https://github.com/debuerreotype/debuerreotype/issues).
