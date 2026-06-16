@@ -238,7 +238,11 @@ else
 	sourcesListArgs+=( --no-deb822 )
 	sourcesListFile='/etc/apt/sources.list'
 fi
-debuerreotype-debian-sources-list "${sourcesListArgs[@]}" --snapshot "$rootfsDir" "$suite"
+sourcesListSnapshotArg=
+if dpkg --compare-versions "$aptVersion" '>=' '0.7.21~'; then
+	sourcesListSnapshotArg=--snapshot
+fi
+debuerreotype-debian-sources-list "${sourcesListArgs[@]}" $sourcesListSnapshotArg "$rootfsDir" "$suite"
 [ -s "$rootfsDir$sourcesListFile" ] # trust, but verify
 
 addGpgvIgnore= # whether to invoke "debuerreotype-gpgv-ignore-expiration-config"
@@ -439,7 +443,7 @@ if [ -n "$codenameCopy" ]; then
 		targetBase="$variantDir/rootfs"
 
 		# point sources.list back at snapshot.debian.org temporarily (but this time pointing at $codename instead of $suite)
-		debuerreotype-debian-sources-list --snapshot "${sourcesListArgs[@]}" "$rootfs" "$codename"
+		debuerreotype-debian-sources-list $sourcesListSnapshotArg "${sourcesListArgs[@]}" "$rootfs" "$codename"
 
 		create_artifacts "$targetBase" "$rootfs" "$codename" "$variant"
 	done
