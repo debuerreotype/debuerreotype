@@ -61,7 +61,16 @@ RUN set -eux; \
 	wget -O debootstrap-download-main.patch 'https://people.debian.org/~tianon/debootstrap-mr-63--download_main.patch'; \
 	echo 'ceae8f508a9b49236fa4519a44a584e6c774aa0e4446eb1551f3b69874a4cde5 *debootstrap-download-main.patch' | sha256sum --strict --check -; \
 	patch --input=debootstrap-download-main.patch /usr/share/debootstrap/functions; \
-	rm debootstrap-download-main.patch
+	rm debootstrap-download-main.patch; \
+	\
+# https://bugs.debian.org/1141672
+# https://launchpad.net/bugs/2160111
+# https://git.launchpad.net/ubuntu/+source/debootstrap/commit/?id=bd8362834905cab652b890181f07c9fe08a05cb3
+# Ubuntu 26.10+ only ships SHA512 checksums in Release and Packages files
+	wget -O debootstrap-sha512.patch 'https://git.launchpad.net/ubuntu/+source/debootstrap/patch/?id=bd8362834905cab652b890181f07c9fe08a05cb3'; \
+	echo 'df3b1a35a5ac9b6592625fbc8767323d920589b53c228c6c5cf441c19b406a8b *debootstrap-sha512.patch' | sha256sum --strict --check -; \
+	patch --input=debootstrap-sha512.patch /usr/share/debootstrap/functions; \
+	rm debootstrap-sha512.patch
 
 # this env is a defined interface used by other scripts
 ENV DEBUERREOTYPE_DIRECTORY /opt/debuerreotype
