@@ -63,7 +63,8 @@ jobs:
           # README.md checksum
           - { DISTRO: readme,     SUITE: stretch, TIMESTAMP: "2017-01-01T00:00:00Z", SHA256: ac026b83d085e1e516e21865a92c443529119264a302bcefc60f0a8613e922ad }
 
-          # smoke test Ubuntu 24.04 and 22.04
+          # smoke test Ubuntu 26.10, 24.04 and 22.04
+          - { DISTRO: ubuntu, SUITE: stonking, SHA256: "" }
           - { DISTRO: ubuntu, SUITE: noble, SHA256: "" }
           - { DISTRO: ubuntu, SUITE: jammy, SHA256: "" }
       fail-fast: false

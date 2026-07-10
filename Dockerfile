@@ -35,10 +35,10 @@ RUN echo 'hsts=0' >> "$WGETRC"
 # https://github.com/debuerreotype/debuerreotype/issues/100
 # https://tracker.debian.org/pkg/distro-info-data
 # http://snapshot.debian.org/package/distro-info-data/
-# http://snapshot.debian.org/package/distro-info-data/0.68/
+# http://snapshot.debian.org/package/distro-info-data/0.69/
 RUN set -eux; \
-	wget -O distro-info-data.deb 'http://snapshot.debian.org/archive/debian/20251018T202603Z/pool/main/d/distro-info-data/distro-info-data_0.68_all.deb'; \
-	echo 'e9ae181a26235a46ff852cb3445752686b96ea83 *distro-info-data.deb' | sha1sum --strict --check -; \
+	wget -O distro-info-data.deb 'http://snapshot.debian.org/archive/debian/20260425T024727Z/pool/main/d/distro-info-data/distro-info-data_0.69_all.deb'; \
+	echo '5f8f502114bb6e81c3fd0db8c321ed0ae7ca7b2e *distro-info-data.deb' | sha1sum --strict --check -; \
 	\
 	versionEx="$(dpkg-query --show --showformat '${Version}\n' distro-info-data || :)"; \
 	versionDl="$(dpkg-deb --field distro-info-data.deb Version)"; \
