@@ -60,9 +60,14 @@ esac
 
 # https://wiki.debian.org/ArchitectureSpecificsMemo#Architecture_baselines
 # https://github.com/opencontainers/image-spec/pull/1172
+# TODO at some point, these baselines will change and we'll probably need to use epoch or something to pivot 😬
+# (they're also not technically accurate for Ubuntu, but we don't officially build for Ubuntu so that's not all that important for *us* to maintain here)
 ociVariant=
 case "$goArch" in
-	arm64) ociVariant='v8' ;; # https://wiki.debian.org/ArchitectureSpecificsMemo#arm64
+	amd64)   ociVariant='v1'       ;; # https://wiki.debian.org/ArchitectureSpecificsMemo#amd64
+	arm64)   ociVariant='v8.0'     ;; # https://wiki.debian.org/ArchitectureSpecificsMemo#arm64
+	ppc64le) ociVariant='power8'   ;; # https://wiki.debian.org/ArchitectureSpecificsMemo#ppc64el
+	riscv64) ociVariant='rva20u64' ;; # https://wiki.debian.org/ArchitectureSpecificsMemo#riscv64-1
 	arm)
 		case "$dpkgArch" in
 			armel) ociVariant='v5' ;; # https://wiki.debian.org/ArchitectureSpecificsMemo#armel
@@ -82,7 +87,7 @@ case "$goArch" in
 	386) bashbrewArch='i386' ;;
 	amd64 | mips64le | ppc64le | riscv64 | s390x) bashbrewArch="$goArch" ;;
 	arm) bashbrewArch="${goArch}32${ociVariant}" ;;
-	arm64) bashbrewArch="${goArch}v8" ;;
+	arm64) bashbrewArch="${goArch}v8" ;; # TODO
 	*) echo >&2 "error: unknown Go architecture: '$goArch'"; exit 1 ;;
 esac
 
