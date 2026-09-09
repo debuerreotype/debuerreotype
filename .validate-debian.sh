@@ -6,6 +6,7 @@ serial="$(TZ=UTC date --date "@$epoch" +%Y%m%d)"
 
 buildArgs=()
 if [ "$SUITE" = 'eol' ]; then
+	serial='eol'
 	buildArgs+=( '--eol' )
 	SUITE="$CODENAME"
 elif [ -n "${CODENAME:-}" ]; then

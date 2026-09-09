@@ -49,13 +49,14 @@ securityMirrors=( 'http://deb.debian.org/debian-security' )
 snapshotSecurityMirrors=( "$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-security')" )
 
 if [ -n "$eol" ]; then
+	# https://bugs.debian.org/986207 - snapshot.debian.org is not currently actually supporting archive.debian.org (and archive.debian.org really is effectively a snapshot in itself), so for EOL releases we should prefer archive.debian.org directly (and fixup timestamps/debuerreotype-recalculate-epoch afterwards)
 	archiveSnapshotMirror="$("$thisDir/.snapshot-url.sh" "@$epoch" 'debian-archive')"
 
 	standardMirrors=( 'http://archive.debian.org/debian' "${standardMirrors[@]}" )
-	snapshotStandardMirrors=( "$archiveSnapshotMirror/debian" "${snapshotStandardMirrors[@]}" )
+	snapshotStandardMirrors=( 'http://archive.debian.org/debian' "$archiveSnapshotMirror/debian" "${snapshotStandardMirrors[@]}" )
 
 	securityMirrors=( 'http://archive.debian.org/debian-security' "${securityMirrors[@]}" )
-	snapshotSecurityMirrors=( "$archiveSnapshotMirror/debian-security" "${snapshotSecurityMirrors[@]}" )
+	snapshotSecurityMirrors=( 'http://archive.debian.org/debian-security' "$archiveSnapshotMirror/debian-security" "${snapshotSecurityMirrors[@]}" )
 fi
 
 case "$target" in
