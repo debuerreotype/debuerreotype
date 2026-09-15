@@ -156,6 +156,8 @@ fi
 echo "$epoch" > "$targetDir/debuerreotype-epoch"
 
 if [ -z "$nonDebian" ]; then
+	echo 'Acquire::Check-Valid-Until "no";' > "$targetDir/etc/apt/apt.conf.d/50debuerreotype-valid-until.conf"
+
 	"$thisDir/debuerreotype-debian-sources-list" --snapshot \
 		$([ -z "$debianEol" ] || echo '--eol') \
 		$([ -z "$debianPorts" ] || echo '--ports') \
