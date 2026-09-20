@@ -85,7 +85,7 @@ if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
 	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-autoremove-suggests"
 
 	# keep us lean by effectively running "apt-get clean" after every install
-	aptGetClean='"rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
+	aptGetClean='"test -z $APT_KEEP_ARCHIVES && rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true";'
 	cat > "$targetDir/etc/apt/apt.conf.d/docker-clean" <<-EOF
 		# Since for most Docker users, package installs happen in "docker build" steps,
 		# they essentially become individual layers due to the way Docker handles
@@ -101,14 +101,21 @@ if [ -d "$targetDir/etc/apt/apt.conf.d" ]; then
 		DPkg::Post-Invoke { $aptGetClean };
 		APT::Update::Post-Invoke { $aptGetClean };
 
-		Dir::Cache::pkgcache "";
-		Dir::Cache::srcpkgcache "";
-
 		# Note that we do realize this isn't the ideal way to do this, and are always
 		# open to better suggestions (https://github.com/debuerreotype/debuerreotype/issues).
 	EOF
 	chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-clean"
 	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-clean"
+
+	# stop making package cache files
+	cat > "$targetDir/etc/apt/apt.conf.d/docker-no-pkgcache" <<-'EOF'
+		# The package caches would take about 70MB of storage and they are not needed.
+
+		Dir::Cache::pkgcache "";
+		Dir::Cache::srcpkgcache "";
+	EOF
+	chmod 0644 "$targetDir/etc/apt/apt.conf.d/docker-no-pkgcache"
+	"$thisDir/.fix-apt-comments.sh" "$aptVersion" "$targetDir/etc/apt/apt.conf.d/docker-no-pkgcache"
 
 	cat > "$targetDir/etc/apt/apt.conf.d/docker-gzip-indexes" <<-'EOF'
 		# Since Docker users using "RUN apt-get update && apt-get install -y ..." in
